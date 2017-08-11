@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/new/photo">
+        <file>mask.png</file>
+        <file>sexyPhoto.jpg</file>
+        <file>background.jpg</file>
+    </qresource>
+    <qresource prefix="/new/memePhoto">
+        <file>catMeme.jpg</file>
+        <file>contiMeme.jpg</file>
+        <file>dryzhMeme.jpg</file>
+        <file>exactlyMeme.jpg</file>
+        <file>potMeme.jpg</file>
+        <file>respectMeme.jpg</file>
+        <file>shlMeme.jpg</file>
+        <file>vzhyhMeme.jpg</file>
+        <file>watchMeme.jpg</file>
+        <file>mem_hmm.png</file>
+        <file>noMeme.png</file>
+        <file>okMeme.png</file>
+    </qresource>
+</RCC>
