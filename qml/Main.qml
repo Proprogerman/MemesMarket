@@ -1,6 +1,5 @@
 import VPlayApps 1.0
 import QtQuick 2.0
-import io.qt.ServerConnection 1.0
 
 
 App {

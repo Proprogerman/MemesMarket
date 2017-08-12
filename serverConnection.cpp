@@ -15,30 +15,53 @@ ServerConnection::ServerConnection(QObject *parent):
         qDebug()<<"database is open...";
 }
 
-bool ServerConnection::signUp(const QString &name, const QString &password)
-{
+
+void ServerConnection::setName(const QString &name){
     QSqlQuery query(database);
-    query.prepare("SELECT * FROM users WHERE user_name = :name;");
+    query.prepare("SELECT * FROM users WHERE name = :name;");
     query.bindValue(":name", name);
 
     query.exec();
 
     if(query.size() == 0)
     {
-        query.prepare("INSERT INTO users (user_name) VALUES(:name, :password);");
-        query.bindValue(":name", name);
-        query.bindValue(":password", password);
-        return true;
+        emit nameIsCorrect();
+        user_name = name;
+        qDebug()<<"имя свободно";
+    }
+    else{
+        emit nameIsExist();
+        qDebug()<<"имя занято!";
+    }
+}
 
-        if(!query.exec())
-        {
-            query.lastError().databaseText();
-            query.lastError().driverText();
-        }
-    }
-    else
-    {
-        qDebug()<<"пользователь с таким именем уже существует, придумайте другое имя!";
-        return false;
-    }
+void ServerConnection::setPassword(const QString &password){
+    user_password = password;
+}
+
+//void ServerConnection::setToken(const QString &token)
+//{
+//    //загрузка токена из БД!!!!
+//}
+
+void ServerConnection::signUp()
+{
+    QSqlQuery query(database);
+    query.prepare("INSERT INTO users (name, password) VALUES(:name, :password);");
+    query.bindValue(":name", user_name);
+    query.bindValue(":password", user_password);
+    query.exec();
+}
+
+QString ServerConnection::userName(){
+    return user_name;
+}
+
+QString ServerConnection::userPassword(){
+    return user_password;
+}
+
+QString ServerConnection::userToken()
+{
+    return user_token;
 }

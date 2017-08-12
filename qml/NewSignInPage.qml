@@ -4,12 +4,30 @@ import QtGraphicalEffects 1.0
 
 import io.qt.ServerConnection 1.0
 
-Page {
+Page{
     id:newSignInPage
 
-    ServerConnection{ id: serverConnection }
+    ServerConnection{
+    id: serverConnection
+        onNameIsExist:{
+            nameOfGroup.state = "nameIsExistState"
+            nameOfGroup.color = "#F8BBD0"
+        }
+        onNameIsCorrect:{
+            nameOfGroup.state = "nameIsValidState"
+            nameOfGroup.color = "#507299"
+        }
+    }
+
 
     property string indicateMessage
+
+    function signUpButtonCheck(){
+        if(nameOfGroup.color == "#507299" && password.color == "#507299")
+            signUpButton.visible = true
+        else
+            signUpButton.visible = false
+    }
 
     Rectangle{
         id: background
@@ -39,27 +57,6 @@ Page {
             opacity: 0.5
         }
 
-        states: [
-            State{
-                name:"inputNameState"
-                PropertyChanges{ target: indicateMessage;  text:"Придумайте название группы" }
-                PropertyChanges{ target: indicateImage; source:"../assets/mem_hmm.png"}
-            },
-            State{
-                name:"nameIsCorrectState"
-                PropertyChanges{ target: indicateMessage; text:"Название доступно" }
-                PropertyChanges{ target: indicateImage; source:"../assets/okMeme.png" }
-            },
-            State{
-                name:"nameIsExistState"
-                PropertyChanges{ target: indicateMessage; text: "Имя занято, придумайте другое"}
-                PropertyChanges{ target: indicateImage; source:"../assets/noMeme.png" }
-            }
-        ]
-
-        /*
-            реализовать обработку текущего статуса регистрации для индикатора
-        */
     }
 
     Rectangle{
@@ -73,6 +70,24 @@ Page {
             anchors.top: parent.top
             color:"#edeef0"
 
+            states: [
+                State{
+                    name:"nameInputState"
+                    PropertyChanges{ target: indicateMessage;  text:"Придумайте название группы" }
+                    PropertyChanges{ target: indicateImage; source:"../assets/mem_hmm.png"}
+                },
+                State{
+                    name:"nameIsValidState"
+                    PropertyChanges{ target: indicateMessage; text:"Название доступно" }
+                    PropertyChanges{ target: indicateImage; source:"../assets/okMeme.png" }
+                },
+                State{
+                    name:"nameIsExistState"
+                    PropertyChanges{ target: indicateMessage; text: "Имя занято, придумайте другое" }
+                    PropertyChanges{ target: indicateImage; source:"../assets/noMeme.png" }
+                }
+            ]
+
             AppTextField{
                 id: nameInputRow
                 width: parent.width * 3/4; height: width * 1/7;
@@ -83,21 +98,18 @@ Page {
                 placeholderText:"Название группы"
                 maximumLength: 16
                 validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
-
                 backgroundColor: "#ffffff"
+
                 onActiveFocusChanged: {
                     if(activeFocus == true)
                         backgroundColor = "lightgrey"
                     else
                         backgroundColor = "#ffffff"
+                    if(getText(0,length) != '' && activeFocus == false)
+                        serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
+                    signUpButtonCheck()
                 }
             }
-//            AppButton{
-//                height: nameInputRow.height; width: height
-//                minimumHeight: height; minimumWidth: width
-//                anchors.verticalCenter: parent.verticalCenter
-//                radius: nameInputRow.radius
-//            }
         }
 
         Rectangle{
@@ -106,6 +118,20 @@ Page {
             anchors.top: nameOfGroup.bottom
             anchors.topMargin: height * 1/20
             color:"#edeef0"
+
+            states:[
+                State{
+                    name:"passwordHasFewerCharsState"
+                    PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
+                    PropertyChanges{ target: indicateImage; source:"../assets/noMeme.png" }
+                },
+                State{
+                    name:"passwordIsOkState"
+                    PropertyChanges{ target: indicateMessage; text: "Пароль удовлетворяет требованиям" }
+                    PropertyChanges{ target: indicateImage; source:"../assets/okMeme.png" }
+                }
+            ]
+
             AppTextField{
                 id: passwordInputRow
                 width: parent.width * 3/4; height: width * 1/7
@@ -118,12 +144,25 @@ Page {
                 validator: RegExpValidator{regExp:/[a-zA-Z1-9\!\@\#\$\%\^\&\*\(\)\-\_\+\=\;\:\,\.\/\?\\\|\`\~\[\]\{\}]{6,}/}
                 backgroundColor: "#ffffff"
                 echoMode: TextInput.Password
+
                 onActiveFocusChanged: {
                     if(activeFocus == true)
                         backgroundColor = "lightgrey"
                     else
                         backgroundColor = "#ffffff"
                 }
+                onTextChanged:{
+                    if(length < 6){
+                        password.color = "#F8BBD0"
+                        password.state = "passwordHasFewerCharsState"
+                    }
+                    else{
+                        password.color = "#507299"
+                        password.state = "passwordIsOkState"
+                    }
+                    signUpButtonCheck()
+                }
+
                 Rectangle{
                     id: passwordVis
 
@@ -155,7 +194,19 @@ Page {
                 }
             }
         }
+        AppButton{
+            id: signUpButton
+            width: passwordInputRow.width; height: password.height
+            anchors{ top: password.bottom; horizontalCenter: parent.horizontalCenter }
+            text:"создать"
+            visible: false
 
+            onClicked:{
+                serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
+                serverConnection.user_password = passwordInputRow.getText(0, passwordInputRow.length)
+                serverConnection.signUp()
+            }
+        }
     }
     DropShadow{
         anchors.fill: dataSheet
