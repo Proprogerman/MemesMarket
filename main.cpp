@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
 //                             "io.qt.SingletonConnection",1,0,"ServerConnection");
 
 
-    qmlRegisterSingletonType<ServerConnection>("io.qt.SingletonConnection",1,0,"ServerConnection",
-                                               &ServerConnection::qobject_singleton_provider);
+//    qmlRegisterSingletonType<ServerConnection>("io.qt.SingletonConnection",1,0,"ServerConnection",
+//                                               &ServerConnection::qobject_singleton_provider);
 
 
     engine.load(QUrl(vplay.mainQmlFileName()));
