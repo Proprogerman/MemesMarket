@@ -5,6 +5,8 @@ import QtGraphicalEffects 1.0
 Page {
     id:signInPage
 
+    Component{ id: mainUserPageComponent; MainUserPage{} }
+
     Image{
         id:background
         width: signInPage.width; height: signInPage.height
@@ -90,6 +92,9 @@ Page {
                 anchors{ horizontalCenter: parent.horizontalCenter; top: passwordRow.bottom;
                     topMargin: passwordRow.height/2 }
                 text:"вход"
+                onClicked:{
+                    navigationStack.push(mainUserPageComponent)
+                }
             }
 
             Rectangle{

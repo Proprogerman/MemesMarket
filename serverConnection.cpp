@@ -25,9 +25,9 @@ void ServerConnection::setName(const QString &name){
 
     if(query.size() == 0)
     {
-        emit nameIsCorrect();
         user_name = name;
-        qDebug()<<"имя свободно";
+        emit nameIsCorrect();
+        qDebug()<<"имя "<<user_name<< " свободно";
     }
     else{
         emit nameIsExist();
@@ -53,15 +53,24 @@ void ServerConnection::signUp()
     query.exec();
 }
 
-QString ServerConnection::userName(){
+QString ServerConnection::getName(){
     return user_name;
 }
 
-QString ServerConnection::userPassword(){
+QString ServerConnection::getPassword(){
     return user_password;
 }
 
 QString ServerConnection::userToken()
 {
     return user_token;
+}
+
+QObject* ServerConnection::qobject_singleton_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(engine)
+    Q_UNUSED(scriptEngine)
+
+    ServerConnection *connection = new ServerConnection();
+    return connection;
 }

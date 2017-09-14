@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     // use this during development
     // for PUBLISHING, use the entry point below
-    vplay.setMainQmlFileName(QStringLiteral("qml/Main.qml"));
+    vplay.setMainQmlFileName(QStringLiteral("qrc:/qml/Main.qml"));
 
     // use this instead of the above call to avoid deployment of the qml files and compile them into the binary with qt's resource system qrc
     // this is the preferred deployment option for publishing games to the app stores, because then your qml files and js files are protected
@@ -28,7 +28,15 @@ int main(int argc, char *argv[])
     // also see the .pro file for more details
     // vplay.setMainQmlFileName(QStringLiteral("qrc:/qml/Main.qml"));
 
-    qmlRegisterType<ServerConnection>("io.qt.ServerConnection", 1, 0,"ServerConnection");
+//    qmlRegisterType<ServerConnection>("io.qt.ServerConnection", 1, 0,"ServerConnection");
+
+//    qmlRegisterSingletonType(QUrl("qrc:/qml/SingletonConnection.qml"),
+//                             "io.qt.SingletonConnection",1,0,"ServerConnection");
+
+
+    qmlRegisterSingletonType<ServerConnection>("io.qt.SingletonConnection",1,0,"ServerConnection",
+                                               &ServerConnection::qobject_singleton_provider);
+
 
     engine.load(QUrl(vplay.mainQmlFileName()));
 

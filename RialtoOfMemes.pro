@@ -11,7 +11,7 @@ DEPLOYMENTFOLDERS += assetsFolder
 
 # Add more folders to ship with the application here
 
-RESOURCES += \ #    resources.qrc # uncomment for publishing
+RESOURCES += /    #resources.qrc   # uncomment for publishing
     assets/qrc.qrc
 
 # NOTE: for PUBLISHING, perform the following steps:
@@ -47,8 +47,8 @@ macx {
     ICON = macx/app_icon.icns
 }
 
-DISTFILES += \
-    qml/MainUserPage.qml
+#DISTFILES += \
+#    qml/MainUserPage.qml
 
 HEADERS += \
     serverConnection.h

@@ -2,28 +2,24 @@ import VPlayApps 1.0
 import QtQuick 2.0
 import QtGraphicalEffects 1.0
 
-import io.qt.ServerConnection 1.0
+import io.qt.SingletonConnection 1.0
 
 Page{
     id:newSignInPage
-
     ServerConnection{
     id: serverConnection
-        onNameIsExist:{
-            nameOfGroup.state = "nameIsExistState"
-            nameOfGroup.color = "#F8BBD0"
-        }
+        onNameIsExist:{ nameOfGroup.state = "nameIsExistState" }
         onNameIsCorrect:{
             nameOfGroup.state = "nameIsValidState"
-            nameOfGroup.color = "#507299"
+            console.log(serverConnection.user_name," NAME")
+            nameFromReg = serverConnection.user_name
         }
     }
-
 
     property string indicateMessage
 
     function signUpButtonCheck(){
-        if(nameOfGroup.color == "#507299" && password.color == "#507299")
+        if(nameOfGroup.state == "nameIsValidState" && password.state == "passwordIsOkState")
             signUpButton.visible = true
         else
             signUpButton.visible = false
@@ -74,19 +70,25 @@ Page{
                 State{
                     name:"nameInputState"
                     PropertyChanges{ target: indicateMessage;  text:"Придумайте название группы" }
-                    PropertyChanges{ target: indicateImage; source:"../assets/mem_hmm.png"}
+                    PropertyChanges{ target: indicateImage; source:"../../assets/mem_hmm.png"}
                 },
                 State{
                     name:"nameIsValidState"
                     PropertyChanges{ target: indicateMessage; text:"Название доступно" }
-                    PropertyChanges{ target: indicateImage; source:"../assets/okMeme.png" }
+                    PropertyChanges{ target: indicateImage; source:"../../assets/okMeme.png" }
+                    PropertyChanges{ target: nameOfGroup; color:"#507299" }
                 },
                 State{
                     name:"nameIsExistState"
                     PropertyChanges{ target: indicateMessage; text: "Имя занято, придумайте другое" }
-                    PropertyChanges{ target: indicateImage; source:"../assets/noMeme.png" }
+                    PropertyChanges{ target: indicateImage; source:"../../assets/noMeme.png" }
+                    PropertyChanges{ target: nameOfGroup; color:"#F8BBD0" }
                 }
             ]
+
+            property string currentNameState: "nameInputState"
+
+            onStateChanged:{ currentNameState = password.state }
 
             AppTextField{
                 id: nameInputRow
@@ -100,14 +102,28 @@ Page{
                 validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
                 backgroundColor: "#ffffff"
 
+                Timer{
+                    id: submitTimer
+                    interval: 3000
+                    running: false
+                    repeat: false
+                    onTriggered:{
+                        if(nameInputRow.getText(0,nameInputRow.length) != '')
+                            serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
+                        signUpButtonCheck()
+                    }
+                }
+
                 onActiveFocusChanged: {
-                    if(activeFocus == true)
+                    if(activeFocus == true){
                         backgroundColor = "lightgrey"
+                        nameOfGroup.state = nameOfGroup.currentNameState
+                    }
                     else
                         backgroundColor = "#ffffff"
-                    if(getText(0,length) != '' && activeFocus == false)
-                        serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
-                    signUpButtonCheck()
+                }
+                onTextChanged:{
+                    submitTimer.start()
                 }
             }
         }
@@ -121,16 +137,29 @@ Page{
 
             states:[
                 State{
-                    name:"passwordHasFewerCharsState"
-                    PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
-                    PropertyChanges{ target: indicateImage; source:"../assets/noMeme.png" }
+                  name:"passwordInputState"
+                  PropertyChanges{ target: indicateMessage; text: "Придумайте пароль" }
+                  PropertyChanges{ target: indicateImage; source: "../../assets/mem_hmm.png" }
                 },
+
                 State{
                     name:"passwordIsOkState"
                     PropertyChanges{ target: indicateMessage; text: "Пароль удовлетворяет требованиям" }
-                    PropertyChanges{ target: indicateImage; source:"../assets/okMeme.png" }
+                    PropertyChanges{ target: indicateImage; source:"../../assets/okMeme.png" }
+                    PropertyChanges{ target: password; color:"#507299" }
+                },
+
+                State{
+                    name:"passwordHasFewerCharsState"
+                    PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
+                    PropertyChanges{ target: indicateImage; source:"../../assets/noMeme.png" }
+                    PropertyChanges{ target: password; color:"#F8BBD0" }
                 }
             ]
+
+            property string currentPasswordState: "passwordInputState"
+
+            onStateChanged:{ currentPasswordState = password.state }
 
             AppTextField{
                 id: passwordInputRow
@@ -146,8 +175,10 @@ Page{
                 echoMode: TextInput.Password
 
                 onActiveFocusChanged: {
-                    if(activeFocus == true)
+                    if(activeFocus == true){
+                        password.state = password.currentPasswordState
                         backgroundColor = "lightgrey"
+                    }
                     else
                         backgroundColor = "#ffffff"
                 }
@@ -205,6 +236,7 @@ Page{
                 serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
                 serverConnection.user_password = passwordInputRow.getText(0, passwordInputRow.length)
                 serverConnection.signUp()
+                stackView.push(mainUserPage)
             }
         }
     }

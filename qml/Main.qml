@@ -1,9 +1,10 @@
 import VPlayApps 1.0
 import QtQuick 2.0
+import QtQuick.Controls 1.4
 
+import "pages"
 
 App {
-
     // You get free licenseKeys from https://v-play.net/licenseKey
     // With a licenseKey you can:
     //  * Publish your games & apps for the app stores
@@ -20,6 +21,21 @@ App {
 
 //    Loader{id:pageLoader}
 //    Component.onCompleted: pageLoader.source="SignInPage.qml"
-    NewSignInPage{}
+//    NewSignInPage{}
 
+    StackView{
+        id:stackView
+        anchors.fill: parent
+        initialItem: mainUserPage
+
+        Component{
+            id: newSignInPage
+            NewSignInPage{}
+        }
+
+        Component{
+            id: mainUserPage
+            MainUserPage{}
+        }
+    }
 }
