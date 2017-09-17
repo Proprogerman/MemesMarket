@@ -26,7 +26,7 @@ App {
     StackView{
         id:stackView
         anchors.fill: parent
-        initialItem: mainUserPage
+        initialItem: newSignInPage
 
         Component{
             id: newSignInPage

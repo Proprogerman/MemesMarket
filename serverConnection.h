@@ -30,7 +30,8 @@ public:
     QString getPassword();
     QString userToken();
 
-    static QObject *qobject_singleton_provider(QQmlEngine *engine, QJSEngine *scriptEngine);
+    static QObject* qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine);
+
 private:
     QSqlDatabase database;
 

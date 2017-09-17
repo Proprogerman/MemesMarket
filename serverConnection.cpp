@@ -66,11 +66,11 @@ QString ServerConnection::userToken()
     return user_token;
 }
 
-QObject* ServerConnection::qobject_singleton_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+QObject* ServerConnection::qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
     Q_UNUSED(engine)
     Q_UNUSED(scriptEngine)
 
-    ServerConnection *connection = new ServerConnection();
-    return connection;
+    return new ServerConnection;
 }
+

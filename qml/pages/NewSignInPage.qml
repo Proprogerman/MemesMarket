@@ -4,16 +4,14 @@ import QtGraphicalEffects 1.0
 
 import io.qt.SingletonConnection 1.0
 
+
 Page{
     id:newSignInPage
-    ServerConnection{
-    id: serverConnection
-        onNameIsExist:{ nameOfGroup.state = "nameIsExistState" }
-        onNameIsCorrect:{
-            nameOfGroup.state = "nameIsValidState"
-            console.log(serverConnection.user_name," NAME")
-            nameFromReg = serverConnection.user_name
-        }
+
+    Connections{
+        target:ServerConnection
+        onNameIsExist: { nameOfGroup.state = "nameIsExistState" }
+        onNameIsCorrect: { nameOfGroup.state = "nameIsValidState" }
     }
 
     property string indicateMessage
@@ -109,7 +107,7 @@ Page{
                     repeat: false
                     onTriggered:{
                         if(nameInputRow.getText(0,nameInputRow.length) != '')
-                            serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
+                            ServerConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
                         signUpButtonCheck()
                     }
                 }
@@ -233,9 +231,9 @@ Page{
             visible: false
 
             onClicked:{
-                serverConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
-                serverConnection.user_password = passwordInputRow.getText(0, passwordInputRow.length)
-                serverConnection.signUp()
+                ServerConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
+                ServerConnection.user_password = passwordInputRow.getText(0, passwordInputRow.length)
+                ServerConnection.signUp()
                 stackView.push(mainUserPage)
             }
         }
