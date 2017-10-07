@@ -4,35 +4,59 @@ import QtGraphicalEffects 1.0
 
 import io.qt.SingletonConnection 1.0
 
+//import "../elements"
+
 Page {
     id:mainUserPage
 
     Rectangle{
         id:background
         anchors.fill: parent
-        z: 0
+        z: -2
         color:"#edeef0"
+    }
+
+    Rectangle{
+        id: staticLine
+        width: parent.width
+        height: parent.height * 1/10
+        anchors.top: parent.top
+        color: header.color
+        z: 4
+
+        Text{
+            id: groupName
+            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.top;
+                topMargin: height/4 }
+            text: ServerConnection.user_name
+            font.pointSize: parent.height * 1/8
+        }
+    }
+
+    DropShadow{
+        anchors.fill: staticLine
+        //verticalOffset: staticLine.height * 1/5
+        radius: 20
+        samples: 17
+        color:"#80000000"
+        source: staticLine
+        opacity: 0.5
+        spread: 0.5
+        z: 3
     }
 
     Rectangle{
         id:header
         width:parent.width
-        height:(parent.height * 1/3)
+        height:(parent.height * 1/5)
+        anchors.top: staticLine.bottom
         z:2
         color:"#507299"
-
-        Text{
-            id: groupName
-            anchors{ horizontalCenter: header.horizontalCenter; top: header.top;
-                topMargin: height/4 }
-            text: ServerConnection.user_name
-            font.pointSize: moneyInd.height * 1/4
-        }
 
         Image {
             id: avatar
             visible:false
-            width: (header.width * 0.4)
+            width: (header.width * 1/3)
             height: width
             anchors.horizontalCenter: header.horizontalCenter
             anchors.verticalCenter: header.bottom
@@ -48,10 +72,19 @@ Page {
             }
         }
 
+//        Rectangle{
+//            id: sortButtons
+//            anchors{left: header.left; right: header.right;
+//                top: header.bottom}
+//            height: avatar.height * 1/2
+//            color: "#83A5CC"
+//            z: -1
+//        }
+
         /////////////////////////////////////////////////////////////////////////
         Rectangle{
             id: moneyInd
-            width: (header.height * 1/3)
+            width: (avatar.height * 1/2)
             height: width
             anchors.verticalCenter: header.verticalCenter
             x: (header.width*3/4 - width*1/2)
@@ -61,13 +94,14 @@ Page {
         ////////////////////////////////////////////////////////////////////////
         Rectangle{
             id:creativeInd
-            width: (header.height * 1/3)
+            width: (avatar.height * 1/2)
             height: width
             anchors.verticalCenter: header.verticalCenter
             x: (header.width*1/4 - width*1/2)
             color:"lime"
             radius: width
         }
+
     }
 
     AppListView {
@@ -86,7 +120,6 @@ Page {
         Component.onCompleted: {
             console.log(getScrollPosition())
         }
-        z: 1
         model:ListModel{
             ListElement{
                 memeImage:"../../assets/catMeme.jpg"
@@ -127,7 +160,7 @@ Page {
         }
         delegate: Rectangle{
             width: header.width
-            height: header.height * 2/3
+            height: header.height
             //rotation:180
             color:"white"
             Image{

@@ -1,17 +1,18 @@
 #ifndef SERVERCONNECTION_H
 #define SERVERCONNECTION_H
 
-#include<QSqlDatabase>
-#include<QSqlQuery>
-#include<QSqlError>
-#include<QSqlRecord>
-#include<QString>
-#include<QObject>
+#include <QString>
+#include <QObject>
 
-#include<QQmlEngine>
-#include<QJSEngine>
+#include <QQmlEngine>
+#include <QJSEngine>
 
-#include<QDebug>
+#include <QDebug>
+
+#include <QTcpSocket>
+
+#include <QJsonObject>
+#include <QJsonDocument>
 
 class ServerConnection: public QObject
 {
@@ -21,7 +22,8 @@ class ServerConnection: public QObject
     //Q_PROPERTY(QString user_token READ userToken WRITE setToken)
 public:
     explicit ServerConnection(QObject *parent = 0);
-
+    Q_INVOKABLE
+    void checkName(const QString &name);
     void setName(const QString &name);
     void setPassword(const QString &password);
     //void setToken(const QString &token);
@@ -30,20 +32,26 @@ public:
     QString getPassword();
     QString userToken();
 
+    void processingResponse(QJsonObject &jsonObj);
+
     static QObject* qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine);
 
 private:
-    QSqlDatabase database;
 
     QString user_name;
     QString user_password;
     QString user_token;
-public slots:
-    void signUp();
-    //bool checkName(const QString &name);
+
+    QTcpSocket* clientSocket;
 signals:
     void nameIsExist();
     void nameIsCorrect();
+public slots:
+    void signUp();
+    void onReadyRead();
+    void onDisconnected();
+    //bool checkName(const QString &name);
+
 };
 
 

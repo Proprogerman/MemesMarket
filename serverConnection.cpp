@@ -3,36 +3,31 @@
 ServerConnection::ServerConnection(QObject *parent):
     QObject(parent)
 {
-    database = QSqlDatabase::addDatabase("QMYSQL");
-    database.setHostName("127.0.0.1");
-    database.setDatabaseName("appschema");
-    database.setPort(3306);
-    database.setUserName("root");
-    database.setPassword("root");
-    if(!database.open())
-        qDebug()<<"database is not open!";
-    else
-        qDebug()<<"database is open...";
+    qDebug()<<"ServerConnection constructor";
+    clientSocket = new QTcpSocket();
+
+    connect(clientSocket, &QTcpSocket::readyRead, this, &ServerConnection::onReadyRead);
+    connect(clientSocket, &QTcpSocket::disconnected, this, &ServerConnection::onDisconnected);
 }
 
+void ServerConnection::checkName(const QString &name){
+    //clientSocket = new QTcpSocket(this);
+    clientSocket->connectToHost("127.0.0.1", 1234);
+
+    if(clientSocket->waitForConnected(3000)){
+        QJsonObject jsonObj
+        {
+            {"requestType", "checkName"},
+            {"user_name",   name}
+        };
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->waitForBytesWritten(3000);
+    }
+
+}
 
 void ServerConnection::setName(const QString &name){
-    QSqlQuery query(database);
-    query.prepare("SELECT * FROM users WHERE name = :name;");
-    query.bindValue(":name", name);
-
-    query.exec();
-
-    if(query.size() == 0)
-    {
-        user_name = name;
-        emit nameIsCorrect();
-        qDebug()<<"имя "<<user_name<< " свободно";
-    }
-    else{
-        emit nameIsExist();
-        qDebug()<<"имя занято!";
-    }
+    user_name = name;
 }
 
 void ServerConnection::setPassword(const QString &password){
@@ -46,11 +41,37 @@ void ServerConnection::setPassword(const QString &password){
 
 void ServerConnection::signUp()
 {
-    QSqlQuery query(database);
-    query.prepare("INSERT INTO users (name, password) VALUES(:name, :password);");
-    query.bindValue(":name", user_name);
-    query.bindValue(":password", user_password);
-    query.exec();
+    clientSocket = new QTcpSocket(this);
+    clientSocket->connectToHost("127.0.0.1", 1234);
+
+    if(clientSocket->waitForConnected(3000)){
+
+        QJsonObject jsonObj {
+                                {"requestType", "signUp"},
+                                {"user_name", user_name},
+                                {"user_password", user_password}
+                            };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->waitForBytesWritten(3000);
+    }
+}
+
+void ServerConnection::onReadyRead()
+{
+    qDebug()<<"onReadyRead()";
+    QByteArray byteArr = clientSocket->readAll();
+    QJsonObject jsonObj = QJsonDocument::fromBinaryData(byteArr).object();
+
+    processingResponse(jsonObj);
+
+}
+
+void ServerConnection::onDisconnected()
+{
+    qDebug()<<"onDisconnected()";
+    clientSocket->close();
+    clientSocket->deleteLater();
 }
 
 QString ServerConnection::getName(){
@@ -64,6 +85,26 @@ QString ServerConnection::getPassword(){
 QString ServerConnection::userToken()
 {
     return user_token;
+}
+
+void ServerConnection::processingResponse(QJsonObject &jsonObj)
+{
+//    switch(jsonObj["responseType"]){
+//        case "checkNameResponse":
+//        {
+    if(jsonObj["responseType"] == "checkNameResponse"){
+            qDebug()<<"responseType == checkNameResponse";
+            if(jsonObj["nameAvailability"] == true){
+                qDebug()<<"emit nameIsCorrect();";
+                emit nameIsCorrect();
+            }
+            else if(jsonObj["nameAvailability"] == false){
+                qDebug()<<"emit nameIsExist();";
+                emit nameIsExist();
+            }
+        }
+        //обработка других ответов от сервера
+//    }
 }
 
 QObject* ServerConnection::qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine)

@@ -26,11 +26,11 @@ App {
     StackView{
         id:stackView
         anchors.fill: parent
-        initialItem: newSignInPage
+        initialItem: signInPage
 
         Component{
-            id: newSignInPage
-            NewSignInPage{}
+            id: signInPage
+            SignInPage{}
         }
 
         Component{

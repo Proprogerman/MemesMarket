@@ -47,8 +47,8 @@ macx {
     ICON = macx/app_icon.icns
 }
 
-#DISTFILES += \
-#    qml/MainUserPage.qml
-
 HEADERS += \
     serverConnection.h
+
+DISTFILES += \
+    qml/pages/MemesPage.qml
