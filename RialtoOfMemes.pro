@@ -51,4 +51,7 @@ HEADERS += \
     serverConnection.h
 
 DISTFILES += \
-    qml/pages/MemesPage.qml
+    qml/pages/MemesPage.qml \
+    qml/elements/PopGraphElement.qml \
+    qml/elements/qmldir \
+    qml/elements/SlidingMenu.qml

@@ -37,5 +37,10 @@ App {
             id: mainUserPage
             MainUserPage{}
         }
+
+        Component{
+            id: memesPage
+            MemesPage{}
+        }
     }
 }

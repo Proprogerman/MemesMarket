@@ -8,6 +8,11 @@ import io.qt.SingletonConnection 1.0
 Page{
     id:signInPage
 
+    property color mainColor: "#507299"
+    property color backColor: "#78909C"
+    property color dataColor: "#CFD8DC"
+    property color errColor: "#F8BBD0"
+
     Connections{
         target:ServerConnection
         onNameIsExist: { nameOfGroup.state = indicateZone.state = "nameIsExistState" }
@@ -26,7 +31,7 @@ Page{
     Rectangle{
         id: background
         anchors.fill: parent
-        color:"#78909C"
+        color: backColor
         z: -2
     }
     Item{
@@ -109,7 +114,7 @@ Page{
         id: dataSheet
         width: background.width; height: background.height * 2/3
         anchors.bottom: background.bottom
-        color:"#CFD8DC"
+        color: dataColor
 
         Rectangle{
             id: nameOfGroup
@@ -120,11 +125,11 @@ Page{
             states:[
                 State{
                     name: "nameIsValidState"
-                    PropertyChanges{ target: nameOfGroup; color:"#507299" }
+                    PropertyChanges{ target: nameOfGroup; color: mainColor }
                 },
                 State{
                     name: "nameIsExistState"
-                    PropertyChanges{ target: nameOfGroup; color:"#F8BBD0" }
+                    PropertyChanges{ target: nameOfGroup; color: errColor }
                 }
             ]
 
@@ -178,11 +183,11 @@ Page{
             states:[
                 State{
                     name:"passwordIsOkState"
-                    PropertyChanges{ target: password; color:"#507299" }
+                    PropertyChanges{ target: password; color: mainColor }
                 },
                 State{
                     name: "passwordHasFewerCharsState"
-                    PropertyChanges{ target:password; color:"#F8BBD0" }
+                    PropertyChanges{ target:password; color: errColor }
                 }
             ]
 
@@ -211,11 +216,11 @@ Page{
                 }
                 onTextChanged:{
                     if(length < 6){
-                        password.color = "#F8BBD0"
+                        password.color = errColor
                         password.state = indicateZone.state = "passwordHasFewerCharsState"
                     }
                     else{
-                        password.color = "#507299"
+                        password.color = mainColor
                         password.state = indicateZone.state = "passwordIsOkState"
                     }
                     signUpButtonCheck()
