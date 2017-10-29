@@ -4,7 +4,7 @@ import QtGraphicalEffects 1.0
 
 import io.qt.SingletonConnection 1.0
 
-import ""
+import "qrc:/qml/pages"
 
 Page{
     id:signInPage

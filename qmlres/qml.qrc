@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/qml/elements">
+        <file>MemeListDelegate.qml</file>
+        <file>PopGraphElement.qml</file>
+        <file>RippleEffect.qml</file>
+        <file>SlidingMenu.qml</file>
+    </qresource>
+    <qresource prefix="/qml/pages">
+        <file>MainUserPage.qml</file>
+        <file>MemesPage.qml</file>
+        <file>SignInPage.qml</file>
+    </qresource>
+    <qresource prefix="/qml">
+        <file>main.qml</file>
+    </qresource>
+</RCC>

@@ -3,8 +3,7 @@ import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 import QtCharts 2.2
 
-import "../elements"
-
+import "qrc:/qml/elements"
 
 Page{
 
@@ -60,8 +59,7 @@ Page{
             width: parent.height
             height: width
             anchors.horizontalCenter: parent.horizontalCenter
-            //source: "qrc:///fmemePhoto/respectMeme.jpg"
-            source: "qrc:///memePhoto/respectMeme.jpg"
+            source: "qrc:/memePhoto/respectMeme.jpg"
         }
     }
 

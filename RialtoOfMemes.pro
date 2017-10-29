@@ -1,18 +1,19 @@
 # allows to add DEPLOYMENTFOLDERS and links to the V-Play library and QtCreator auto-completion
-CONFIG += v-play
+QT += network sql charts qml
 
-QT += network sql
+#qmlFolder.source = qml
 
-qmlFolder.source = qml
-DEPLOYMENTFOLDERS += qmlFolder # comment for publishing
+#DEPLOYMENTFOLDERS += qmlFolder # comment for publishing
 
-assetsFolder.source = assets
-DEPLOYMENTFOLDERS += assetsFolder
+#assetsFolder.source = assets
+#DEPLOYMENTFOLDERS += assetsFolder
 
 # Add more folders to ship with the application here
 
-RESOURCES += \ #    resources.qrc # uncomment for publishing
-    assets/qrc.qrc
+RESOURCES += \
+    assets/qrc.qrc \
+    qmlres/qml.qrc
+
 
 # NOTE: for PUBLISHING, perform the following steps:
 # 1. comment the DEPLOYMENTFOLDERS += qmlFolder line above, to avoid shipping your qml files with the application (instead they get compiled to the app binary)
@@ -50,8 +51,15 @@ macx {
 HEADERS += \
     serverConnection.h
 
-DISTFILES += \
-    qml/pages/MemesPage.qml \
-    qml/elements/PopGraphElement.qml \
-    qml/elements/qmldir \
-    qml/elements/SlidingMenu.qml
+#OTHER_FILES += \
+#    qml/main.qml \
+#    qml/pages/MemesPage.qml \
+#    qml/pages/SignInPage.qml \
+#    qml/pages/MainUserPage.qml \
+#    qml/elements/PopGraphElement.qml \
+#    qml/elements/SlidingMenu.qml \
+#    qml/elements/RippleEffect.qml
+
+#    qml/* \
+#    qml/elements/* \
+#    qml/pages/*
