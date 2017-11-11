@@ -3,6 +3,7 @@
         <file>mask.png</file>
         <file>sexyPhoto.jpg</file>
         <file>background.jpg</file>
+        <file>heart.png</file>
     </qresource>
     <qresource prefix="/memePhoto">
         <file>catMeme.jpg</file>

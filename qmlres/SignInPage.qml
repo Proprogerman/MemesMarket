@@ -1,5 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 2.2
+import QtQuick.Controls.Styles 1.4
+//import QtQuick.Controls.Material 2.2
 import QtGraphicalEffects 1.0
 
 import io.qt.SingletonConnection 1.0
@@ -49,6 +51,7 @@ Page{
             color: "lightgrey"
             font.pixelSize: parent.height * 1/6
             horizontalAlignment: Text.AlignRight
+            wrapMode: Text.WordWrap
         }
         Image{
             id: indicateImage
@@ -61,40 +64,40 @@ Page{
             State{
                 name:"nameInputState"
                 PropertyChanges{ target: indicateMessage;  text: "Придумайте название группы" }
-                PropertyChanges{ target: indicateImage; source: "../../assets/mem_hmm.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
                 PropertyChanges{ target: indicateZone; currentStateKey: "name" }
             },
             State{
                 name:"nameIsValidState"
                 PropertyChanges{ target: indicateMessage; text: "Название доступно" }
-                PropertyChanges{ target: indicateImage; source: "../../assets/okMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
                 PropertyChanges{ target: indicateZone; currentStateKey: "name" }
             },
             State{
                 name:"nameIsExistState"
                 PropertyChanges{ target: indicateMessage; text: "Имя занято, придумайте другое" }
-                PropertyChanges{ target: indicateImage; source: "../../assets/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
                 PropertyChanges{ target: indicateZone; currentStateKey: "name" }
             },
 
             State{
               name:"passwordInputState"
               PropertyChanges{ target: indicateMessage; text: "Придумайте пароль" }
-              PropertyChanges{ target: indicateImage; source: "../../assets/mem_hmm.png" }
+              PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
               PropertyChanges{ target: indicateZone; currentStateKey: "password" }
             },
 
             State{
                 name:"passwordIsOkState"
                 PropertyChanges{ target: indicateMessage; text: "Пароль удовлетворяет требованиям" }
-                PropertyChanges{ target: indicateImage; source: "../../assets/okMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
                 PropertyChanges{ target: indicateZone; currentStateKey: "password" }
             },
 
             State{
                 name:"passwordHasFewerCharsState"
                 PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
-                PropertyChanges{ target: indicateImage; source: "../../assets/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
                 PropertyChanges{ target: indicateZone; currentStateKey: "password" }
             }
         ]
@@ -146,7 +149,13 @@ Page{
                 placeholderText:"Название группы"
                 maximumLength: 16
                 validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
-                //backgroundColor: "#ffffff"
+                property color backgroundColor: "#ffffff"
+
+                background: Rectangle{
+                    anchors.fill: parent
+                    radius: parent.height/2
+                    color: parent.backgroundColor
+                }
 
                 Timer{
                     id: submitTimer
@@ -204,8 +213,14 @@ Page{
                 placeholderText:"Пароль"
                 maximumLength: 16
                 validator: RegExpValidator{regExp:/[a-zA-Z1-9\!\@\#\$\%\^\&\*\(\)\-\_\+\=\;\:\,\.\/\?\\\|\`\~\[\]\{\}]{6,}/}
-                //backgroundColor: "#ffffff"
+                property color backgroundColor: "#ffffff"
                 echoMode: TextInput.Password
+
+                background: Rectangle{
+                    anchors.fill: parent
+                    radius: parent.height/2
+                    color: parent.backgroundColor
+                }
 
                 onActiveFocusChanged: {
                     if(activeFocus == true){
@@ -226,6 +241,12 @@ Page{
                     }
                     signUpButtonCheck()
                 }
+
+//                Rectangle{
+//                    //property alias backgroundColor: color
+//                    anchors.fill: parent
+//                    radius: height/2
+//                }
 
                 Rectangle{
                     id: passwordVis

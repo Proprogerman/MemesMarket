@@ -63,7 +63,7 @@ Page {
             height: width
             anchors.horizontalCenter: userPanel.horizontalCenter
             anchors.verticalCenter: userPanel.verticalCenter
-            source: "../../assets/sexyPhoto.jpg"
+            source: "qrc:/memePhoto/sexyPhoto.jpg"
             //radius: height/2
         }
         OpacityMask{
@@ -171,39 +171,39 @@ Page {
 
         model:ListModel{
             ListElement{
-                memeImageSource:"../../assets/catMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/catMeme.jpg"
                 memeName:"Кошан"
             }
             ListElement{
-                memeImageSource:"../../assets/contiMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/contiMeme.jpg"
                 memeName:"Ну давай, продолжай"
             }
             ListElement{
-                memeImageSource:"../../assets/dryzhMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/dryzhMeme.jpg"
                 memeName:"Дружко"
             }
             ListElement{
-                memeImageSource:"../../assets/exactlyMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/exactlyMeme.jpg"
                 memeName:"Действительно"
             }
             ListElement{
-                memeImageSource:"../../assets/potMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/potMeme.jpg"
                 memeName:"Потный"
             }
             ListElement{
-                memeImageSource:"../../assets/respectMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/respectMeme.jpg"
                 memeName:"Мое уважение"
             }
             ListElement{
-                memeImageSource:"../../assets/shlMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/shlMeme.jpg"
                 memeName:"А ты точно?"
             }
             ListElement{
-                memeImageSource:"../../assets/vzhyhMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/vzhyhMeme.jpg"
                 memeName:"Вжух"
             }
             ListElement{
-                memeImageSource:"../../assets/watchMeme.jpg"
+                memeImageSource:"qrc:/memePhoto/watchMeme.jpg"
                 memeName:"Я слежу за тобой"
             }
         }

@@ -6,11 +6,10 @@ import "qrc:/qml/pages"
 
     ApplicationWindow{
         visible: true
-//        height: 720
-//        width: 405
-//        x: 300 ; y: 50
-        height: 1280
-        width: 720
+        height: 720
+        width: 405
+        x: 300 ; y: 50
+
 
 
     // You get free licenseKeys from https://v-play.net/licenseKey
@@ -26,7 +25,7 @@ import "qrc:/qml/pages"
     StackView{
         id:stackView
         anchors.fill: parent
-        initialItem: signInPage
+        initialItem: memesPage
 
         Component{
             id: signInPage

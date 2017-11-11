@@ -10,7 +10,7 @@ Page{
     property color mainColor: "#507299"
     //property color backColor: "#78909C"
     property color backColor: "#edeef0"
-    //property int spacing: pageHeader.height * 1/4
+    property int itemSpacing: 0//pageHeader.height * 1/4
 
     //backgroundColor: backColor
     Rectangle{
@@ -53,7 +53,7 @@ Page{
         height: parent.width * 1/2
         anchors.top: pageHeader.bottom
         //anchors.topMargin:
-        color: "white"
+        color: backColor//"white"
         Image {
             id: image
             width: parent.height
@@ -68,11 +68,13 @@ Page{
         width: parent.width
         height: parent.height * 3/8
         anchors.top: imageItem.bottom
+        color: backColor
 
         ChartView{
             //title: "Популярность мема:"
             anchors.fill: parent
             antialiasing: true
+            legend.visible: false
 
             LineSeries{
                 XYPoint { x: 0; y: 0 }
@@ -90,7 +92,59 @@ Page{
         id: popManipItem
         anchors{ top: popGraphItem.bottom; bottom: parent.bottom;
             left: parent.left; right: parent.right }
+        color: backColor
 
+        RadioButtons{
+            id: radioButton
+            width: parent.width;
+            height: 100;
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            uncheckedColor: "#ECEFF1"
+            checkedColor: "#607D8B"
+            backgroundColor: backColor
+            spacing: width/70
+        }
+
+        Button{
+            id: button
+            width: 200
+            height: 100
+            anchors{
+                top:radioButton.bottom
+                bottom: parent.bottom
+                left: parent.left
+                right: parent.right
+            }
+    //        color: "#F48FB1"
+            clickable: true
+            radius: height/ 20
+            rippleColor: "#F8BBD0"
+            unclickableColor: "#F48FB1"
+            clickableColor: "#EC407A"
+            label: "Click"
+//            Connections{
+//                target: buttArea
+//            }
+        }
+
+
+    }
+
+    Loader{
+        id: likeActLoader
+        sourceComponent: LikeAct{
+            anchors.fill: parent
+            buttonStartSize: parent.width/5
+            maxTap: 10
+            relaxInterval: 400
+            increase: 0.1
+        }
+
+        anchors{ top: pageHeader.bottom; bottom: background.bottom;
+            left: parent.left; right: parent.right }
+        active: false
+        z: 5
     }
 
     DropShadow{
