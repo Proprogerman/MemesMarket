@@ -25,17 +25,17 @@ import "qrc:/qml/pages"
     StackView{
         id:stackView
         anchors.fill: parent
-        initialItem: memesPage
+        initialItem: signInPage
 
         Component{
             id: signInPage
             SignInPage{}
         }
 
-//        Component{
-//            id: mainUserPage
-//            MainUserPage{}
-//        }
+        Component{
+            id: mainUserPage
+            MainUserPage{}
+        }
 
         Component{
             id: memesPage

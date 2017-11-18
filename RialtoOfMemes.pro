@@ -27,7 +27,8 @@ RESOURCES += \
 
 # The .cpp file which was generated for your project. Feel free to hack it.
 SOURCES += main.cpp \
-    serverConnection.cpp
+    meme.cpp \
+    user.cpp
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
@@ -49,7 +50,8 @@ macx {
 }
 
 HEADERS += \
-    serverConnection.h
+    meme.h \
+    user.h
 
 #OTHER_FILES += \
 #    qml/main.qml \

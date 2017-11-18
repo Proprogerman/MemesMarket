@@ -8,7 +8,7 @@
         <file>RippleButton.qml</file>
         <file>CheckButton.qml</file>
         <file>RadioButtons.qml</file>
-        <file>Button.qml</file>
+        <file>MaterialButton.qml</file>
     </qresource>
     <qresource prefix="/qml/pages">
         <file>MainUserPage.qml</file>

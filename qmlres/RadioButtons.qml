@@ -3,6 +3,7 @@ import QtQuick 2.0
 Item {
     id: control
 
+    property var buttItems: { 'item1': 0, 'item2': 0, 'item3': 0, 'item4': 0 }
     property color uncheckedColor
     property color checkedColor
     property color backgroundColor
@@ -25,6 +26,7 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
+            Component.onCompleted:{ label = buttItems.item1 }
 
             Connections{
                 target: butt1.buttArea
@@ -47,6 +49,7 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
+            Component.onCompleted:{ label = buttItems.item2 }
 
             Connections{
                 target: butt2.buttArea
@@ -69,6 +72,7 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
+            Component.onCompleted:{ label = buttItems.item3 }
 
             Connections{
                 target: butt3.buttArea
@@ -91,6 +95,7 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
+            Component.onCompleted:{ label = buttItems.item4 }
 
             Connections{
                 target: butt4.buttArea

@@ -8,6 +8,7 @@ Item {
     property color uncheckedColor
     property bool checked: false
     property alias buttArea: buttonArea
+    property alias label: buttonLabel.text
 
     Rectangle{
         id: mask
@@ -21,6 +22,15 @@ Item {
         anchors.fill: parent
         visible: false
         color: uncheckedColor
+    }
+
+    Text{
+        id: buttonLabel
+        anchors.centerIn: parent
+        font.pointSize: parent.height/4
+        horizontalAlignment: Text.alignCenter
+        color: "#000000"
+        z: 5
     }
 
     Component{

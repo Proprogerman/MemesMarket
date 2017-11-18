@@ -1,12 +1,12 @@
 import QtQuick 2.0
 import QtQuick.Controls 2.2
-import QtQuick.Controls.Styles 1.4
+//import QtQuick.Controls.Styles 1.4
 //import QtQuick.Controls.Material 2.2
 import QtGraphicalEffects 1.0
 
-import io.qt.SingletonConnection 1.0
+import io.qt.SingletonUser 1.0
 
-import "qrc:/qml/pages"
+import "qrc:/qml/elements"
 
 Page{
     id:signInPage
@@ -17,7 +17,7 @@ Page{
     property color errColor: "#F8BBD0"
 
     Connections{
-        target:ServerConnection
+        target:User
         onNameIsExist: { nameOfGroup.state = indicateZone.state = "nameIsExistState" }
         onNameIsCorrect: { nameOfGroup.state = indicateZone.state = "nameIsValidState" }
     }
@@ -26,9 +26,9 @@ Page{
 
     function signUpButtonCheck(){
         if(nameOfGroup.state == "nameIsValidState" && password.state == "passwordIsOkState")
-            signUpButton.visible = true
+            signUpButton.clickable = true
         else
-            signUpButton.visible = false
+            signUpButton.clickable = false
     }
 
     Rectangle{
@@ -164,7 +164,7 @@ Page{
                     repeat: false
                     onTriggered:{
                         if(nameInputRow.getText(0,nameInputRow.length) != '')
-                            ServerConnection.checkName( nameInputRow.getText(0, nameInputRow.length) )
+                            User.checkName( nameInputRow.getText(0, nameInputRow.length) )
                             signUpButtonCheck()
                         }
                 }
@@ -256,7 +256,7 @@ Page{
 
                     height: parent.height; width: height
                     anchors{right: parent.right; top: parent.top}
-                    radius: passwordInputRow.radius
+                    radius: passwordInputRow.height/2
                     color: inactiveColor
                     Rectangle{
                         height: parent.height; width: height * 1/2
@@ -279,20 +279,28 @@ Page{
                 }
             }
         }
-        Button{
+        MaterialButton{
             id: signUpButton
-            width: passwordInputRow.width; height: password.height
-            anchors{ top: password.bottom; horizontalCenter: parent.horizontalCenter }
-            text:"создать"
-            visible: false
+            width: password.width/1.5; height: password.height/1.5
+            anchors{ top: password.bottom; topMargin: height/20; horizontalCenter: parent.horizontalCenter }
+            label: "создать"
+            radius: height/10
+            clickableColor: mainColor
+            unclickableColor: dataColor
+            rippleColor: Qt.lighter(clickableColor, 1.5)
+            clickable: false
 
-            onClicked:{
-                ServerConnection.user_name = nameInputRow.getText(0, nameInputRow.length)
-                ServerConnection.user_password = passwordInputRow.getText(0, passwordInputRow.length)
+            Connections{
+                target: signUpButton.buttArea
+                onClicked:{
+                    console.log("signUpButton")
+                    User.user_name = nameInputRow.getText(0, nameInputRow.length)
+                    User.user_password = passwordInputRow.getText(0, passwordInputRow.length)
 
-                ServerConnection.signUp()
+                    User.signUp()
 
-                stackView.push(mainUserPage)
+                    stackView.push(mainUserPage)
+                }
             }
         }
     }
@@ -301,7 +309,7 @@ Page{
         horizontalOffset: 0
         verticalOffset: - indicateZone.height * 1/10
         radius: 20
-        samples: 17
+        samples: 41
         color:"#80000000"
         source: dataSheet
         opacity: 0.5

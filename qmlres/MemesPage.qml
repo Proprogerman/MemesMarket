@@ -104,9 +104,20 @@ Page{
             checkedColor: "#607D8B"
             backgroundColor: backColor
             spacing: width/70
+
+            Component.onCompleted:{
+                button.clickable = radioButton.checkedItem != 0 ? true : false
+                radioButton.buttItems.item1 = 100
+                radioButton.buttItems.item2 = 200
+                radioButton.buttItems.item3 = 300
+                radioButton.buttItems.item4 = 400
+            }
+            onCheckedItemChanged:{
+                button.clickable = radioButton.checkedItem != 0 ? true : false
+            }
         }
 
-        Button{
+        MaterialButton{
             id: button
             width: 200
             height: 100
@@ -123,9 +134,11 @@ Page{
             unclickableColor: "#F48FB1"
             clickableColor: "#EC407A"
             label: "Click"
-//            Connections{
-//                target: buttArea
-//            }
+
+            Connections{
+                target: button.buttArea
+                onClicked: { likeActLoader.active = true }
+            }
         }
 
 

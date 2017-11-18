@@ -1,16 +1,16 @@
-#include "serverConnection.h"
+#include "user.h"
 
-ServerConnection::ServerConnection(QObject *parent):
+User::User(QObject *parent):
     QObject(parent)
 {
-    qDebug()<<"ServerConnection constructor";
+    qDebug()<<"User constructor";
     clientSocket = new QTcpSocket();
 
-    connect(clientSocket, &QTcpSocket::readyRead, this, &ServerConnection::onReadyRead);
-    connect(clientSocket, &QTcpSocket::disconnected, this, &ServerConnection::onDisconnected);
+    connect(clientSocket, &QTcpSocket::readyRead, this, &User::onReadyRead);
+    connect(clientSocket, &QTcpSocket::disconnected, this, &User::onDisconnected);
 }
 
-void ServerConnection::checkName(const QString &name){
+void User::checkName(const QString &name){
     //clientSocket = new QTcpSocket(this);
     clientSocket->connectToHost("127.0.0.1", 1234);
 
@@ -26,11 +26,11 @@ void ServerConnection::checkName(const QString &name){
 
 }
 
-void ServerConnection::setName(const QString &name){
+void User::setName(const QString &name){
     user_name = name;
 }
 
-void ServerConnection::setPassword(const QString &password){
+void User::setPassword(const QString &password){
     user_password = password;
 }
 
@@ -39,7 +39,7 @@ void ServerConnection::setPassword(const QString &password){
 //    //загрузка токена из БД!!!!
 //}
 
-void ServerConnection::signUp()
+void User::signUp()
 {
     clientSocket = new QTcpSocket(this);
     clientSocket->connectToHost("127.0.0.1", 1234);
@@ -57,7 +57,7 @@ void ServerConnection::signUp()
     }
 }
 
-void ServerConnection::onReadyRead()
+void User::onReadyRead()
 {
     qDebug()<<"onReadyRead()";
     QByteArray byteArr = clientSocket->readAll();
@@ -67,38 +67,30 @@ void ServerConnection::onReadyRead()
 
 }
 
-void ServerConnection::onDisconnected()
+void User::onDisconnected()
 {
     qDebug()<<"onDisconnected()";
     clientSocket->close();
     clientSocket->deleteLater();
 }
 
-QString ServerConnection::getName(){
+QString User::getName(){
     return user_name;
 }
 
-QString ServerConnection::getPassword(){
+QString User::getPassword(){
     return user_password;
 }
 
-QString ServerConnection::userToken()
+void User::processingResponse(QJsonObject &jsonObj)
 {
-    return user_token;
-}
-
-void ServerConnection::processingResponse(QJsonObject &jsonObj)
-{
-//    switch(jsonObj["responseType"]){
-//        case "checkNameResponse":
-//        {
     if(jsonObj["responseType"] == "checkNameResponse"){
             qDebug()<<"responseType == checkNameResponse";
-            if(jsonObj["nameAvailability"] == true){
+            if(jsonObj["nameAvailable"] == true){
                 qDebug()<<"emit nameIsCorrect();";
                 emit nameIsCorrect();
             }
-            else if(jsonObj["nameAvailability"] == false){
+            else if(jsonObj["nameAvailable"] == false){
                 qDebug()<<"emit nameIsExist();";
                 emit nameIsExist();
             }
@@ -107,11 +99,45 @@ void ServerConnection::processingResponse(QJsonObject &jsonObj)
 //    }
 }
 
-QObject* ServerConnection::qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine)
+QObject* User::qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
     Q_UNUSED(engine)
     Q_UNUSED(scriptEngine)
 
-    return new ServerConnection;
+    return new User;
+}
+
+void User::getMemeList()
+{
+    clientSocket = new QTcpSocket(this);
+    clientSocket->connectToHost("127.0.0.1", 1234);
+
+    if(clientSocket->waitForConnected(3000)){
+
+        QJsonObject jsonObj {
+                                {"requestType", "getMemeList"},
+                                {"user_name", user_name}
+                            };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->waitForBytesWritten(3000);
+    }
+}
+
+void User::getMeme(QString &meme_name)
+{
+    clientSocket = new QTcpSocket(this);
+    clientSocket->connectToHost("127.0.0.1", 1234);
+
+    if(clientSocket->waitForConnected(3000)){
+
+        QJsonObject jsonObj {
+                                {"requestType", "getMeme"},
+                                {"meme_name", meme_name}
+                            };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->waitForBytesWritten(3000);
+    }
 }
 

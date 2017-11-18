@@ -2,9 +2,9 @@ import QtQuick 2.0
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 
-import io.qt.SingletonConnection 1.0
+import io.qt.SingletonUser 1.0
 
-//import "../elements"
+import "qrc:/qml/elements"
 
 Page {
     id:mainUserPage
@@ -58,12 +58,12 @@ Page {
 
         Image {
             id: avatar
-            //visible:false
+            visible:false
             width: (userPanel.width * 1/3)
             height: width
             anchors.horizontalCenter: userPanel.horizontalCenter
             anchors.verticalCenter: userPanel.verticalCenter
-            source: "qrc:/memePhoto/sexyPhoto.jpg"
+            source: "qrc:/photo/sexyPhoto.jpg"
             //radius: height/2
         }
         OpacityMask{

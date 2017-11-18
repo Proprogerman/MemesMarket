@@ -41,8 +41,8 @@ Item {
     DropShadow{
         anchors.fill: button
         source: button
-        //color: "#80000000"
-        color: "#000000"
+        color: "#80000000"
+        //color: "#000000"
         z: button.z - 1
         radius: 8.0
         samples: 17

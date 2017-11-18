@@ -1,4 +1,4 @@
-#include<serverConnection.h>
+#include<user.h>
 
 #include <QApplication>
 
@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
 //                             "io.qt.SingletonConnection",1,0,"ServerConnection");
 
 
-    qmlRegisterSingletonType<ServerConnection>("io.qt.SingletonConnection",1,0,"ServerConnection",
-                                               ServerConnection::qmlInstance);
+    qmlRegisterSingletonType<User>("io.qt.SingletonUser",1,0,"User",
+                                               User::qmlInstance);
 
     engine.load(QUrl("qrc:/qml/main.qml"));
 
