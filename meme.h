@@ -3,22 +3,21 @@
 
 #include <QObject>
 #include <QVector>
+#include <QList>
+#include <QJsonArray>
 
-class Meme : public QObject
+class Meme
 {
-    Q_OBJECT
 public:
-    explicit Meme(QObject *parent = nullptr);
+    Meme();
+    Meme(QString memeName, QVector<int> memeValues, QString memeImagePath);
 
-    //Q_PROPERTY(QString memeName)
-
+    void setName(QString memeName);
+    void setPopValues(QVector<int> memePopValues);
 private:
-    QString memeName;
+    QString name;
     QVector<int> popValues;
-
-signals:
-
-public slots:
+    QString imagePath;
 };
 
 #endif // MEME_H

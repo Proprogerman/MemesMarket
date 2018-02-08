@@ -2,15 +2,167 @@ import QtQuick 2.0
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 
-import io.qt.SingletonUser 1.0
+import KlimeSoft.SingletonUser 1.0
 
 import "qrc:/qml/elements"
 
 Page {
     id:mainUserPage
 
+    property string directionFormat
+
+    function updateMeme(meme_name, image_name, values, direction){
+        if(direction > 0)
+            directionFormat = "+" + direction
+        else
+            directionFormat = direction
+
+        memeListModel.append({"memeName": meme_name, "popValues": values, "courseDirection": directionFormat,
+                                 "imageName": image_name})
+
+        console.log("update Meme: ", image_name, " - ",values)
+    }
+
+    Connections{
+        target: User
+        onMemesRecieved:{
+            updateMeme(memeName, imageName, popValues, courseDir)
+        }
+    }
+
+    Component.onCompleted:{
+        User.getMemeList()
+        getMemeListTimer.start()
+    }
+
+    Timer{
+        id: getMemeListTimer
+        interval: 10000
+        repeat: true
+        onTriggered:{
+            memeListModel.clear()
+            User.getMemeList()
+        }
+    }
+
     property color backColor: "#edeef0"
     property color itemColor: "white"
+
+    SlidingMenu{
+        id: slidingMenu
+        onOpenChanged: {
+            hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
+        }
+        data:[
+            Column{
+                width: parent.width
+                height: parent.height
+                Image{
+                    id: bigAvatar
+                    source: "qrc:/photo/sexyPhoto.jpg"
+                    width: parent.width
+                    height: width
+                    sourceSize.height: height
+                    sourceSize.width: width
+                }
+
+                Rectangle{
+                    id: memesExchange
+                    width: parent.width
+                    height: parent.height / 10
+                    color: "lightgrey"
+                    Text{
+                        text:"Биржа мемов"
+                        font.pixelSize: parent.height / 3
+                        anchors.centerIn: parent
+                    }
+                }
+            }
+
+        ]
+    }
+
+    Item{
+        id: hamburger
+        height: pageHeader.height / 4
+        width: height * 3 / 2
+        anchors{ left: slidingMenu.right; leftMargin: width; verticalCenter: pageHeader.verticalCenter }
+        z: 5
+
+        property int smallBarLength: width / 1.5
+        property int xOffsetBackBars: width / 2
+        property int startBar2Yposition: bar2.y
+
+        Rectangle{
+            id: bar1
+            color:"white"
+            width: parent.width
+            height: parent.height * 1/5
+            anchors.top: parent.top
+            antialiasing: true
+        }
+        Rectangle{
+            id: bar2
+            color:"white"
+            width: parent.width
+            height: parent.height * 1/5
+            anchors.top: bar1.bottom
+            anchors.topMargin: parent.height * 1/5
+            antialiasing: true
+        }
+        Rectangle{
+            id: bar3
+            color:"white"
+            width: parent.width
+            height: parent.height * 1/5
+            anchors.top: bar2.bottom
+            anchors.topMargin: parent.height * 1/5
+            antialiasing: true
+        }
+        state: "menu"
+
+        states:[
+            State{
+                name: "menu"
+            },
+            State{
+                name: "back"
+                PropertyChanges{ target: hamburger; rotation: 180;}
+                PropertyChanges{ target: bar1; rotation: 45; width: hamburger.smallBarLength;
+                    x: hamburger.xOffsetBackBars; y: hamburger.startBar2Yposition - 5}
+                PropertyChanges{ target: bar2}
+                PropertyChanges{ target: bar3; rotation: -45; width: hamburger.smallBarLength;
+                    x: hamburger.xOffsetBackBars; y: hamburger.startBar2Yposition + 5}
+                AnchorChanges{ target: bar1; anchors.top: undefined;}
+                AnchorChanges{ target: bar2; anchors.top: undefined;}
+                AnchorChanges{ target: bar3; anchors.top: undefined;}
+            }
+        ]
+
+        transitions:[
+            Transition{
+                PropertyAnimation{target: hamburger; property:"rotation"; duration: 260; easing.type: Easing.InOutQuad}
+                PropertyAnimation{target: bar1; properties:"rotation, width, x, y"; duration: 260; easing.type:Easing.InOutQuad}
+                PropertyAnimation{target: bar2; properties:"rotation"; duration: 260; easing.type:Easing.InOutQuad}
+                PropertyAnimation{target: bar3; properties:"rotation, width, x, y"; duration: 260; easing.type:Easing.InOutQuad}
+            }
+
+        ]
+
+        MouseArea{
+            anchors.fill: parent
+            onClicked:{
+                if(hamburger.state == "menu"){
+                    hamburger.state = "back"
+                    slidingMenu.show()
+                }
+                else if(hamburger.state == "back"){
+                    hamburger.state = "menu"
+                    slidingMenu.hide()
+                }
+            }
+        }
+    }
 
     Rectangle{
         id:background
@@ -31,7 +183,7 @@ Page {
             id: groupName
             anchors{ horizontalCenter: parent.horizontalCenter; top: parent.top;
                 topMargin: height/4 }
-            text: "King of Memes"//ServerConnection.user_name
+            text: User.user_name
             font.pixelSize: parent.height/2
         }
     }
@@ -169,59 +321,91 @@ Page {
 //            }
 //        }
 
-        model:ListModel{
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/catMeme.jpg"
-                memeName:"Кошан"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/contiMeme.jpg"
-                memeName:"Ну давай, продолжай"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/dryzhMeme.jpg"
-                memeName:"Дружко"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/exactlyMeme.jpg"
-                memeName:"Действительно"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/potMeme.jpg"
-                memeName:"Потный"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/respectMeme.jpg"
-                memeName:"Мое уважение"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/shlMeme.jpg"
-                memeName:"А ты точно?"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/vzhyhMeme.jpg"
-                memeName:"Вжух"
-            }
-            ListElement{
-                memeImageSource:"qrc:/memePhoto/watchMeme.jpg"
-                memeName:"Я слежу за тобой"
-            }
-        }
+        model: memeListModel
+//        model:ListModel{
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/catMeme.jpg"
+//                memeName:"Кошан"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/contiMeme.jpg"
+//                memeName:"Ну давай, продолжай"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/dryzhMeme.jpg"
+//                memeName:"Дружко"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/exactlyMeme.jpg"
+//                memeName:"Действительно"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/potMeme.jpg"
+//                memeName:"Потный"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/respectMeme.jpg"
+//                memeName:"Мое уважение"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/shlMeme.jpg"
+//                memeName:"А ты точно?"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/vzhyhMeme.jpg"
+//                memeName:"Вжух"
+//            }
+//            ListElement{
+//                memeImageSource:"qrc:/memePhoto/watchMeme.jpg"
+//                memeName:"Я слежу за тобой"
+//            }
+//        }
         delegate: Rectangle{
             width: userPanel.width
             height: userPanel.height
+
             //rotation:180
             color: itemColor
             Image{
                 id: memeImage
                 height: parent.height
                 width: height
-                source: memeImageSource
+                //source: memeImageSource
             }
             Text{
                 text: memeName
                 anchors{ left: memeImage.right; top: parent.top }
             }
+            Text{
+                text: courseDirection
+                anchors{ right: parent.right; verticalCenter: parent.verticalCenter }
+
+                property int intCourse
+
+                onTextChanged:{
+                    intCourse = text
+                    if(intCourse > 0)
+                        color = "green"
+                    else if(intCourse < 0)
+                        color = "red"
+                }
+            }
+            Component.onCompleted:{
+                memeImage.source = "image://meme/" + imageName
+                //memeImage.source = "image://meme/exactlyMeme.jpg"
+                //IMAGE PROVIDER
+                console.log("image name:", imageName)
+            }
+
+            MouseArea{
+                anchors.fill: parent
+                onClicked:{
+                    stackView.push({item: memesPage, properties: {img: "qrc:/photo/sexyPhoto.jpg", name: "Lol"}})
+                }
+            }
         }
+    }
+    ListModel{
+        id: memeListModel
     }
 }

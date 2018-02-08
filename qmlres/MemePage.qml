@@ -3,9 +3,18 @@ import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 import QtCharts 2.2
 
+import KlimeSoft.SingletonUser 1.0
+
 import "qrc:/qml/elements"
 
 Page{
+
+    Component.onCompleted:{
+        User.getMeme(name.toString())
+    }
+
+    property alias img: image.source
+    property alias name: memeName.text
 
     property color mainColor: "#507299"
     //property color backColor: "#78909C"
@@ -140,8 +149,6 @@ Page{
                 onClicked: { likeActLoader.active = true }
             }
         }
-
-
     }
 
     Loader{

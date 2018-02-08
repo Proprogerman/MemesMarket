@@ -1,5 +1,5 @@
 # allows to add DEPLOYMENTFOLDERS and links to the V-Play library and QtCreator auto-completion
-QT += network sql charts qml
+QT += network sql charts qml quick
 
 #qmlFolder.source = qml
 
@@ -27,8 +27,9 @@ RESOURCES += \
 
 # The .cpp file which was generated for your project. Feel free to hack it.
 SOURCES += main.cpp \
+    user.cpp \
     meme.cpp \
-    user.cpp
+    imageprovider.cpp
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
@@ -50,8 +51,9 @@ macx {
 }
 
 HEADERS += \
+    user.h \
     meme.h \
-    user.h
+    imageprovider.h
 
 #OTHER_FILES += \
 #    qml/main.qml \

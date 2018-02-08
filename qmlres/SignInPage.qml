@@ -4,7 +4,7 @@ import QtQuick.Controls 2.2
 //import QtQuick.Controls.Material 2.2
 import QtGraphicalEffects 1.0
 
-import io.qt.SingletonUser 1.0
+import KlimeSoft.SingletonUser 1.0
 
 import "qrc:/qml/elements"
 
@@ -298,6 +298,8 @@ Page{
                     User.user_password = passwordInputRow.getText(0, passwordInputRow.length)
 
                     User.signUp()
+
+                    User.getMemeList()
 
                     stackView.push(mainUserPage)
                 }

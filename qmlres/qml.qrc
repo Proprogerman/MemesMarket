@@ -12,7 +12,7 @@
     </qresource>
     <qresource prefix="/qml/pages">
         <file>MainUserPage.qml</file>
-        <file>MemesPage.qml</file>
+        <file>MemePage.qml</file>
         <file>SignInPage.qml</file>
     </qresource>
     <qresource prefix="/qml">

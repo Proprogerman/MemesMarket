@@ -4,6 +4,8 @@
 
 #include <QQmlApplicationEngine>
 
+#include "imageprovider.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -35,10 +37,11 @@ int main(int argc, char *argv[])
 //                             "io.qt.SingletonConnection",1,0,"ServerConnection");
 
 
-    qmlRegisterSingletonType<User>("io.qt.SingletonUser",1,0,"User",
-                                               User::qmlInstance);
+    qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser",1,0,"User", User::qmlInstance);
 
     engine.load(QUrl("qrc:/qml/main.qml"));
+
+    engine.addImageProvider("meme", new ImageProvider());
 
     return app.exec();
 }

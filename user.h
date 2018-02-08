@@ -14,10 +14,14 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+#include <QVector>
+
+#include "meme.h"
+
 class User: public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString user_name READ getName WRITE setName)
+    Q_PROPERTY(QString user_name READ getName WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QString user_password READ getPassword WRITE setPassword)
 public:
     explicit User(QObject *parent = 0);
@@ -27,6 +31,7 @@ public:
 
     void setName(const QString &name);
     void setPassword(const QString &password);
+    void setMemes(QVariantList memeList);
 
     void processingResponse(QJsonObject &jsonObj);
 
@@ -43,14 +48,19 @@ private:
     QString user_name;
     QString user_password;
 
+    QVector<Meme> memes;
+
     QTcpSocket* clientSocket;
 signals:
     void nameIsExist();
     void nameIsCorrect();
+
+    void nameChanged();
+
+    void memesRecieved(QString memeName, QString imageName, QVector<int> popValues, int courseDir);
 public slots:
     void onReadyRead();
     void onDisconnected();
-
 };
 
 
