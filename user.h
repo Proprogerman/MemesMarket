@@ -31,7 +31,9 @@ public:
 
     void setName(const QString &name);
     void setPassword(const QString &password);
-    void setMemes(QVariantList memeList);
+    void setMemesOfUser(const QVariantList &memeList);
+    void setUpdatedDataForMemeOfUser(const QJsonObject);
+    void setMemesWithCategory(const QVariantList &memeList, const QString &category);
 
     void processingResponse(QJsonObject &jsonObj);
 
@@ -39,9 +41,13 @@ public:
 
     Q_INVOKABLE void checkName(const QString &name);
     Q_INVOKABLE void signUp();
-    Q_INVOKABLE void getMemeList();
-    Q_INVOKABLE void getMeme(QString &meme_name);
+    Q_INVOKABLE void getMemeListOfUser();
+    Q_INVOKABLE void setExistingMemeListWithCategory(const QString &category);
+    Q_INVOKABLE void getMemeListWithCategory(const QString &category);
+    Q_INVOKABLE void getMemeDataForUser(const QString &memeName);
+    Q_INVOKABLE void getMemesCategories();
 
+    Q_INVOKABLE bool memesWithCategoryIsEmpty(const QString &category);
 
 private:
 
@@ -49,6 +55,8 @@ private:
     QString user_password;
 
     QVector<Meme> memes;
+    QVariantList categories;
+    QMap<QString, QVector<Meme>> memesWithCategory;
 
     QTcpSocket* clientSocket;
 signals:
@@ -57,7 +65,11 @@ signals:
 
     void nameChanged();
 
-    void memesRecieved(QString memeName, QString imageName, QVector<int> popValues, int courseDir);
+    void memeForUserReceived(QString memeName, QString imageName, QVector<int> popValues, int startPopValue);
+    void memeWithCategoryReceived(QString memeName, QString imageName, QVector<int> popValues, QString category);
+    void memePopValuesForUserUpdated(QString memeName, QVector<int> popValues, int startPopValue);
+    void memePopValuesWithCategoryUpdated(QString memeName, QVector<int> popValues, QString category);
+    void memesCategoriesReceived(QVariantList memesCategories);
 public slots:
     void onReadyRead();
     void onDisconnected();

@@ -10,6 +10,34 @@ Item {
     property int checkedItem
     property alias spacing: radioButtons.spacing
 
+    function setButtonActive(button){
+        if(button === butt1){
+            if(radioButtons.state !== "butt1Checked"){
+                radioButtons.state = "butt1Checked"
+            }
+            else
+                radioButtons.state = "unchecked"
+        }
+        else if(button === butt2){
+            if(radioButtons.state !== "butt2Checked")
+                radioButtons.state = "butt2Checked"
+            else
+                radioButtons.state = "unchecked"
+        }
+        else if(button === butt3){
+            if(radioButtons.state !== "butt3Checked")
+                radioButtons.state = "butt3Checked"
+            else
+                radioButtons.state = "unchecked"
+        }
+        else if(button === butt4){
+            if(radioButtons.state !== "butt4Checked")
+                radioButtons.state = "butt4Checked"
+            else
+                radioButtons.state = "unchecked"
+        }
+    }
+
     Rectangle{
         id: background
         color: backgroundColor
@@ -30,15 +58,8 @@ Item {
 
             Connections{
                 target: butt1.buttArea
-                onClicked:{
-                    if(butt1.checked){
-                        radioButtons.state = "butt1Checked"
-                        butt2.checked = false
-                        butt3.checked = false
-                        butt4.checked = false
-                    }
-                    else
-                        radioButtons.state = "unchecked"
+                onReleased:{
+                    setButtonActive(butt1)
                     console.log("checkedItem: ", checkedItem)
                 }
             }
@@ -53,15 +74,9 @@ Item {
 
             Connections{
                 target: butt2.buttArea
-                onClicked:{
-                    if(butt2.checked){
-                        radioButtons.state = "butt2Checked"
-                        butt1.checked = false
-                        butt3.checked = false
-                        butt4.checked = false
-                    }
-                    else
-                        radioButtons.state = "unchecked"
+                onReleased:{
+//                    butt2.checked = butt2.checked ? false : true
+                    setButtonActive(butt2)
                     console.log("checkedItem: ", checkedItem)
                 }
             }
@@ -76,15 +91,9 @@ Item {
 
             Connections{
                 target: butt3.buttArea
-                onClicked:{
-                    if(butt3.checked){
-                        radioButtons.state = "butt3Checked"
-                        butt1.checked = false
-                        butt2.checked = false
-                        butt4.checked = false
-                    }
-                    else
-                        radioButtons.state = "unchecked"
+                onReleased:{
+//                    butt3.checked = butt3.checked ? false : true
+                    setButtonActive(butt3)
                     console.log("checkedItem: ", checkedItem)
                 }
             }
@@ -99,15 +108,9 @@ Item {
 
             Connections{
                 target: butt4.buttArea
-                onClicked:{
-                    if(butt4.checked){
-                        radioButtons.state = "butt4Checked"
-                        butt1.checked = false
-                        butt2.checked = false
-                        butt3.checked = false
-                    }
-                    else
-                        radioButtons.state = "unchecked"
+                onReleased:{
+//                    butt4.checked = butt4.checked ? false : true
+                    setButtonActive(butt4)
                     console.log("checkedItem: ", checkedItem)
                 }
             }
@@ -115,27 +118,46 @@ Item {
 
         states:[
             State{
-                name: "unchecked"
+                name: "unchecked" 
                 PropertyChanges{ target: control; checkedItem: 0}
+                PropertyChanges{ target: butt1; checked: false }
+                PropertyChanges{ target: butt2; checked: false }
+                PropertyChanges{ target: butt3; checked: false }
+                PropertyChanges{ target: butt4; checked: false }
             },
             State{
                 name: "butt1Checked"
-                PropertyChanges{ target: control; checkedItem: 1}
+                PropertyChanges{ target: control; checkedItem: 1 }
+                PropertyChanges{ target: butt1; checked: true }
+                PropertyChanges{ target: butt2; checked: false }
+                PropertyChanges{ target: butt3; checked: false }
+                PropertyChanges{ target: butt4; checked: false }
             },
             State{
                 name: "butt2Checked"
-                PropertyChanges{ target: control; checkedItem: 2}
+                PropertyChanges{ target: control; checkedItem: 2 }
+                PropertyChanges{ target: butt2; checked: true }
+                PropertyChanges{ target: butt1; checked: false }
+                PropertyChanges{ target: butt3; checked: false }
+                PropertyChanges{ target: butt4; checked: false }
             },
             State{
                 name: "butt3Checked"
-                PropertyChanges{ target: control; checkedItem: 3}
+                PropertyChanges{ target: control; checkedItem: 3 }
+                PropertyChanges{ target: butt3; checked: true }
+                PropertyChanges{ target: butt1; checked: false }
+                PropertyChanges{ target: butt2; checked: false }
+                PropertyChanges{ target: butt4; checked: false }
             },
             State{
                 name: "butt4Checked"
-                PropertyChanges{ target: control; checkedItem: 4}
+                PropertyChanges{ target: control; checkedItem: 4 }
+                PropertyChanges{ target: butt4; checked: true }
+                PropertyChanges{ target: butt1; checked: false }
+                PropertyChanges{ target: butt2; checked: false }
+                PropertyChanges{ target: butt3; checked: false }
             }
         ]
-
         state: "unchecked"
     }
 }

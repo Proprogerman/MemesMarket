@@ -10,10 +10,6 @@ import "qrc:/qml/pages"
         width: 405
         x: 300 ; y: 50
 
-//    Loader{id:pageLoader}
-//    Component.onCompleted: pageLoader.source="SignInPage.qml"
-//    NewSignInPage{}
-
     StackView{
         id:stackView
         anchors.fill: parent
@@ -30,8 +26,17 @@ import "qrc:/qml/pages"
         }
 
         Component{
-            id: memesPage
+            id: memePage
             MemePage{}
+        }
+
+        Component{
+            id: rialtoPage
+            RialtoPage{}
+        }
+        Component{
+            id: categoryMemeListPage
+            CategoryMemeListPage{}
         }
     }
 }

@@ -9,11 +9,14 @@
         <file>CheckButton.qml</file>
         <file>RadioButtons.qml</file>
         <file>MaterialButton.qml</file>
+        <file>PageHeader.qml</file>
     </qresource>
     <qresource prefix="/qml/pages">
         <file>MainUserPage.qml</file>
         <file>MemePage.qml</file>
         <file>SignInPage.qml</file>
+        <file>RialtoPage.qml</file>
+        <file>CategoryMemeListPage.qml</file>
     </qresource>
     <qresource prefix="/qml">
         <file>main.qml</file>
