@@ -10,6 +10,7 @@
         <file>RadioButtons.qml</file>
         <file>MaterialButton.qml</file>
         <file>PageHeader.qml</file>
+        <file>WaveIndicator.qml</file>
     </qresource>
     <qresource prefix="/qml/pages">
         <file>MainUserPage.qml</file>

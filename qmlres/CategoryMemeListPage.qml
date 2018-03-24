@@ -8,14 +8,23 @@ import KlimeSoft.SingletonUser 1.0
 Page{
 
     property color itemColor: "white"
+    property color backColor: "#edeef0"
 
     property string pageCategory
     property var memesPopValues: []
 
     function updateMeme(meme_name, image_name){
-        memeListModel.append({ "memeName": meme_name, "imageName": image_name })
+        memeListModel.append({ "memeName": meme_name, "image": "image://meme/" + image_name })
 
         console.log("update Meme: ", image_name)
+    }
+
+    function updateMemeImage(meme_name, image_name){
+        for(var i = 0; i < memeListModel.count; i++)
+            if(memeListModel.get(i).memeName === meme_name){
+                memeListModel.setProperty(i, "image", " ")
+                memeListModel.setProperty(i, "image", "image://meme/" + image_name)
+            }
     }
 
     Component.onCompleted: {
@@ -48,12 +57,22 @@ Page{
                 console.log("onMemeWithCategoryReceived")
             }
         }
+        onMemeImageReceived:{
+            updateMemeImage(memeName, imageName)
+        }
         onMemePopValuesWithCategoryUpdated:{
             if(category == pageCategory){
                 memesPopValues[memeName] = popValues
                 console.log("onMemePopValuesWithCategoryUpdated")
             }
         }
+    }
+
+    Rectangle{
+        id: background
+        anchors.fill: parent
+        color: backColor
+        z: -1
     }
 
     PageHeader{
@@ -68,7 +87,8 @@ Page{
         id: appListView
         height: parent.height - pageHeader.height
         width: parent.width
-        spacing: parent.height/50
+        spacing: parent.height/ 50
+        z: background.z + 1
         anchors{
             top: pageHeader.bottom
             right: parent.right
@@ -79,15 +99,16 @@ Page{
         model: memeListModel
 
         delegate: Rectangle{
-            width: pageHeader.header
+            width: pageHeader.width
             height: pageHeader.height * 2
 
-            //rotation:180
             color: itemColor
             Image{
                 id: memeImage
                 height: parent.height
                 width: height
+                cache: false
+                source: image
             }
             Text{
                 text: memeName
@@ -106,19 +127,27 @@ Page{
 //                    }
 //                }
 //            }
-            Component.onCompleted:{
-                memeImage.source = "image://meme/" + imageName
-                //memeImage.source = "image://meme/exactlyMeme.jpg"
-                //IMAGE PROVIDER
-                console.log("image name:", imageName)
-            }
 
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
-                    stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
-                        memePopValues: memesPopValues[memeName], memeStartPopValue: startPopValues[memeName] }})
+                    if(User.findMeme(memeName)){
+                        stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
+                            memePopValues: memesPopValues[memeName], memeStartPopValue: memesPopValues[memeName],
+                            category: pageCategory, state: "mine" }})
+                    }
+                    else{
+                        stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
+                            memePopValues: memesPopValues[memeName], memeStartPopValue: memesPopValues[memeName],
+                            category: pageCategory, state: "general" }})
+                    }
                 }
+            }
+            Rectangle{
+                color: "red"
+                anchors.fill: parent
+                z: memeImage.z + 1
+                visible: false
             }
         }
     }

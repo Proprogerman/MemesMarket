@@ -19,4 +19,8 @@
         <file>noMeme.png</file>
         <file>okMeme.png</file>
     </qresource>
+    <qresource prefix="/uiIcons">
+        <file>up-arrow.svg</file>
+        <file>wave.svg</file>
+    </qresource>
 </RCC>

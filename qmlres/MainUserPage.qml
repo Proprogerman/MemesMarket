@@ -11,10 +11,31 @@ Page {
 
     objectName: "mainUserPage"
 
+    property string userPopValue: "100"
+    property int userCreativity: 0
+    property string userShekels: "100"
+
+    property color backColor: "#edeef0"
+    property color itemColor: "white"
+
     property var memesPopValues: []
     property var startPopValues: []
 
     property string directionFormat
+
+
+    function valueToShort(value){
+        var count = 0
+        while(Math.floor(value / 1000) > 0){
+            count++
+            value = Math.floor(value / 1000)
+            print(value)
+        }
+        for(var i = 0; i < count; i++)
+            value += 'K'
+        return value
+    }
+
 
     function courseWithSign(direction){
         if(direction > 0)
@@ -26,15 +47,30 @@ Page {
 
     function updateMeme(meme_name, image_name, crsDir){
         memeListModel.append({ "memeName": meme_name, "courseDirection": courseWithSign(crsDir),
-            "imageName": image_name })
+            "imageName": image_name, "image": "image://meme/" + image_name })
 
         console.log("update Meme: ", image_name)
     }
 
-    function updatePopValues(nameOfMeme, crsDir){
+    function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeName === nameOfMeme){
+            if(memeListModel.get(i).memeName === meme_name){
+                memeListModel.setProperty(i, "image", " ")
+                memeListModel.setProperty(i, "image", "image://meme/" + image_name)
+            }
+    }
+
+    function updatePopValues(meme_name, crsDir){
+        for(var i = 0; i < memeListModel.count; i++)
+            if(memeListModel.get(i).memeName === meme_name){
                 memeListModel.setProperty(i, "courseDirection", courseWithSign(crsDir))
+            }
+    }
+
+    function unforceMeme(meme_name){
+        for(var i = 0; i < memeListModel.count; i++)
+            if(memeListModel.get(i).memeName === meme_name){
+                memeListModel.remove(i)
             }
     }
 
@@ -55,28 +91,57 @@ Page {
             console.log("startPopValue: ", startPopValue)
             console.log("___________________________________________________")
         }
+        onMemeImageReceived:{
+            updateMemeImage(memeName, imageName)
+        }
+        onPopValueChanged:{
+            userPopValue = valueToShort(User.pop_values)
+        }
+        onCreativityChanged:{
+            userCreativity = User.creativity
+        }
+        onShekelsChanged:{
+            userShekels = valueToShort(User.shekels)
+        }
+        onMemeUnforced:{
+            unforceMeme(memeName)
+        }
     }
 
     Component.onCompleted:{
         User.getMemeListOfUser()
+        User.getUserData()
         getMemeListTimer.start()
+        getUserDataTimer.start()
+//        creativeInd.startAnimation()
     }
 
     Timer{
-        id: getMemeListTimer
+        id: getUserDataTimer
         interval: 10000
         repeat: true
         onTriggered:{
             //memeListModel.clear()
             if(stackView.currentItem.objectName == "mainUserPage"){
                 console.log("GET MEME LIST TIMER")
-                User.getMemeListOfUser()
+                User.getUserData()
             }
         }
     }
 
-    property color backColor: "#edeef0"
-    property color itemColor: "white"
+    Timer{
+        id: getMemeListTimer
+        interval: 15000
+        repeat: true
+        onTriggered:{
+            //memeListModel.clear()
+            if(stackView.currentItem.objectName == "mainUserPage"){
+                console.log("GET MEME LIST TIMER")
+                User.getMemeListOfUser()
+//                User.getUserData()
+            }
+        }
+    }
 
     SlidingMenu{
         id: slidingMenu
@@ -116,7 +181,6 @@ Page {
                     }
                 }
             }
-
         ]
     }
 
@@ -215,7 +279,7 @@ Page {
         height: parent.height * 1/10
         anchors.top: parent.top
         color: userPanel.color
-        z: 5
+        z: 7
 
         Text{
             id: groupName
@@ -244,7 +308,7 @@ Page {
         height:(parent.height * 1/5)
         //anchors.top: pageHeader.bottom
         y: pageHeader.y + height / 2
-        z: 2
+        z: pageHeader.z - 3
         color:"#507299"
 
         states: [
@@ -302,7 +366,7 @@ Page {
     }
 
     MouseArea{
-        z: 30
+        z: pageHeader.z
         anchors.fill: avatar
         onClicked:{
             if(avatar.state == "tapToTop"){
@@ -315,7 +379,7 @@ Page {
         id: avatarMask
         anchors.fill: avatar
         source: bluredAvatar
-        z: 3
+        z: pageHeader.z - 2
         maskSource:Rectangle{
             width: avatar.width
             height: width
@@ -349,7 +413,7 @@ Page {
 
     Item{
         anchors.fill: avatar
-        z: 15
+        z: pageHeader.z - 1
         Rectangle{
             height: Math.floor(parent.height / 2)
             width: parent.width
@@ -373,12 +437,12 @@ Page {
         width: avatar.width / 4
         height: avatar.height / 4
         anchors{ bottom: avatar.bottom; bottomMargin: height / 2; horizontalCenter: avatar.horizontalCenter}
-        z: 20
+        z: pageHeader.z + 2
 
         property bool flipped: false
 
         front: Text{
-            text: "100k"
+            text: userPopValue
             width: parent.width
             height: parent.height
             font.pixelSize: parent.height
@@ -386,15 +450,14 @@ Page {
             verticalAlignment: Text.AlignVCenter
             color: "white"
         }
-        back: Text{
-            text: "up"
-            width: parent.width
-            height: parent.height
-            font.pixelSize: parent.height
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            color: "white"
+        back: Image{
+            width: Math.ceil(parent.width * 1.25)
+            height: Math.ceil(parent.height * 1.25)
+            anchors{ horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
+            source: "qrc:/uiIcons/up-arrow.svg"
+            antialiasing: true
         }
+
         transform: Rotation{
             id: rotation
             origin.x: avatarLable.width / 2
@@ -420,21 +483,53 @@ Page {
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.left: avatar.right
         anchors.leftMargin: width * 1/2
-        z: 3
+        z: userPanel.z + 1
         color:"gold"
         radius: width/2
+        Text{
+            id: moneyLabel
+            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
+            font.pixelSize: parent.height / 5
+            text: userShekels.toString()
+            color: "#ffffff"
+        }
     }
     ////////////////////////////////////////////////////////////////////////
-    Rectangle{
-        id:creativeInd
+//    Rectangle{
+//        id:creativeInd
+//        width: (avatar.height * 1/2)
+//        height: width
+//        anchors.verticalCenter: userPanel.verticalCenter
+//        anchors.right: avatar.left
+//        anchors.rightMargin: width * 1/2
+//        z: userPanel.z + 1
+//        color:"lime"
+//        radius: width/2
+//        Text{
+//            id: creativityLabel
+//            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
+//            font.pixelSize: parent.height / 5
+//            text: userCreativity.toString()
+//            color: "#ffffff"
+//        }
+//    }
+    WaveIndicator{
+        id: creativeInd
         width: (avatar.height * 1/2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.right: avatar.left
         anchors.rightMargin: width * 1/2
-        z: 3
-        color:"lime"
-        radius: width/2
+        z: userPanel.z + 1
+
+        amount: userCreativity
+        Text{
+            id: creativityLabel
+            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
+            font.pixelSize: parent.height / 5
+            text: userCreativity.toString()
+            color: "#ffffff"
+        }
     }
 
     DropShadow{
@@ -445,7 +540,7 @@ Page {
         color: "#000000"
         opacity: 0.8
         spread: 0.4
-        z: 1
+        z: userPanel.z - 1
     }
 
     ListView {
@@ -474,20 +569,23 @@ Page {
         delegate: Rectangle{
             width: userPanel.width
             height: userPanel.height
-
-            property int startPopValue
-
-            onStartPopValueChanged: {
-                console.log("-------------------- ", startPopValue, " ----------------------")
-            }
-
-            //rotation:180
             color: itemColor
+
             Image{
                 id: memeImage
                 height: parent.height
                 width: height
+                cache: false
+                source: image
             }
+            Rectangle{
+                id: unforceButton
+                width: memeImage.width
+                height: memeImage.height / 2
+                anchors{ left: memeImage.left; bottom: memeImage.bottom }
+                color: "#F06292"
+            }
+
             Text{
                 text: memeName
                 anchors{ left: memeImage.right; top: parent.top }
@@ -505,12 +603,6 @@ Page {
                     }
                 }
             }
-            Component.onCompleted:{
-                memeImage.source = "image://meme/" + imageName
-                //memeImage.source = "image://meme/exactlyMeme.jpg"
-                //IMAGE PROVIDER
-                console.log("image name:", imageName)
-            }
 
             MouseArea{
                 anchors.fill: parent
@@ -519,41 +611,47 @@ Page {
                         memePopValues: memesPopValues[memeName], memeStartPopValue: startPopValues[memeName] }})
                 }
             }
+            MouseArea{
+                anchors.fill: unforceButton
+                onClicked:{
+                    User.unforceMeme(memeName)
+                }
+            }
         }
         NumberAnimation{ id: listViewAnim; target: appListView; property: "contentY"; duration: 400;
             easing.type: Easing.InOutQuad }
     }
     ListModel{
         id: memeListModel
-        ListElement{
-            memeName: "Check"
-            courseDirection: 100
-            imageName: "exactlyMeme.jpg"
-        }
-        ListElement{
-            memeName: "Check"
-            courseDirection: 100
-            imageName: "exactlyMeme.jpg"
-        }
-        ListElement{
-            memeName: "Check"
-            courseDirection: 100
-            imageName: "exactlyMeme.jpg"
-        }
-        ListElement{
-            memeName: "Check"
-            courseDirection: 100
-            imageName: "exactlyMeme.jpg"
-        }
-        ListElement{
-            memeName: "Check"
-            courseDirection: 100
-            imageName: "exactlyMeme.jpg"
-        }
-        ListElement{
-            memeName: "Check"
-            courseDirection: 100
-            imageName: "exactlyMeme.jpg"
-        }
+//        ListElement{
+//            memeName: "Check"
+//            courseDirection: 100
+//            imageName: "exactlyMeme.jpg"
+//        }
+//        ListElement{
+//            memeName: "Check"
+//            courseDirection: 100
+//            imageName: "exactlyMeme.jpg"
+//        }
+//        ListElement{
+//            memeName: "Check"
+//            courseDirection: 100
+//            imageName: "exactlyMeme.jpg"
+//        }
+//        ListElement{
+//            memeName: "Check"
+//            courseDirection: 100
+//            imageName: "exactlyMeme.jpg"
+//        }
+//        ListElement{
+//            memeName: "Check"
+//            courseDirection: 100
+//            imageName: "exactlyMeme.jpg"
+//        }
+//        ListElement{
+//            memeName: "Check"
+//            courseDirection: 100
+//            imageName: "exactlyMeme.jpg"
+//        }
     }
 }

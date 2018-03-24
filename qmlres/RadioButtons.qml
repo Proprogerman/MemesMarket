@@ -9,6 +9,7 @@ Item {
     property color backgroundColor
     property int checkedItem
     property alias spacing: radioButtons.spacing
+    property int activeButton: 0
 
     function setButtonActive(button){
         if(button === butt1){
@@ -36,6 +37,19 @@ Item {
             else
                 radioButtons.state = "unchecked"
         }
+    }
+
+    function setDefaultActiveButton(){
+        if(activeButton == 0)
+            return "unchecked"
+        if(activeButton == 1)
+            return "butt1Checked"
+        if(activeButton == 2)
+            return "butt2Checked"
+        if(activeButton == 3)
+            return "butt3Checked"
+        if(activeButton == 4)
+            return "butt4Checked"
     }
 
     Rectangle{
@@ -158,6 +172,6 @@ Item {
                 PropertyChanges{ target: butt3; checked: false }
             }
         ]
-        state: "unchecked"
+        state: setDefaultActiveButton()
     }
 }

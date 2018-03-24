@@ -31,6 +31,7 @@ Page{
         width: parent.width
         height: parent.height / 10
         headerText: "Биржа Мемов"
+        z: categoriesGridView.z + 1
     }
 
     GridView{
@@ -39,6 +40,7 @@ Page{
         width: parent.width
         cellWidth: background.width / 2
         cellHeight: cellWidth
+        z: background.z + 1
 
         anchors{
             top: pageHeader.bottom
@@ -60,7 +62,7 @@ Page{
                 Text{
                     id: categoryLabel
                     text: categoryText
-                    font.pixelSize: parent.height / 5
+                    font.pixelSize: parent.height / 10
                 }
                 MouseArea{
                     anchors.fill: parent
@@ -71,16 +73,8 @@ Page{
                 }
             }
         }
-
     }
     ListModel{
         id: categoryGridModel
-//        ListElement{
-//            categoryText: "Стабильные"
-//        }
-//        ListElement{
-//            categoryText: "Нестабильные"
-//        }
-
     }
 }

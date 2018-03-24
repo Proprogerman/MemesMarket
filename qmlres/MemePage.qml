@@ -8,17 +8,18 @@ import KlimeSoft.SingletonUser 1.0
 import "qrc:/qml/elements"
 
 Page{
+    id: memePage
 
     objectName: "memePage"
 
     property alias img: image.source
     property alias name: memeNameLabel.text
+    property string category
 
     property var memePopValues:[]
     property int memeStartPopValue
 
     property color mainColor: "#507299"
-    //property color backColor: "#78909C"
     property color backColor: "#edeef0"
     property int itemSpacing: 0//pageHeader.height * 1/4
 
@@ -26,7 +27,10 @@ Page{
 
 
     Component.onCompleted:{
-        User.getMemeDataForUser(name.toString())
+        if(state == "mine")
+            User.getMemeDataForUser(name.toString())
+        else if(state == "general")
+            User.getMemeData(name.toString())
         getMemeDataTimer.start()
     }
 
@@ -38,14 +42,15 @@ Page{
             console.log(stackView.currentItem.objectName)
             //console.log("stackView.currentItem: ", stackView.currentItem, " ------- memePage: ", memePage)
             if(stackView.currentItem.objectName == "memePage"){
-                console.log("GET MEME DATA TIMER")
-                User.getMemeDataForUser(name.toString())
+                if(state == "mine")
+                    User.getMemeDataForUser(name.toString())
+                else if(state == "general")
+                    User.getMemeData(name.toString())
             }
         }
     }
 
     onMemePopValuesChanged: {
-
         popGraphLineSeries.clear()
 
         for(var i = 0; i < memePopValues.length; i++){
@@ -62,6 +67,13 @@ Page{
     Connections{
         target: User
         onMemePopValuesForUserUpdated:{
+            console.log("UPDATING MEME WITH NAME: ", memeName)
+            if(memeName == memeNameLabel.text){
+                console.log("qqqqqqqqqqqqqqqqqqqqqqqq")
+                memePopValues = popValues
+            }
+        }
+        onMemePopValuesUpdated:{
             console.log("UPDATING MEME WITH NAME: ", memeName)
             if(memeName == memeNameLabel.text){
                 console.log("qqqqqqqqqqqqqqqqqqqqqqqq")
@@ -126,6 +138,19 @@ Page{
             anchors.horizontalCenter: parent.horizontalCenter
             //source: "qrc:/memePhoto/respectMeme.jpg"
         }
+        Rectangle{
+            id: unforceButton
+            width: image.width
+            height: image.height / 2
+            anchors{ left: image.left; bottom: image.bottom }
+            color: "#F06292"
+            MouseArea{
+                anchors.fill: parent
+                onClicked:{
+                    User.unforceMeme(name)
+                }
+            }
+        }
     }
 
     Rectangle{
@@ -180,15 +205,15 @@ Page{
             }
         }
     }
-    //Pop
+
     Rectangle{
-        id: popManipItem
+        id: manipItem
         anchors{ top: popGraphItem.bottom; bottom: parent.bottom;
             left: parent.left; right: parent.right }
         color: backColor
 
         RadioButtons{
-            id: radioButton
+            id: radioButtons
             width: parent.width;
             height: 100;
             anchors.top: parent.top
@@ -199,40 +224,44 @@ Page{
             spacing: width/70
 
             Component.onCompleted:{
-                button.clickable = radioButton.checkedItem != 0 ? true : false
-                radioButton.buttItems.item1 = 100
-                radioButton.buttItems.item2 = 200
-                radioButton.buttItems.item3 = 300
-                radioButton.buttItems.item4 = 400
+                if(parent.state == "general")
+                    likeActButton.clickable = radioButtons.checkedItem != 0 ? true : false
+                else
+                    likeActButton.clickable = true
+                radioButtons.buttItems.item1 = 100
+                radioButtons.buttItems.item2 = 200
+                radioButtons.buttItems.item3 = 300
+                radioButtons.buttItems.item4 = 400
             }
             onCheckedItemChanged:{
-                button.clickable = radioButton.checkedItem != 0 ? true : false
+                if(memePage.state == "mine")
+                    likeActButton.clickable = radioButtons.checkedItem != 0 ? true : false
             }
         }
 
         MaterialButton{
-            id: button
+            id: likeActButton
             width: 200
             height: 100
             anchors{
-                top:radioButton.bottom
+                top: radioButtons.bottom
                 bottom: parent.bottom
                 left: parent.left
                 right: parent.right
             }
     //        color: "#F48FB1"
-            clickable: true
             radius: height/ 20
             rippleColor: "#F8BBD0"
             unclickableColor: "#F48FB1"
             clickableColor: "#EC407A"
-            label: "Накрутить лайки"
-
-            Connections{
-                target: button.buttArea
-                onClicked: { likeActLoader.active = true }
-            }
         }
+    }
+
+    DropShadow{
+        anchors.fill: manipItem
+        source: manipItem
+        color: "#80000000"
+        visible: manipItem.visible
     }
 
     Loader{
@@ -251,9 +280,29 @@ Page{
         z: 5
     }
 
-    DropShadow{
-        anchors.fill: popManipItem
-        source: popManipItem
-        color: "#80000000"
+    states:[
+        State{
+            name: "general"
+            PropertyChanges{ target: likeActButton; label: "ЗАФОРСИТЬ" }
+            PropertyChanges{ target: radioButtons; activeButton: 0 }
+            PropertyChanges{ target: unforceButton; visible: false }
+        },
+        State{
+            name: "mine"
+            PropertyChanges{ target: likeActButton; label: "НАКРУТИТЬ ЛАЙКИ" }
+            PropertyChanges{ target: radioButtons; activeButton: 1 }
+            PropertyChanges{ target: unforceButton; visible: true }
+        }
+    ]
+    state: "mine"
+
+    Connections{
+        target: likeActButton.buttArea
+        onClicked: {
+            likeActLoader.active = true
+            if(state == "general"){
+                User.forceMeme(name, 10, memePopValues[memePopValues.lenght - 1], category) ///// ДОДЕЛАТЬ КРЕАТИВНОСТЬ...
+            }
+        }
     }
 }

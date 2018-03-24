@@ -7,7 +7,10 @@ QPixmap ImageProvider::requestPixmap(const QString &id, QSize *size, const QSize
 {
     qDebug()<<"IMAGE PROVIDER REQUEST PIXMAP --------- "<<"C:/Development/clientImages/" + id;
     QPixmap result;
-    result.load("C:/Development/clientImages/" + id);
+    if(!result.load("C:/Development/clientImages/" + id)){
+        result.load("C:/Development/clientImages/loader.png");
+        qDebug()<<"НЕ НАЙДЕНО ИЗОБРАЖЕНИЕ!!!!";
+    }
     return result;
 }
 
