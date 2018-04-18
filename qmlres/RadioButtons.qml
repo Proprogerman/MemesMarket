@@ -3,13 +3,19 @@ import QtQuick 2.0
 Item {
     id: control
 
-    property var buttItems: { 'item1': 0, 'item2': 0, 'item3': 0, 'item4': 0 }
+    property int value: 0
+
     property color uncheckedColor
     property color checkedColor
     property color backgroundColor
     property int checkedItem
     property alias spacing: radioButtons.spacing
     property int activeButton: 0
+
+    property alias button1Label: butt1.label
+    property alias button2Label: butt2.label
+    property alias button3Label: butt3.label
+    property alias button4Label: butt4.label
 
     function setButtonActive(button){
         if(button === butt1){
@@ -68,7 +74,6 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
-            Component.onCompleted:{ label = buttItems.item1 }
 
             Connections{
                 target: butt1.buttArea
@@ -84,7 +89,6 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
-            Component.onCompleted:{ label = buttItems.item2 }
 
             Connections{
                 target: butt2.buttArea
@@ -101,7 +105,6 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
-            Component.onCompleted:{ label = buttItems.item3 }
 
             Connections{
                 target: butt3.buttArea
@@ -118,7 +121,6 @@ Item {
             width: parent.rowWidth/4; height: parent.height
             checkedColor: "#90A4AE"
             uncheckedColor: "#CFD8DC"
-            Component.onCompleted:{ label = buttItems.item4 }
 
             Connections{
                 target: butt4.buttArea
@@ -138,6 +140,7 @@ Item {
                 PropertyChanges{ target: butt2; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
                 PropertyChanges{ target: butt4; checked: false }
+                PropertyChanges{ target: control; value: 0 }
             },
             State{
                 name: "butt1Checked"
@@ -146,6 +149,7 @@ Item {
                 PropertyChanges{ target: butt2; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
                 PropertyChanges{ target: butt4; checked: false }
+                PropertyChanges{ target: control; value: Number(butt1.label) }
             },
             State{
                 name: "butt2Checked"
@@ -154,6 +158,7 @@ Item {
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
                 PropertyChanges{ target: butt4; checked: false }
+                PropertyChanges{ target: control; value: Number(butt2.label) }
             },
             State{
                 name: "butt3Checked"
@@ -162,6 +167,7 @@ Item {
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt2; checked: false }
                 PropertyChanges{ target: butt4; checked: false }
+                PropertyChanges{ target: control; value: Number(butt3.label) }
             },
             State{
                 name: "butt4Checked"
@@ -170,6 +176,7 @@ Item {
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt2; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
+                PropertyChanges{ target: control; value: Number(butt4.label) }
             }
         ]
         state: setDefaultActiveButton()

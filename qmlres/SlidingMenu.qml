@@ -3,9 +3,9 @@ import QtQuick 2.2
 Rectangle {
     id: panel
 
-    property bool open: false                     // The open or close state of the drawer
-    property int position: Qt.LeftEdge            // Which side of the screen the drawer is on, can be Qt.LeftEdge or Qt.RightEdge
-    property Item visualParent: parent            // The item the drawer should cover, by default the parent of the Drawer
+    property bool open: false
+    property int position: Qt.LeftEdge
+    property Item visualParent: parent
 
     // The fraction showing how open the drawer is
     readonly property real panelProgress:  (panel.x - _minimumX) / (_maximumX - _minimumX)
@@ -18,11 +18,10 @@ Rectangle {
         else open = true;
     }
 
-    // Internal
 
     default property alias data: contentItem.data
-    readonly property real expandedFraction: 0.78  // How big fraction of the screen realesatate that is covered by an open menu
-    readonly property real _scaleFactor: _rootItem.width / 320 // Note, this should really be application global
+    readonly property real expandedFraction: 0.78
+    readonly property real _scaleFactor: _rootItem.width / 320
     readonly property int _pullThreshold: panel.width/2
     readonly property int _slideDuration: 260
     readonly property int _collapsedX: _rightEdge ? _rootItem.width :  - panel.width
@@ -51,7 +50,7 @@ Rectangle {
     x: _collapsedX
     z: 10
 
-    function _setupAnchors() {     // Note that we can't reliably apply anchors using bindings
+    function _setupAnchors() {
         _rootItem = _findRootItem();
 
         shadow.anchors.right = undefined;
@@ -166,8 +165,9 @@ Rectangle {
         id: backgroundDimmer
         parent: visualParent
         anchors.fill: parent
-        opacity: 0.5 * Math.min(1, Math.abs(panel.x - _collapsedX) / _rootItem.width/2)
+        opacity: 1 * Math.min(1, Math.abs(panel.x - _collapsedX) / _rootItem.width/2)
         color: "black"
+        z: panel.z - 1
     }
 
     Item {

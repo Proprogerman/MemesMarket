@@ -4,11 +4,11 @@ import QtQuick.Window 2.0
 
 import "qrc:/qml/pages"
 
-    ApplicationWindow{
-        visible: true
-        height: 720
-        width: 405
-        x: 300 ; y: 50
+ApplicationWindow{
+    visible: true
+    height: 720                                 //
+    width: 405                                  // for desktop
+    x: 300 ; y: 50                              //
 
     StackView{
         id:stackView

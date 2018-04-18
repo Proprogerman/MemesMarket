@@ -17,7 +17,10 @@ Page{
     property string category
 
     property var memePopValues:[]
-    property int memeStartPopValue
+    property int memeStartPopValue: state == "mine" ? memePopValues[memePopValues.length - 1] : 0
+
+    property int userCreativity: User.creativity
+    property int userShekels: User.shekels
 
     property color mainColor: "#507299"
     property color backColor: "#edeef0"
@@ -25,6 +28,26 @@ Page{
 
     property int timePeriod: 10
 
+    function updateMemePopGraph(){
+        popGraphLineSeries.clear()
+        for(var i = 0; i < memePopValues.length; i++){
+            popGraphLineSeries.insert(i, i * timePeriod, memePopValues[i])
+        }
+    }
+
+
+    function setRadioButtonsItems(source){
+        radioButtons.button1Label = Math.floor(source / 4)
+        radioButtons.button2Label = Math.floor(source / 3)
+        radioButtons.button3Label = Math.floor(source / 2)
+        radioButtons.button4Label = source
+    }
+
+    function setStartPopValueAxis(){
+        startPopValueLine.clear()
+        startPopValueLine.append(xAxis.min, memeStartPopValue)
+        startPopValueLine.append(xAxis.max, memeStartPopValue)
+    }
 
     Component.onCompleted:{
         if(state == "mine")
@@ -42,26 +65,21 @@ Page{
             console.log(stackView.currentItem.objectName)
             //console.log("stackView.currentItem: ", stackView.currentItem, " ------- memePage: ", memePage)
             if(stackView.currentItem.objectName == "memePage"){
-                if(state == "mine")
+                if(memePage.state == "mine")
                     User.getMemeDataForUser(name.toString())
-                else if(state == "general")
+                else if(memePage.state == "general")
                     User.getMemeData(name.toString())
             }
         }
     }
 
     onMemePopValuesChanged: {
-        popGraphLineSeries.clear()
-
-        for(var i = 0; i < memePopValues.length; i++){
-            //popGraphLineSeries.append(i * timePeriod, memePopValues[i])
-            console.log("point of LINE SERIES: ", popGraphLineSeries.at(i),
-                " ---- ", "point of MEME VALUES: ", memePopValues[i])
-            if(popGraphLineSeries.at(i).y !== memePopValues[i])
-                popGraphLineSeries.insert(i, i * timePeriod, memePopValues[i])
-        }
-
+        updateMemePopGraph()
         console.log("POPVALUES CHANGED ...........................JJJJJJJJLJL")
+    }
+
+    onMemeStartPopValueChanged: {
+        setStartPopValueAxis()
     }
 
     Connections{
@@ -71,18 +89,39 @@ Page{
             if(memeName == memeNameLabel.text){
                 console.log("qqqqqqqqqqqqqqqqqqqqqqqq")
                 memePopValues = popValues
+                memeStartPopValue = startPopValue
             }
         }
         onMemePopValuesUpdated:{
             console.log("UPDATING MEME WITH NAME: ", memeName)
             if(memeName == memeNameLabel.text){
-                console.log("qqqqqqqqqqqqqqqqqqqqqqqq")
+                console.log("pppppppppppppppppppppppp")
                 memePopValues = popValues
             }
         }
+        onCreativityChanged:{
+            userCreativity = User.creativity
+            if(memePage.state == "general")
+                setRadioButtonsItems(userCreativity)
+        }
+        onShekelsChanged:{
+            userShekels = User.shekels
+            if(memePage.state == "mine")
+                setRadioButtonsItems(userShekels)
+        }
     }
 
-    //backgroundColor: backColor
+    Hamburger{
+        id: hamburger
+        height: pageHeader.height / 4
+        width: height * 3 / 2
+        y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
+        anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
+        z: pageHeader.z + 1
+        dynamic: false
+        onBackAction: stackView.pop()
+    }
+
     Rectangle{
         id: background
         anchors.fill: parent
@@ -105,12 +144,12 @@ Page{
             font.pixelSize: parent.height/2
         }
 
-        MouseArea{
-            anchors.fill: parent
-            onClicked:{
-                stackView.pop()
-            }
-        }
+//        MouseArea{
+//            anchors.fill: parent
+//            onClicked:{
+//                stackView.pop()
+//            }
+//        }
     }
 
 
@@ -141,13 +180,16 @@ Page{
         Rectangle{
             id: unforceButton
             width: image.width
-            height: image.height / 2
+            height: image.height
             anchors{ left: image.left; bottom: image.bottom }
-            color: "#F06292"
+            opacity: 0.5
+            radius: width
+            color: "#000000"
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
                     User.unforceMeme(name)
+                    memePage.state = "general"
                 }
             }
         }
@@ -159,7 +201,6 @@ Page{
         height: parent.height * 3/8
         anchors.top: imageItem.bottom
         color: backColor
-
 
         property var popValues: []
         clip: true
@@ -174,10 +215,11 @@ Page{
             backgroundRoundness: 0.0
 
             //animationOptions: ChartView.AllAnimations
+            animationOptions: ChartView.NoAnimation
             ValueAxis{
                 id: xAxis
                 min: 0.0
-                max: 5.0 * timePeriod
+                max: 13.0 * timePeriod
                 labelsVisible: false
                 gridVisible: false
                 visible: false
@@ -197,12 +239,35 @@ Page{
                 axisY: yAxis
                 pointsVisible: true
             }
+
             LineSeries{
-                id: startPopValueLine
-                XYPoint{ x: xAxis.min; y: memeStartPopValue }
-                XYPoint{ x: xAxis.max; y: memeStartPopValue }
+                id: zeroPopValueLine
+                XYPoint{ x: xAxis.min; y: 0 }
+                XYPoint{ x: xAxis.max; y: 0 }
                 color: "red"
             }
+            LineSeries{
+                id: startPopValueLine
+                XYPoint{ id: xy1; x: xAxis.min; y: 50/*memeStartPopValue*/ }
+                XYPoint{ id: xy2; x: xAxis.max; y: 50/*memeStartPopValue*/ }
+                color: "blue"
+            }
+//            LineSeries{
+//                id: startPopValueLine
+//                axisY: CategoryAxis{
+//                    min: - 200
+//                    max: 200
+//                    labelsVisible: false
+//                    gridVisible: false
+//                    gridLineColor: "red"
+//                    minorGridLineColor: "blue"
+//                    titleVisible: false
+//                    CategoryRange{
+//                        id: startPopValueRange
+//                        endValue: memeStartPopValue
+//                    }
+//                }
+//            }
         }
     }
 
@@ -224,23 +289,22 @@ Page{
             spacing: width/70
 
             Component.onCompleted:{
-                if(parent.state == "general")
-                    likeActButton.clickable = radioButtons.checkedItem != 0 ? true : false
-                else
-                    likeActButton.clickable = true
-                radioButtons.buttItems.item1 = 100
-                radioButtons.buttItems.item2 = 200
-                radioButtons.buttItems.item3 = 300
-                radioButtons.buttItems.item4 = 400
+                if(memePage.state == "general"){
+                    setRadioButtonsItems(userCreativity)
+                }
+                else if(memePage.state == "mine"){
+                    setRadioButtonsItems(userShekels)
+                }
+                memeActionButton.clickable = true
             }
             onCheckedItemChanged:{
                 if(memePage.state == "mine")
-                    likeActButton.clickable = radioButtons.checkedItem != 0 ? true : false
+                    memeActionButton.clickable = radioButtons.checkedItem != 0 ? true : false
             }
         }
 
         MaterialButton{
-            id: likeActButton
+            id: memeActionButton
             width: 200
             height: 100
             anchors{
@@ -283,25 +347,35 @@ Page{
     states:[
         State{
             name: "general"
-            PropertyChanges{ target: likeActButton; label: "ЗАФОРСИТЬ" }
+            PropertyChanges{ target: memeActionButton; label: "ЗАФОРСИТЬ" }
             PropertyChanges{ target: radioButtons; activeButton: 0 }
             PropertyChanges{ target: unforceButton; visible: false }
+            PropertyChanges{ target: startPopValueLine; visible: false }
+            PropertyChanges{ target: memePage; memeStartPopValue: 0 }
         },
         State{
             name: "mine"
-            PropertyChanges{ target: likeActButton; label: "НАКРУТИТЬ ЛАЙКИ" }
+            PropertyChanges{ target: memeActionButton; label: "НАКРУТИТЬ ЛАЙКИ" }
             PropertyChanges{ target: radioButtons; activeButton: 1 }
             PropertyChanges{ target: unforceButton; visible: true }
+            PropertyChanges{ target: startPopValueLine; visible: true }
+            PropertyChanges{ target: memePage; memeStartPopValue: memePopValues[memePopValues.length - 1] }
+            StateChangeScript{ script: setStartPopValueAxis() }
         }
     ]
     state: "mine"
 
     Connections{
-        target: likeActButton.buttArea
+        target: memeActionButton.buttArea
         onClicked: {
-            likeActLoader.active = true
+            //likeActLoader.active = true
             if(state == "general"){
-                User.forceMeme(name, 10, memePopValues[memePopValues.lenght - 1], category) ///// ДОДЕЛАТЬ КРЕАТИВНОСТЬ...
+                User.forceMeme(name, radioButtons.value, memePopValues[memePopValues.length - 1],
+                               category)
+                state = "mine"
+            }
+            else if(state == "mine"){
+                User.increaseLikesQuantity(name, radioButtons.value)
             }
         }
     }

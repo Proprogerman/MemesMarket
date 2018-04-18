@@ -11,6 +11,7 @@
         <file>MaterialButton.qml</file>
         <file>PageHeader.qml</file>
         <file>WaveIndicator.qml</file>
+        <file>Hamburger.qml</file>
     </qresource>
     <qresource prefix="/qml/pages">
         <file>MainUserPage.qml</file>

@@ -19,12 +19,5 @@ Item {
                 topMargin: height/4 }
             font.pixelSize: parent.height/2
         }
-
-        MouseArea{
-            anchors.fill: parent
-            onClicked:{
-                stackView.pop()
-            }
-        }
     }
 }

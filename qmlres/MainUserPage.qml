@@ -46,8 +46,9 @@ Page {
     }
 
     function updateMeme(meme_name, image_name, crsDir){
-        memeListModel.append({ "memeName": meme_name, "courseDirection": courseWithSign(crsDir),
-            "imageName": image_name, "image": "image://meme/" + image_name })
+        if(!findMeme(meme_name))
+            memeListModel.append({ "memeName": meme_name, "courseDirection": courseWithSign(crsDir),
+                "imageName": image_name, "image": "image://meme/" + image_name })
 
         console.log("update Meme: ", image_name)
     }
@@ -72,6 +73,14 @@ Page {
             if(memeListModel.get(i).memeName === meme_name){
                 memeListModel.remove(i)
             }
+    }
+
+    function findMeme(meme_name){
+        for(var i = 0; i < memeListModel.count; i++){
+            if(memeListModel.get(i).memeName === meme_name)
+                return true
+        }
+        return false
     }
 
     Connections{
@@ -108,12 +117,18 @@ Page {
         }
     }
 
+    Connections{
+        target: stackView
+        onCurrentItemChanged: {
+            if(stackView.currentItem.objectName == "mainUserPage"){
+                User.localUpdateUserData()
+            }
+        }
+    }
+
     Component.onCompleted:{
-        User.getMemeListOfUser()
         User.getUserData()
-        getMemeListTimer.start()
         getUserDataTimer.start()
-//        creativeInd.startAnimation()
     }
 
     Timer{
@@ -121,24 +136,11 @@ Page {
         interval: 10000
         repeat: true
         onTriggered:{
-            //memeListModel.clear()
             if(stackView.currentItem.objectName == "mainUserPage"){
-                console.log("GET MEME LIST TIMER")
+                console.log("GET USER DATA TIMER")
                 User.getUserData()
-            }
-        }
-    }
-
-    Timer{
-        id: getMemeListTimer
-        interval: 15000
-        repeat: true
-        onTriggered:{
-            //memeListModel.clear()
-            if(stackView.currentItem.objectName == "mainUserPage"){
-                console.log("GET MEME LIST TIMER")
-                User.getMemeListOfUser()
-//                User.getUserData()
+                if(!creativeInd.running)
+                    creativeInd.running = true
             }
         }
     }
@@ -184,86 +186,14 @@ Page {
         ]
     }
 
-    Item{
+    Hamburger{
         id: hamburger
         height: pageHeader.height / 4
         width: height * 3 / 2
         anchors{ left: slidingMenu.right; leftMargin: width; verticalCenter: pageHeader.verticalCenter }
-        z: pageHeader.z + 1
-
-        property int smallBarLength: width / 1.5
-        property int xOffsetBackBars: width / 2
-        property int startBar2Yposition: bar2.y
-
-        Rectangle{
-            id: bar1
-            color:"white"
-            width: parent.width
-            height: parent.height * 1/5
-            anchors.top: parent.top
-            antialiasing: true
-        }
-        Rectangle{
-            id: bar2
-            color:"white"
-            width: parent.width
-            height: parent.height * 1/5
-            anchors.top: bar1.bottom
-            anchors.topMargin: parent.height * 1/5
-            antialiasing: true
-        }
-        Rectangle{
-            id: bar3
-            color:"white"
-            width: parent.width
-            height: parent.height * 1/5
-            anchors.top: bar2.bottom
-            anchors.topMargin: parent.height * 1/5
-            antialiasing: true
-        }
-        state: "menu"
-
-        states:[
-            State{
-                name: "menu"
-            },
-            State{
-                name: "back"
-                PropertyChanges{ target: hamburger; rotation: 180;}
-                PropertyChanges{ target: bar1; rotation: 45; width: hamburger.smallBarLength;
-                    x: hamburger.xOffsetBackBars; y: hamburger.startBar2Yposition - 5}
-                PropertyChanges{ target: bar2}
-                PropertyChanges{ target: bar3; rotation: -45; width: hamburger.smallBarLength;
-                    x: hamburger.xOffsetBackBars; y: hamburger.startBar2Yposition + 5}
-                AnchorChanges{ target: bar1; anchors.top: undefined;}
-                AnchorChanges{ target: bar2; anchors.top: undefined;}
-                AnchorChanges{ target: bar3; anchors.top: undefined;}
-            }
-        ]
-
-        transitions:[
-            Transition{
-                PropertyAnimation{target: hamburger; property:"rotation"; duration: 260; easing.type: Easing.InOutQuad}
-                PropertyAnimation{target: bar1; properties:"rotation, width, x, y"; duration: 260; easing.type:Easing.InOutQuad}
-                PropertyAnimation{target: bar2; properties:"rotation"; duration: 260; easing.type:Easing.InOutQuad}
-                PropertyAnimation{target: bar3; properties:"rotation, width, x, y"; duration: 260; easing.type:Easing.InOutQuad}
-            }
-
-        ]
-
-        MouseArea{
-            anchors.fill: parent
-            onClicked:{
-                if(hamburger.state == "menu"){
-                    hamburger.state = "back"
-                    slidingMenu.show()
-                }
-                else if(hamburger.state == "back"){
-                    hamburger.state = "menu"
-                    slidingMenu.hide()
-                }
-            }
-        }
+        z: slidingMenu.z
+        onOpenAction: slidingMenu.show()
+        onBackAction: slidingMenu.hide()
     }
 
     Rectangle{
@@ -273,21 +203,12 @@ Page {
         color: backColor
     }
 
-    Rectangle{
+    PageHeader{
         id: pageHeader
         width: parent.width
-        height: parent.height * 1/10
-        anchors.top: parent.top
-        color: userPanel.color
+        height: parent.height / 10
+        headerText: User.user_name
         z: 7
-
-        Text{
-            id: groupName
-            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.top;
-                topMargin: height/4 }
-            text: User.user_name
-            font.pixelSize: parent.height/2
-        }
     }
 
 
@@ -581,9 +502,11 @@ Page {
             Rectangle{
                 id: unforceButton
                 width: memeImage.width
-                height: memeImage.height / 2
-                anchors{ left: memeImage.left; bottom: memeImage.bottom }
-                color: "#F06292"
+                height: memeImage.height
+                anchors.centerIn: memeImage
+                opacity: 0.5
+                radius: width
+                color: "#000000"
             }
 
             Text{

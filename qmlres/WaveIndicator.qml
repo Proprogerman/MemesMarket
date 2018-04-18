@@ -3,12 +3,7 @@ import QtGraphicalEffects 1.0
 
 Item {
     property int amount: 0
-    readonly property alias running: waveAnimation.running
-
-    onAmountChanged: {
-        if(!creativeInd.running)
-            waveAnimation.start()
-    }
+    property alias running: waveAnimation.running
 
     Rectangle{
         id: waveFrame
@@ -54,11 +49,12 @@ Item {
 
     PropertyAnimation{
         id: waveAnimation
-        target: wave;
-        property: "x";
+        target: wave
+        property: "x"
         from: waveFrame.x + waveFrame.width - wave.width
         to: waveFrame.x + waveFrame.width - wave.width / 2
         loops: Animation.Infinite
         duration: 650
+        running: false
     }
 }

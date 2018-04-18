@@ -10,18 +10,21 @@ class Meme
 {
 public:
     Meme();
-    Meme(QString memeName, QVector<int> memeValues, QString memeImageName);
+    Meme(QString memeName, QVector<int> memeValues, QString memeImageName, int memeStartPopValue = 0);
 
-    void setName(QString memeName);
-    void setPopValues(QVector<int> memePopValues);
+    void setName(const QString &memeName);
+    void setPopValues(const QVector<int> &memePopValues);
+    void setStartPopValue(const int &memeStartPopValue);
+
     QString getName();
     QVector<int> getPopValues();
     QString getImageName();
-    void updatePopValues(QVector<int> &newPopValues);
+    int getStartPopValue();
 private:
     QString name;
     QVector<int> popValues;
     QString imageName;
+    int startPopValue;
 };
 
 #endif // MEME_H
