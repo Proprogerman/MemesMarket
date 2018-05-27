@@ -16,6 +16,8 @@
 
 #include <QVector>
 
+#include <QTimer>
+
 #include "meme.h"
 
 class User: public QObject
@@ -36,14 +38,15 @@ public:
     int getShekels();
 
     Q_INVOKABLE void checkName(const QString &name);
-    Q_INVOKABLE void signUp();
+    Q_INVOKABLE void signUp(const QString &name, const QString &password);
+    Q_INVOKABLE void signIn(const QString &name, const QString &password);
     Q_INVOKABLE void getUserData();
     Q_INVOKABLE void setExistingMemeListWithCategory(const QString &category);
     Q_INVOKABLE void getMemeListWithCategory(const QString &category);
     Q_INVOKABLE void getMemeDataForUser(const QString &memeName);
     Q_INVOKABLE void getMemeData(const QString &memeName);
     Q_INVOKABLE void getMemesCategories();
-    Q_INVOKABLE void forceMeme(const QString &memeName, const int &endowedCreativity, const int &startPopValue,
+    Q_INVOKABLE void forceMeme(const QString &memeName, const int &contributedCreativity, const int &startPopValue,
                                const QString &category);
     Q_INVOKABLE void unforceMeme(const QString &memeName);
     Q_INVOKABLE void increaseLikesQuantity(const QString &memeName, const int &investedShekels);
@@ -71,11 +74,10 @@ public:
     static QObject* qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine);
 
 private:
-
     QString user_name;
     QString user_password;
     int pop_value = 0;
-    int creativity = 50;
+    int creativity = 9;
     int shekels = 0;
 
     QVector<Meme> memes;
@@ -85,19 +87,21 @@ private:
 
     QTcpSocket* clientSocket;
 signals:
-    void nameIsExist();
-    void nameIsCorrect();
+    void nameExist();
+    void nameDoesNotExist();
 
     void nameChanged();
     void popValueChanged();
     void creativityChanged();
     void shekelsChanged();
 
-    void memeForUserReceived(QString memeName, QString imageName, QVector<int> popValues, int startPopValue);
+    void memeForUserReceived(QString memeName, QString imageName, QVector<int> popValues, int startPopValue,
+                             double memeFeedbackRate, int memeCreativity);
     void memeImageReceived(QString memeName, QString imageName);
     void memeReceived(QString memeName, QString imageName, QVector<int> popValues);
     void memeWithCategoryReceived(QString memeName, QString imageName, QVector<int> popValues, QString category);
-    void memePopValuesForUserUpdated(QString memeName, QVector<int> popValues, int startPopValue);
+    void memePopValuesForUserUpdated(QString memeName, QVector<int> popValues, int startPopValue, double memeFeedbackRate,
+                                     int memeCreativity);
     void memePopValuesUpdated(QString memeName, QVector<int> popValues);
     void memePopValuesWithCategoryUpdated(QString memeName, QVector<int> popValues, QString category);
     void memesCategoriesReceived(QVariantList memesCategories);

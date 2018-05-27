@@ -4,6 +4,7 @@ import QtGraphicalEffects 1.0
 Item {
     property int amount: 0
     property alias running: waveAnimation.running
+    property alias itemColor: colorOverlay.color
 
     Rectangle{
         id: waveFrame
@@ -27,9 +28,9 @@ Item {
             }
         }
         ColorOverlay{
+            id: colorOverlay
             anchors.fill: wave
             source: wave
-            color: "#00BCD4"
         }
     }
 

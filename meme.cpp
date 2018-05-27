@@ -6,8 +6,10 @@ Meme::Meme()
 
 }
 
-Meme::Meme(QString memeName, QVector<int> memeValues, QString memeImageName, int memeStartPopValue): name(memeName),
-    popValues(memeValues), imageName(memeImageName), startPopValue(memeStartPopValue)
+Meme::Meme(QString memeName, QVector<int> memeValues, QString memeImageName, int memeStartPopValue,
+           double memeCreativity, double memeFeedbackRate):
+    name(memeName), popValues(memeValues), imageName(memeImageName),
+    startPopValue(memeStartPopValue), creativity(memeCreativity), feedbackRate(memeFeedbackRate)
 {
     qDebug() << "Meme constructor:\n" << "name: "<< name << "\npopValues:" << popValues;
 }
@@ -46,4 +48,14 @@ QString Meme::getImageName()
 int Meme::getStartPopValue()
 {
     return startPopValue;
+}
+
+int Meme::getCreativity()
+{
+    return creativity;
+}
+
+double Meme::getFeedbackRate()
+{
+    return feedbackRate;
 }

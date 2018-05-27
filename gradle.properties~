@@ -1,0 +1,6 @@
+systemProp.firebase_cpp_sdk.dir=C:/Development/firebase_cpp_sdk
+systemProp.ndk_dir=C:/Android/adt-bundle-windows-x86_64-20140702/sdk/ndk-bundle
+androidBuildToolsVersion=26.0.0
+androidCompileSdkVersion=23
+buildDir=.build
+qt5AndroidDir=C:/Qt/5.10.0/android_x86/src/android/java

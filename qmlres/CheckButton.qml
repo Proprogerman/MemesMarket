@@ -6,6 +6,7 @@ Item {
 
     property color checkedColor
     property color uncheckedColor
+    property bool uncheckWithTap: true
     property bool checked: false
     property alias buttArea: buttonArea
     property alias label: buttonLabel.text
@@ -27,7 +28,7 @@ Item {
     Text{
         id: buttonLabel
         anchors.centerIn: parent
-        font.pointSize: parent.height/4
+        font.pixelSize: parent.height/4
         horizontalAlignment: Text.alignCenter
         color: "#000000"
         z: 5
@@ -50,9 +51,12 @@ Item {
             Connections{
                 target: buttonArea
                 onPressed:{
-                    checked = checked ? false : true
                     wave.startX = target.mouseX
                     wave.startY = target.mouseY
+                    if(uncheckWithTap)
+                        checked = checked ? false : true
+                    else
+                        checked = true
                 }
             }
 

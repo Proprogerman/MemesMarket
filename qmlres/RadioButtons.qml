@@ -5,8 +5,8 @@ Item {
 
     property int value: 0
 
-    property color uncheckedColor
-    property color checkedColor
+    property color itemUncheckedColor
+    property color itemCheckedColor
     property color backgroundColor
     property int checkedItem
     property alias spacing: radioButtons.spacing
@@ -72,8 +72,8 @@ Item {
         CheckButton{
             id: butt1;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: "#90A4AE"
-            uncheckedColor: "#CFD8DC"
+            checkedColor: itemCheckedColor//"#90A4AE"
+            uncheckedColor: itemUncheckedColor//"#CFD8DC"
 
             Connections{
                 target: butt1.buttArea
@@ -87,13 +87,12 @@ Item {
         CheckButton{
             id: butt2;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: "#90A4AE"
-            uncheckedColor: "#CFD8DC"
+            checkedColor: itemCheckedColor//"#90A4AE"
+            uncheckedColor: itemUncheckedColor//"#CFD8DC"
 
             Connections{
                 target: butt2.buttArea
                 onReleased:{
-//                    butt2.checked = butt2.checked ? false : true
                     setButtonActive(butt2)
                     console.log("checkedItem: ", checkedItem)
                 }
@@ -103,13 +102,12 @@ Item {
         CheckButton{
             id: butt3;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: "#90A4AE"
-            uncheckedColor: "#CFD8DC"
+            checkedColor: itemCheckedColor//"#90A4AE"
+            uncheckedColor: itemUncheckedColor//"#CFD8DC"
 
             Connections{
                 target: butt3.buttArea
                 onReleased:{
-//                    butt3.checked = butt3.checked ? false : true
                     setButtonActive(butt3)
                     console.log("checkedItem: ", checkedItem)
                 }
@@ -119,13 +117,12 @@ Item {
         CheckButton{
             id: butt4;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: "#90A4AE"
-            uncheckedColor: "#CFD8DC"
+            checkedColor: itemCheckedColor//"#90A4AE"
+            uncheckedColor: itemUncheckedColor//"#CFD8DC"
 
             Connections{
                 target: butt4.buttArea
                 onReleased:{
-//                    butt4.checked = butt4.checked ? false : true
                     setButtonActive(butt4)
                     console.log("checkedItem: ", checkedItem)
                 }

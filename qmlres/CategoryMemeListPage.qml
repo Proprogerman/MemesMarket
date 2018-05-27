@@ -13,6 +13,8 @@ Page{
     property string pageCategory
     property var memesPopValues: []
 
+    property double weight: 0
+
     function updateMeme(meme_name, image_name){
         memeListModel.append({ "memeName": meme_name, "image": "image://meme/" + image_name })
 
@@ -125,6 +127,7 @@ Page{
                 text: memeName
                 anchors{ left: memeImage.right; top: parent.top }
             }
+
 //            Text{
 //                text: courseDirection
 //                anchors{ right: parent.right; verticalCenter: parent.verticalCenter }

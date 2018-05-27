@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1069112446532",
+    "firebase_url": "https://memesmarket-edbdc.firebaseio.com",
+    "project_id": "memesmarket-edbdc",
+    "storage_bucket": "memesmarket-edbdc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1069112446532:android:f1e2a44938a36b6c",
+        "android_client_info": {
+          "package_name": "com.KlimeSoft.MemesMarket"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1069112446532-epvnrbsd0eu73rg2i9693sd7pnn9d2fh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrWEINLRaYWZUdwB3zB-9HDCvvzAuXAXE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

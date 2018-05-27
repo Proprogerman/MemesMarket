@@ -7,6 +7,7 @@ Item {
     property alias color: button.color
     property alias rippleColor: ripple.color
     property alias label: buttonLabel.text
+    property alias labelSize: buttonLabel.font.pixelSize
     property alias radius: button.radius
     property alias buttArea: buttonArea
     property bool clickable
@@ -22,7 +23,6 @@ Item {
     Text{
         id: buttonLabel
         anchors.centerIn: button
-        font.pointSize: button.height/4
         horizontalAlignment: Text.AlignHCenter
     }
 

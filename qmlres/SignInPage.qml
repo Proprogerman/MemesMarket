@@ -11,25 +11,79 @@ import "qrc:/qml/elements"
 Page{
     id:signInPage
 
+    objectName: "signInPage"
+
     property color mainColor: "#507299"
     property color backColor: "#78909C"
     property color dataColor: "#CFD8DC"
     property color errColor: "#F8BBD0"
 
+    property string mode: "signUp"
+
     Connections{
-        target:User
-        onNameIsExist: { nameOfGroup.state = indicateZone.state = "nameIsExistState" }
-        onNameIsCorrect: { nameOfGroup.state = indicateZone.state = "nameIsValidState" }
+        target: User
+        onNameExist: { nameOfGroup.state = indicateZone.state = "nameExistState" }
+        onNameDoesNotExist: { nameOfGroup.state = indicateZone.state = "nameDoesNotExistState" }
+    }
+
+    Timer{
+        id: timer
+        interval: 3000
+        repeat: false
+        onTriggered: {
+            signInPage.state = signInPage.state == "hidden" ? "normal" : "hidden"
+        }
+    }
+    Component.onCompleted: {
+        timer.start()
+    }
+
+    onModeChanged: {
+        signUpButtonCheck()
     }
 
     property string indicateMessage
 
     function signUpButtonCheck(){
-        if(nameOfGroup.state == "nameIsValidState" && password.state == "passwordIsOkState")
-            signUpButton.clickable = true
-        else
-            signUpButton.clickable = false
+        if(mode == "signUp"){
+            if(nameOfGroup.state == "nameDoesNotExistState" && password.state == "passwordIsOkState")
+                signUpButton.clickable = true
+            else
+                signUpButton.clickable = false
+        }
+        else{
+            if(nameOfGroup.state == "nameExistState" && password.state == "passwordIsOkState")
+                signUpButton.clickable = true
+            else
+                signUpButton.clickable = false
+        }
     }
+
+    states: [
+        State{
+            name: "normal"
+            AnchorChanges{ target: dataSheet; anchors.top: indicateZone.bottom }
+            PropertyChanges{ target: dataSheetShadow; opacity: 0.35 }
+            StateChangeScript{ name: "activeFocusChange"; script: nameInputRow.forceActiveFocus() }
+        },
+        State{
+            name: "hidden"
+            AnchorChanges{ target: dataSheet; anchors.top: background.bottom }
+            PropertyChanges{ target: dataSheetShadow; opacity: 0.0 }
+        }
+    ]
+
+    transitions: Transition{
+        SequentialAnimation{
+            ParallelAnimation{
+                AnchorAnimation{ duration: 750; easing.type: Easing.OutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
+                PropertyAnimation{ property: "opacity"; duration: 750; easing.type: Easing.OutElastic }
+            }
+            ScriptAction{ scriptName: "activeFocusChange" }
+        }
+    }
+
+    state: "hidden"
 
     Rectangle{
         id: background
@@ -42,7 +96,7 @@ Page{
         width: background.width; height: background.height * 1/3
         anchors.top: background.top
         z: -1
-        state:"inputNameState"
+        state: "nameInputState"
 
         Text{
             id: indicateMessage
@@ -62,91 +116,81 @@ Page{
 
         states: [
             State{
-                name:"nameInputState"
-                PropertyChanges{ target: indicateMessage;  text: "Придумайте название группы" }
+                name: "nameInputState"
+                PropertyChanges{ target: indicateMessage;  text: mode == "signUp" ? "Придумайте название группы" :
+                                                                                    "Введите название группы" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
-                PropertyChanges{ target: indicateZone; currentStateKey: "name" }
             },
             State{
-                name:"nameIsValidState"
-                PropertyChanges{ target: indicateMessage; text: "Название доступно" }
+                name: "nameDoesNotExistState"
+                PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название доступно" :
+                                                                                    "Такого имени нет" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
-                PropertyChanges{ target: indicateZone; currentStateKey: "name" }
             },
             State{
-                name:"nameIsExistState"
-                PropertyChanges{ target: indicateMessage; text: "Имя занято, придумайте другое" }
+                name: "nameExistState"
+                PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название занято, придумайте другое" :
+                                                                                   "Такое имя есть" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
-                PropertyChanges{ target: indicateZone; currentStateKey: "name" }
             },
-
             State{
-              name:"passwordInputState"
+              name: "passwordInputState"
               PropertyChanges{ target: indicateMessage; text: "Придумайте пароль" }
               PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
-              PropertyChanges{ target: indicateZone; currentStateKey: "password" }
             },
-
             State{
-                name:"passwordIsOkState"
+                name: "passwordIsOkState"
                 PropertyChanges{ target: indicateMessage; text: "Пароль удовлетворяет требованиям" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
-                PropertyChanges{ target: indicateZone; currentStateKey: "password" }
             },
-
             State{
-                name:"passwordHasFewerCharsState"
+                name: "passwordHasFewerCharsState"
                 PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
-                PropertyChanges{ target: indicateZone; currentStateKey: "password" }
             }
         ]
-
-        property string currentStateKey
-        property string currentNameState: "nameInputState"
-        property string currentPasswordState: "passwordInputState"
-
-//        onStateChanged: {
-//            if(currentStateKey == "name")
-//                currentNameState = state
-//            if(currentStateKey == "password")
-//                currentPasswordState = state
-//        }
     }
 
     Rectangle{
         id: dataSheet
-        width: background.width; height: background.height * 2/3
-        anchors.bottom: background.bottom
+        width: background.width; height: background.height /** 2/3*/
+//        anchors.bottom: background.bottom
         color: dataColor
 
         Rectangle{
             id: nameOfGroup
             width: parent.width; height: nameInputRow.height * 2
             anchors.top: parent.top
-            color:"#edeef0"
+            color: "#edeef0"
 
             states:[
                 State{
-                    name: "nameIsValidState"
-                    PropertyChanges{ target: nameOfGroup; color: mainColor }
+                    name: "nameInputState"
+                    PropertyChanges{ target: nameOfGroup; color: "#edeef0" }
                 },
                 State{
-                    name: "nameIsExistState"
-                    PropertyChanges{ target: nameOfGroup; color: errColor }
+                    name: "nameDoesNotExistState"
+                    PropertyChanges{ target: nameOfGroup; color: mode == "signUp" ? mainColor : errColor }
+                },
+                State{
+                    name: "nameExistState"
+                    PropertyChanges{ target: nameOfGroup; color: mode == "signUp" ? errColor : mainColor }
                 }
             ]
+            state: "nameInputState"
 
-//            onStateChanged:{ indicateZone.currentNameState = state }
+            onStateChanged: {
+                signUpButtonCheck()
+            }
 
             TextField{
                 id: nameInputRow
                 width: parent.width * 3/4; height: width * 1/7;
                 anchors.centerIn: parent
                 //radius: height * 1/4
-                font.family:"Roboto"
+                font.family: "Roboto"
                 font.pixelSize: height * 1/2
-                placeholderText:"Название группы"
+                placeholderText: "Название группы"
                 maximumLength: 16
                 validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
                 property color backgroundColor: "#ffffff"
@@ -163,22 +207,23 @@ Page{
                     running: false
                     repeat: false
                     onTriggered:{
-                        if(nameInputRow.getText(0,nameInputRow.length) != '')
-                            User.checkName( nameInputRow.getText(0, nameInputRow.length) )
-                            signUpButtonCheck()
+                        if(nameInputRow.getText(0, nameInputRow.length) !== '')
+                            User.checkName(nameInputRow.getText(0, nameInputRow.length))
                         }
                 }
 
                 onActiveFocusChanged: {
                     if(activeFocus == true){
-                        indicateZone.state = indicateZone.currentNameState
+                        indicateZone.state = nameOfGroup.state
                         backgroundColor = "lightgrey"
                     }
                     else
                         backgroundColor = "#ffffff"
                     }
                 onTextChanged:{
-                    submitTimer.start()
+                    nameOfGroup.state = indicateZone.state = "nameInputState"
+                    if(nameInputRow.getText(0, nameInputRow.length) !== '')
+                        submitTimer.start()
                 }
             }
         }
@@ -188,9 +233,13 @@ Page{
             width: parent.width; height: nameInputRow.height * 2
             anchors.top: nameOfGroup.bottom
             anchors.topMargin: height * 1/20
-            color:"#edeef0"
+            color: "#edeef0"
 
             states:[
+                State{
+                    name: "passwordInputState"
+                    PropertyChanges{ target: password; color: "#edeef0" }
+                },
                 State{
                     name:"passwordIsOkState"
                     PropertyChanges{ target: password; color: mainColor }
@@ -200,8 +249,11 @@ Page{
                     PropertyChanges{ target:password; color: errColor }
                 }
             ]
+            state: "passwordInputState"
 
-//            onStateChanged: { indicateZone.currentPasswordState = state }
+            onStateChanged: {
+                signUpButtonCheck()
+            }
 
             TextField{
                 id: passwordInputRow
@@ -218,13 +270,13 @@ Page{
 
                 background: Rectangle{
                     anchors.fill: parent
-                    radius: parent.height/2
+                    radius: Math.ceil(parent.height / 2)
                     color: parent.backgroundColor
                 }
 
                 onActiveFocusChanged: {
                     if(activeFocus == true){
-                        indicateZone.state = indicateZone.currentPasswordState
+                        indicateZone.state = password.state
                         backgroundColor = "lightgrey"
                     }
                     else
@@ -232,21 +284,18 @@ Page{
                 }
                 onTextChanged:{
                     if(length < 6){
-                        password.color = errColor
-                        password.state = indicateZone.state = "passwordHasFewerCharsState"
+                        if(length === 0)
+                            password.state = indicateZone.state = "passwordInputState"
+                        else{
+                            password.color = errColor
+                            password.state = indicateZone.state = "passwordHasFewerCharsState"
+                        }
                     }
                     else{
                         password.color = mainColor
                         password.state = indicateZone.state = "passwordIsOkState"
                     }
-                    signUpButtonCheck()
                 }
-
-//                Rectangle{
-//                    //property alias backgroundColor: color
-//                    anchors.fill: parent
-//                    radius: height/2
-//                }
 
                 Rectangle{
                     id: passwordVis
@@ -256,7 +305,7 @@ Page{
 
                     height: parent.height; width: height
                     anchors{right: parent.right; top: parent.top}
-                    radius: passwordInputRow.height/2
+                    radius: Math.ceil(passwordInputRow.height / 2)
                     color: inactiveColor
                     Rectangle{
                         height: parent.height; width: height * 1/2
@@ -279,11 +328,14 @@ Page{
                 }
             }
         }
+
         MaterialButton{
             id: signUpButton
-            width: password.width/1.5; height: password.height/1.5
+//            width: password.width/1.5; height: password.height/1.5
+            width: password.width; height: password.height
             anchors{ top: password.bottom; topMargin: height/20; horizontalCenter: parent.horizontalCenter }
-            label: "создать"
+            label: mode == "signUp" ? "создать" : "войти"
+            labelSize: height / 4
             radius: height/10
             clickableColor: mainColor
             unclickableColor: dataColor
@@ -294,27 +346,82 @@ Page{
                 target: signUpButton.buttArea
                 onClicked:{
                     console.log("signUpButton")
-                    User.user_name = nameInputRow.getText(0, nameInputRow.length)
-                    User.user_password = passwordInputRow.getText(0, passwordInputRow.length)
 
-                    User.signUp()
+                    if(mode == "signUp"){
+                        User.signUp(nameInputRow.getText(0, nameInputRow.length),
+                                    passwordInputRow.getText(0, passwordInputRow.length))
+                    }
+                    else{
+                        User.signIn(nameInputRow.getText(0, nameInputRow.length),
+                                    passwordInputRow.getText(0, passwordInputRow.length))
+                    }
 
-                    User.getMemeList()
+//                    User.getUserData()
 
                     stackView.push(mainUserPage)
                 }
             }
         }
+
+        Row{
+            height: nameOfGroup.height / 2
+            width: nameOfGroup.width / 2
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: signUpButton.bottom
+            anchors.topMargin: height / 10
+            CheckButton{
+                id: signUpToggle
+                label: "создать"
+                height: parent.height
+                width: parent.width / 2
+                checkedColor: "#90A4AE"
+                uncheckedColor: "#CFD8DC"
+                checked: true
+                uncheckWithTap: false
+                onCheckedChanged: {
+                    if(checked){
+                        signInToggle.checked = false
+                        mode = "signUp"
+                    }
+                }
+            }
+            CheckButton{
+                id: signInToggle
+                label: "войти"
+                height: parent.height
+                width: parent.width / 2
+                checkedColor: "#90A4AE"
+                uncheckedColor: "#CFD8DC"
+                uncheckWithTap: false
+                onCheckedChanged: {
+                    if(checked){
+                        signUpToggle.checked = false
+                        mode = "signIn"
+                    }
+                }
+            }
+        }
     }
+
+    Rectangle{
+        id: shadowPlot
+        width: dataSheet.width * 2
+        height: dataSheet.height
+        anchors.centerIn: dataSheet
+        visible: false
+    }
+
     DropShadow{
-        anchors.fill: dataSheet
+        id: dataSheetShadow
+        anchors.fill: shadowPlot
         horizontalOffset: 0
-        verticalOffset: - indicateZone.height * 1/10
-        radius: 20
-        samples: 41
-        color:"#80000000"
-        source: dataSheet
-        opacity: 0.5
+        verticalOffset: - Math.ceil(indicateZone.height / 10)
+        radius: Math.abs(Math.ceil(verticalOffset / 2))
+        samples: radius * 2 + 1
+        color: "#000000"//"#80000000"
+        source: shadowPlot
+        cached: true
+        z: dataSheet.z - 1
     }
 
 }

@@ -4,6 +4,8 @@ import QtGraphicalEffects 1.0
 
 import KlimeSoft.SingletonUser 1.0
 
+import QtFirebase 1.0
+
 import "qrc:/qml/elements"
 
 Page {
@@ -22,6 +24,8 @@ Page {
     property var startPopValues: []
 
     property string directionFormat
+
+    property Item slidingMenu
 
 
     function valueToShort(value){
@@ -45,17 +49,20 @@ Page {
         return directionFormat
     }
 
-    function updateMeme(meme_name, image_name, crsDir){
-        if(!findMeme(meme_name))
-            memeListModel.append({ "memeName": meme_name, "courseDirection": courseWithSign(crsDir),
-                "imageName": image_name, "image": "image://meme/" + image_name })
+    function updateMeme(meme_name, image_name, crsDir, /*memeFeedbackRate,*/ memeCreativity){
+        if(!findMeme(meme_name)){
+            memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
+                                   "imageNameText": image_name, "image": "image://meme/" + image_name,
+                                   /*"memeFeedbackRateText": memeFeedbackRate,*/ "memeCreativityText": memeCreativity
+                                 })
+        }
 
         console.log("update Meme: ", image_name)
     }
 
     function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeName === meme_name){
+            if(memeListModel.get(i).memeNameText === meme_name){
                 memeListModel.setProperty(i, "image", " ")
                 memeListModel.setProperty(i, "image", "image://meme/" + image_name)
             }
@@ -63,21 +70,21 @@ Page {
 
     function updatePopValues(meme_name, crsDir){
         for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeName === meme_name){
-                memeListModel.setProperty(i, "courseDirection", courseWithSign(crsDir))
+            if(memeListModel.get(i).memeNameText === meme_name){
+                memeListModel.setProperty(i, "courseDirectionText", courseWithSign(crsDir))
             }
     }
 
     function unforceMeme(meme_name){
         for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeName === meme_name){
+            if(memeListModel.get(i).memeNameText === meme_name){
                 memeListModel.remove(i)
             }
     }
 
     function findMeme(meme_name){
         for(var i = 0; i < memeListModel.count; i++){
-            if(memeListModel.get(i).memeName === meme_name)
+            if(memeListModel.get(i).memeNameText === meme_name)
                 return true
         }
         return false
@@ -86,14 +93,16 @@ Page {
     Connections{
         target: User
         onMemeForUserReceived:{
-            var crsDir = popValues[popValues.length - 1] - startPopValue
-            updateMeme(memeName, imageName, crsDir, startPopValue)
+            var crsDir = Math.ceil(popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100))/*memeFeedbackRate*/ - startPopValue)
+            console.log("startPopValue: ", startPopValue, "currentValue: ", popValues[popValues.length - 1], "creativity: ", parseFloat(memeCreativity / 100))
+            updateMeme(memeName, imageName, crsDir, /*memeFeedbackRate,*/ memeCreativity)
             memesPopValues[memeName] = popValues
             startPopValues[memeName] = startPopValue
             console.log("startPopValue: ", startPopValue)
         }
         onMemePopValuesForUserUpdated:{
-            var crsDir = popValues[popValues.length - 1] - startPopValue
+            var crsDir = Math.ceil(popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100))/*memeFeedbackRate*/ - startPopValue)
+            console.log("startPopValue: ", startPopValue, "currentValue: ", popValues[popValues.length - 1], "creativity: ", parseFloat(memeCreativity / 100))
             updatePopValues(memeName, crsDir, startPopValue)
             memesPopValues[memeName] = popValues
             startPopValues[memeName] = startPopValue
@@ -136,65 +145,55 @@ Page {
         interval: 10000
         repeat: true
         onTriggered:{
-            if(stackView.currentItem.objectName == "mainUserPage"){
+//            if(stackView.currentItem.objectName == "mainUserPage"){
                 console.log("GET USER DATA TIMER")
                 User.getUserData()
                 if(!creativeInd.running)
                     creativeInd.running = true
-            }
+//            }
         }
     }
 
-    SlidingMenu{
-        id: slidingMenu
-        onOpenChanged: {
-            hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
-        }
-        data:[
-            Column{
-                width: parent.width
-                height: parent.height
-                Image{
-                    id: bigAvatar
-                    source: "qrc:/photo/sexyPhoto.jpg"
-                    width: parent.width
-                    height: width
-                    sourceSize.height: height
-                    sourceSize.width: width
-                }
+//    SlidingMenu{
+//        id: slidingMenu
+//        onOpenChanged: {
+//            hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
+//        }
+//        itemData:[
+//            Column{
+//                width: parent.width
+//                height: parent.height
+//                Image{
+//                    id: bigAvatar
+//                    source: "qrc:/photo/sexyPhoto.jpg"
+//                    width: parent.width
+//                    height: width
+//                    sourceSize.height: height
+//                    sourceSize.width: width
+//                }
 
-                Rectangle{
-                    id: memesExchange
-                    width: parent.width
-                    height: parent.height / 10
-                    color: "lightgrey"
-                    Text{
-                        text:"Биржа мемов"
-                        font.pixelSize: parent.height / 3
-                        anchors.centerIn: parent
-                    }
-                    MouseArea{
-                        anchors.fill: parent
-                        onClicked:{
-                            User.getMemesCategories()
-                            stackView.push(rialtoPage)
-                            slidingMenu.hide()
-                        }
-                    }
-                }
-            }
-        ]
-    }
-
-    Hamburger{
-        id: hamburger
-        height: pageHeader.height / 4
-        width: height * 3 / 2
-        anchors{ left: slidingMenu.right; leftMargin: width; verticalCenter: pageHeader.verticalCenter }
-        z: slidingMenu.z
-        onOpenAction: slidingMenu.show()
-        onBackAction: slidingMenu.hide()
-    }
+//                Rectangle{
+//                    id: memesExchange
+//                    width: parent.width
+//                    height: parent.height / 10
+//                    color: "lightgrey"
+//                    Text{
+//                        text:"Биржа мемов"
+//                        font.pixelSize: parent.height / 3
+//                        anchors.centerIn: parent
+//                    }
+//                    MouseArea{
+//                        anchors.fill: parent
+//                        onClicked:{
+//                            User.getMemesCategories()
+//                            stackView.push(rialtoPage)
+//                            slidingMenu.hide()
+//                        }
+//                    }
+//                }
+//            }
+//        ]
+//    }
 
     Rectangle{
         id:background
@@ -220,7 +219,7 @@ Page {
         color:"#000000"
         source: pageHeader
         opacity: 0.5
-        z: pageHeader.z - 1
+        z: avatarMask.z + 1/*pageHeader.z - 1*/
     }
 
     Rectangle{
@@ -251,7 +250,7 @@ Page {
     Image {
         id: avatar
         visible:false
-        width: userPanel.width * 1/3
+        width: Math.ceil(userPanel.height * 0.95)/*userPanel.width * 1/3*/
         height: width
         x: userPanel.x + (userPanel.width - width) / 2
         y: userPanel.y + (userPanel.height - height) / 2
@@ -399,14 +398,14 @@ Page {
     /////////////////////////////////////////////////////////////////////////
     Rectangle{
         id: moneyInd
-        width: (avatar.height * 1/2)
+        width: (avatar.height * 1 / 2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.left: avatar.right
-        anchors.leftMargin: width * 1/2
+        anchors.leftMargin: width * 1 / 2
         z: userPanel.z + 1
-        color:"gold"
-        radius: width/2
+        color: "#fdd835"
+        radius: width / 2
         Text{
             id: moneyLabel
             anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
@@ -436,12 +435,13 @@ Page {
 //    }
     WaveIndicator{
         id: creativeInd
-        width: (avatar.height * 1/2)
+        width: (avatar.height * 1 / 2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.right: avatar.left
-        anchors.rightMargin: width * 1/2
+        anchors.rightMargin: width * 1 / 2
         z: userPanel.z + 1
+        itemColor: "#00BCD4"
 
         amount: userCreativity
         Text{
@@ -510,11 +510,13 @@ Page {
             }
 
             Text{
-                text: memeName
+                id: memeNameLabel
+                text: memeNameText
                 anchors{ left: memeImage.right; top: parent.top }
             }
             Text{
-                text: courseDirection
+                id: courseDirectionLabel
+                text: courseDirectionText
                 anchors{ right: parent.right; verticalCenter: parent.verticalCenter }
 
                 onTextChanged:{
@@ -526,18 +528,30 @@ Page {
                     }
                 }
             }
+            Text{
+                id: memeCreativityLabel
+                text: memeCreativityText
+                anchors{ top: courseDirectionLabel.bottom; right: parent.right }
+                color: "#00BCD4"
+            }
+//            Text{
+//                text: memeFeedbackRateText
+//                anchors{ top: memeCreativityLabel.bottom; right: parent.right }
+//                color: "#000000"
+//            }
 
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
-                    stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
-                        memePopValues: memesPopValues[memeName], memeStartPopValue: startPopValues[memeName] }})
+                    stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
+                                    memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
+                                    memeCreativity: Number(memeCreativityText)/*, memeFeedbackRate: parseFloat(memeFeedbackRateText)*/}})
                 }
             }
             MouseArea{
                 anchors.fill: unforceButton
                 onClicked:{
-                    User.unforceMeme(memeName)
+                    User.unforceMeme(memeNameText)
                 }
             }
         }
@@ -576,5 +590,53 @@ Page {
 //            courseDirection: 100
 //            imageName: "exactlyMeme.jpg"
 //        }
+    }
+
+    AdMobRewardedVideoAd {
+        id: rewardedVideoAd
+
+        adUnitId: "ca-app-pub-3940256099942544/5224354917"
+//            Qt.platform.os == "android" ? "ca-app-pub-6606648560678905/5628948780" : "ca-app-pub-6606648560678905/2850564595"
+
+        onReadyChanged: if(ready) load()
+
+        onClosed: load()
+
+        request: AdMobRequest {
+            gender: AdMob.GenderUnknown
+            childDirectedTreatment: AdMob.ChildDirectedTreatmentUnknown
+
+            // NOTE remember JS Date months are 0 based
+            // 8th of December 1979:
+            birthday: new Date(1979,11,8)
+
+            keywords: [
+                "Qt",
+                "Firebase"
+            ]
+
+            extras: [
+                { "something_extra1": "extra_stuff1" },
+                { "something_extra2": "extra_stuff2" }
+            ]
+        }
+
+        onError: {
+            App.log("RewardedVideoAd failed with error code",code,"and message",message)
+
+            // See AdMob.Error* enums
+            if(code === AdMob.ErrorNetworkError)
+                App.log("No network available");
+        }
+
+        onPresentationStateChanged: {
+            if(state === AdMobRewardedVideoAd.PresentationStateHidden)
+                App.log("AdMobRewardedVideoAd","::onPresentationStateChanged","PresentationStateHidden")
+            if(state === AdMobRewardedVideoAd.PresentationStateCoveringUI)
+                App.log("AdMobRewardedVideoAd","::onPresentationStateChanged","PresentationStateCoveringUI");
+        }
+        onLoading: {
+            showFullScreen()
+        }
     }
 }

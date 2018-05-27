@@ -4,10 +4,10 @@ Rectangle {
     id: panel
 
     property bool open: false
+    property alias active: mouse.enabled
     property int position: Qt.LeftEdge
     property Item visualParent: parent
 
-    // The fraction showing how open the drawer is
     readonly property real panelProgress:  (panel.x - _minimumX) / (_maximumX - _minimumX)
 
     function show() { open = true; }
@@ -19,7 +19,7 @@ Rectangle {
     }
 
 
-    default property alias data: contentItem.data
+    default property alias itemData: contentItem.data
     readonly property real expandedFraction: 0.78
     readonly property real _scaleFactor: _rootItem.width / 320
     readonly property int _pullThreshold: panel.width/2
@@ -30,7 +30,7 @@ Rectangle {
     readonly property bool _rightEdge: position === Qt.RightEdge
     readonly property int _minimumX:  _rightEdge ?  _rootItem.width - panel.width : -panel.width
     readonly property int _maximumX: _rightEdge ? _rootItem.width : 0
-    readonly property int _openMarginSize: 20 * _scaleFactor
+    readonly property int _openMarginSize: 10 * _scaleFactor
 
     property real _velocity: 0
     property real _oldMouseX: -1
