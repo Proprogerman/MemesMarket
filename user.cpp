@@ -5,21 +5,28 @@
 #include <QByteArray>
 #include <QThread>
 
+#include <QCryptographicHash>
+
 #include <QImage>
 
 #include "user.h"
 #include "independentconnection.h"
 
 
-User::User(QObject *parent): QObject(parent)
-{                                                 // while testing
+User::User(QObject *parent): QObject(parent), settings(new QSettings())
+{
+    if(!settings->value("user/name").toString().isEmpty())
+        user_name = settings->value("user/name").toString();
     clientSocket = new QTcpSocket();
     clientSocket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 //    clientSocket->connectToHost("10.0.3.2", 1234);
     clientSocket->connectToHost("127.0.0.1", 1234);
+//    clientSocket->connectToHost("185.26.120.243", 131);
 
     connect(clientSocket, &QTcpSocket::readyRead, this, &User::onReadyRead);
     connect(clientSocket, &QTcpSocket::disconnected, this, &User::onDisconnected);
+    connect(this, &User::signInAnswered, this, &User::storeUserSettings);
+    connect(this, &User::signUpAnswered, this, &User::storeUserSettings);
 }
 
 void User::checkName(const QString &name){
@@ -40,7 +47,7 @@ void User::setName(const QString &name){
 }
 
 void User::setPassword(const QString &password){
-    user_password = password;
+//    user_password = password;
 }
 
 void User::setUserData(const QJsonObject &userData)
@@ -209,6 +216,13 @@ void User::setMemeData(const QJsonObject &obj)
     qDebug()<<"MEME VALUES:::::::::::::::::::::::::::: " << memeValues << "::::::" << tempPop;
 }
 
+void User::setUsersRating(const QJsonArray &userList, const int &userRating)
+{
+    emit usersRatingReceived(userList.toVariantList(), userRating);
+}
+
+
+
 bool User::findCategoryMeme(const QString &name, const QString &category){
     foreach(Meme memeCont, memesWithCategory[category]){
         if(memeCont.getName() == name)
@@ -217,32 +231,75 @@ bool User::findCategoryMeme(const QString &name, const QString &category){
     return false;
 }
 
+QString User::hashPassword(const QString &password, const QString &login){
+    QByteArray passwordHash = QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Sha224);
+
+    for(int i = 0; i < 4; i++){
+        passwordHash = QCryptographicHash::hash(login.toUtf8() + passwordHash, QCryptographicHash::Sha224);
+        qDebug()<<"HASH: "<<passwordHash;
+    }
+
+    return QString::fromStdString(passwordHash.toHex().toStdString());
+}
+
 void User::signUp(const QString &name, const QString &password)
 {
     if(clientSocket->waitForConnected(3000)){
+        passwordHash = hashPassword(password, name);
 
         QJsonObject jsonObj {
                                 {"requestType", "signUp"},
                                 {"user_name", name},
-                                {"user_password", password}
+                                {"passwordHash", passwordHash}
                             };
 
         clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
         clientSocket->flush();
     }
-    setName(name);
-    setPassword(password);
 }
 
 void User::signIn(const QString &name, const QString &password)
 {
     if(clientSocket->waitForConnected(3000)){
+        passwordHash = hashPassword(password, name);
 
         QJsonObject jsonObj {
                                 {"requestType", "signIn"},
                                 {"user_name", name},
-                                {"user_password", password}
+                                {"passwordHash", passwordHash}
                             };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->flush();
+    }
+}
+
+void User::autoSignIn()
+{
+    if(clientSocket->waitForConnected(3000)){
+        passwordHash = settings->value("user/passwordHash").toString();
+
+        QJsonObject jsonObj {
+                                {"requestType", "signIn"},
+                                {"user_name", settings->value("user/name").toString()},
+                                {"passwordHash", settings->value("user/passwordHash").toString()}
+                            };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->flush();
+    }
+}
+
+void User::signOut()
+{
+    settings->setValue("user/name", "");
+    settings->setValue("user/passwordHash", "");
+    settings->sync();
+    if(clientSocket->waitForConnected(3000)){
+        QJsonObject jsonObj {
+                                {"requestType", "signOut"},
+                                {"user_name", user_name}
+        };
 
         clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
         clientSocket->flush();
@@ -285,12 +342,20 @@ void User::onDisconnected(){
     clientSocket->deleteLater();
 }
 
+void User::storeUserSettings(QString name, bool isSigned){
+    if(isSigned){
+        settings->setValue("user/name", name);
+        settings->setValue("user/passwordHash", passwordHash);
+        settings->sync();
+    }
+}
+
 QString User::getName(){
     return user_name;
 }
 
 QString User::getPassword(){
-    return user_password;
+//    return user_password;
 }
 
 int User::getUserPopValue(){
@@ -322,6 +387,12 @@ void User::processingResponse(QJsonObject &jsonObj)
             emit nameExist();
         }
     }
+    else if(responseType == "signUpResponse"){
+        emit signUpAnswered(jsonObj["user_name"].toString(), jsonObj["created"].toBool());
+    }
+    else if(responseType == "signInResponse"){
+        emit signInAnswered(jsonObj["user_name"].toString(), jsonObj["accessed"].toBool());
+    }
     else if(responseType == "getUserDataResponse"){
         setUserData(jsonObj);
     }
@@ -341,6 +412,10 @@ void User::processingResponse(QJsonObject &jsonObj)
     else if(responseType == "getMemesCategoriesResponse"){
         categories = jsonObj["categories"].toArray().toVariantList();
         emit memesCategoriesReceived(categories);
+    }
+    else if(responseType == "getUsersRatingResponse"){
+        qDebug()<<"getUsersRatingResponse";
+        setUsersRating(jsonObj["usersList"].toArray(), jsonObj["user_rating"].toInt());
     }
 }
 
@@ -432,12 +507,24 @@ void User::getMemeData(const QString &memeName)
 
 void User::getMemesCategories()
 {
-    qDebug() << "get categories";
-
     if(clientSocket->waitForConnected(3000)){
 
         QJsonObject jsonObj {
                                 {"requestType", "getMemesCategories"}
+                            };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->flush();
+    }
+}
+
+void User::getUsersRating()
+{
+    if(clientSocket->waitForConnected(3000)){
+
+        QJsonObject jsonObj {
+                                {"requestType", "getUsersRating"},
+                                {"user_name", user_name}
                             };
 
         clientSocket->write(QJsonDocument(jsonObj).toBinaryData());

@@ -16,24 +16,55 @@ Page{
     property color mainColor: "#507299"
     property color backColor: "#78909C"
     property color dataColor: "#CFD8DC"
-    property color errColor: "#F8BBD0"
+    property color errColor: "#EA7171"//"#F8BBD0"
 
     property string mode: "signUp"
+
+    property alias backgroundColor: background.color
 
     Connections{
         target: User
         onNameExist: { nameOfGroup.state = indicateZone.state = "nameExistState" }
         onNameDoesNotExist: { nameOfGroup.state = indicateZone.state = "nameDoesNotExistState" }
+        onSignUpAnswered: {
+            console.log("created: ", created, " name: ", name)
+            if(name === nameInputRow.getText(0, nameInputRow.length)){
+                if(created){
+                    User.user_name = name
+                    stackView.push(mainUserPage)
+                }
+                else{
+                    console.log("не создано")
+                    signInPage.state = "normal"
+                }
+            }
+        }
+
+        onSignInAnswered: {
+            console.log("accessed: ", accessed, " name: ", name)
+            if(name === nameInputRow.getText(0, nameInputRow.length)){
+                if(accessed){
+                    console.log("вход выполнен")
+                    User.user_name = name
+                    stackView.push(mainUserPage)
+                }
+                else{
+                    console.log("вход не выполнен")
+                    signInPage.state = "normal"
+                }
+            }
+        }
     }
 
     Timer{
         id: timer
-        interval: 3000
+        interval: 1
         repeat: false
         onTriggered: {
-            signInPage.state = signInPage.state == "hidden" ? "normal" : "hidden"
+            signInPage.state = "normal"
         }
     }
+
     Component.onCompleted: {
         timer.start()
     }
@@ -64,20 +95,23 @@ Page{
             name: "normal"
             AnchorChanges{ target: dataSheet; anchors.top: indicateZone.bottom }
             PropertyChanges{ target: dataSheetShadow; opacity: 0.35 }
+            PropertyChanges{ target: indicateZone; visible: true }
             StateChangeScript{ name: "activeFocusChange"; script: nameInputRow.forceActiveFocus() }
         },
         State{
             name: "hidden"
             AnchorChanges{ target: dataSheet; anchors.top: background.bottom }
             PropertyChanges{ target: dataSheetShadow; opacity: 0.0 }
+            PropertyChanges{ target: indicateZone; visible: false}
         }
     ]
 
     transitions: Transition{
         SequentialAnimation{
             ParallelAnimation{
-                AnchorAnimation{ duration: 750; easing.type: Easing.OutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
-                PropertyAnimation{ property: "opacity"; duration: 750; easing.type: Easing.OutElastic }
+                AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
+                PropertyAnimation{ property: "opacity"; duration: 750; easing.type: Easing.InOutElastic }
+                PropertyAnimation{ property: "visible"; duration: signInPage.state == "hidden" ? 0 : 750 }
             }
             ScriptAction{ scriptName: "activeFocusChange" }
         }
@@ -119,23 +153,26 @@ Page{
                 name: "nameInputState"
                 PropertyChanges{ target: indicateMessage;  text: mode == "signUp" ? "Придумайте название группы" :
                                                                                     "Введите название группы" }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png"}
             },
             State{
                 name: "nameDoesNotExistState"
                 PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название доступно" :
                                                                                     "Такого имени нет" }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
+                PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/okMeme.png" :
+                                                                                   "qrc:/memePhoto/noMeme.png" }
             },
             State{
                 name: "nameExistState"
                 PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название занято, придумайте другое" :
                                                                                    "Такое имя есть" }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/noMeme.png" :
+                                                                                   "qrc:/memePhoto/okMeme.png" }
             },
             State{
               name: "passwordInputState"
-              PropertyChanges{ target: indicateMessage; text: "Придумайте пароль" }
+              PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Придумайте пароль" :
+                                                                                 "Введите пароль" }
               PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
             },
             State{
@@ -342,23 +379,18 @@ Page{
             rippleColor: Qt.lighter(clickableColor, 1.5)
             clickable: false
 
-            Connections{
-                target: signUpButton.buttArea
-                onClicked:{
-                    console.log("signUpButton")
+            onClicked:{
+                console.log("signUpButton")
 
-                    if(mode == "signUp"){
-                        User.signUp(nameInputRow.getText(0, nameInputRow.length),
-                                    passwordInputRow.getText(0, passwordInputRow.length))
-                    }
-                    else{
-                        User.signIn(nameInputRow.getText(0, nameInputRow.length),
-                                    passwordInputRow.getText(0, passwordInputRow.length))
-                    }
+                signInPage.state = "hidden"
 
-//                    User.getUserData()
-
-                    stackView.push(mainUserPage)
+                if(mode == "signUp"){
+                    User.signUp(nameInputRow.getText(0, nameInputRow.length),
+                                passwordInputRow.getText(0, passwordInputRow.length))
+                }
+                else{
+                    User.signIn(nameInputRow.getText(0, nameInputRow.length),
+                                passwordInputRow.getText(0, passwordInputRow.length))
                 }
             }
         }

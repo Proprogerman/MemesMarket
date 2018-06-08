@@ -11,6 +11,7 @@ Page{
     id: memePage
 
     objectName: "memePage"
+    background: backgroundItem
 
     property alias img: image.source
     property alias name: memeNameLabel.text
@@ -225,7 +226,7 @@ Page{
     }
 
     Rectangle{
-        id: background
+        id: backgroundItem
         anchors.fill: parent
         color: backColor
     }
@@ -256,10 +257,11 @@ Page{
 
 
     DropShadow{
+        id: headerShadow
         anchors.fill: pageHeader
         //verticalOffset: staticLine.height * 1/5
-        radius: 13
-        samples: 17
+        radius: Math.floor(pageHeader.height / 10)
+        samples: radius * 2 + 1
         color:"#000000"
         source: pageHeader
         opacity: 0.5
@@ -272,12 +274,14 @@ Page{
         anchors.top: pageHeader.bottom
         //anchors.topMargin:
         color: backColor//"white"
+    }
+    Item{
+        height: imageItem.height
+        width: height
+        anchors.centerIn: imageItem
         Image {
             id: image
-            width: parent.height
-            height: width
-            anchors.horizontalCenter: parent.horizontalCenter
-            //source: "qrc:/memePhoto/respectMeme.jpg"
+            anchors.fill: parent
         }
         Rectangle{
             id: unforceButton
@@ -503,6 +507,26 @@ Page{
 //            }
             StateChangeScript{ script: setYAxis() }
             StateChangeScript{ script: setStartPopValueAxis() }
+        },
+        State{
+            name: "hidden"
+            PropertyChanges{ target: pageHeader; visible: false }
+            PropertyChanges{ target: popGraphItem; visible: false }
+            PropertyChanges{ target: manipItem; visible: false }
+            PropertyChanges{ target: backgroundItem; visible: false }
+            PropertyChanges{ target: headerShadow; visible: false }
+            PropertyChanges{ target: imageItem; visible: false }
+            PropertyChanges{ target: hamburger; visible: false }
+        },
+        State{
+            name: "normal"
+            PropertyChanges{ target: pageHeader; visible: true }
+            PropertyChanges{ target: popGraphItem; visible: true }
+            PropertyChanges{ target: manipItem; visible: true }
+            PropertyChanges{ target: backgroundItem; visible: true }
+            PropertyChanges{ target: headerShadow; visible: true }
+            PropertyChanges{ target: imageItem; visible: true }
+            PropertyChanges{ target: hamburger; visible: true }
         }
     ]
     state: "mine"

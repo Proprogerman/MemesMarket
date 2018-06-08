@@ -12,6 +12,9 @@ int main(int argc, char *argv[])
     setlocale(LC_ALL,"Russian");
     QApplication app(argc, argv);
 
+    app.setOrganizationName("KlimeSoft");
+    app.setApplicationName("MemesMarket");
+
     QQmlApplicationEngine engine;
 
 //    qmlRegisterType<ServerConnection>("io.qt.ServerConnection", 1, 0,"ServerConnection");
@@ -20,7 +23,7 @@ int main(int argc, char *argv[])
 //                             "io.qt.SingletonConnection",1,0,"ServerConnection");
 
 
-    qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser",1,0,"User", User::qmlInstance);
+    qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser", 1, 0, "User", User::qmlInstance);
 
     engine.load(QUrl("qrc:/qml/main.qml"));
 

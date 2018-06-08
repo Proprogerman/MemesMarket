@@ -27,6 +27,11 @@ Page {
 
     property Item slidingMenu
 
+    property bool avatarPosFixation: true
+
+    property int clickedMemeOnList
+    property int clickedMemeImageSize
+
 
     function valueToShort(value){
         var count = 0
@@ -94,20 +99,15 @@ Page {
         target: User
         onMemeForUserReceived:{
             var crsDir = Math.ceil(popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100))/*memeFeedbackRate*/ - startPopValue)
-            console.log("startPopValue: ", startPopValue, "currentValue: ", popValues[popValues.length - 1], "creativity: ", parseFloat(memeCreativity / 100))
             updateMeme(memeName, imageName, crsDir, /*memeFeedbackRate,*/ memeCreativity)
             memesPopValues[memeName] = popValues
             startPopValues[memeName] = startPopValue
-            console.log("startPopValue: ", startPopValue)
         }
         onMemePopValuesForUserUpdated:{
             var crsDir = Math.ceil(popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100))/*memeFeedbackRate*/ - startPopValue)
-            console.log("startPopValue: ", startPopValue, "currentValue: ", popValues[popValues.length - 1], "creativity: ", parseFloat(memeCreativity / 100))
             updatePopValues(memeName, crsDir, startPopValue)
             memesPopValues[memeName] = popValues
             startPopValues[memeName] = startPopValue
-            console.log("startPopValue: ", startPopValue)
-            console.log("___________________________________________________")
         }
         onMemeImageReceived:{
             updateMemeImage(memeName, imageName)
@@ -154,49 +154,45 @@ Page {
         }
     }
 
-//    SlidingMenu{
-//        id: slidingMenu
-//        onOpenChanged: {
-//            hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
-//        }
-//        itemData:[
-//            Column{
-//                width: parent.width
-//                height: parent.height
-//                Image{
-//                    id: bigAvatar
-//                    source: "qrc:/photo/sexyPhoto.jpg"
-//                    width: parent.width
-//                    height: width
-//                    sourceSize.height: height
-//                    sourceSize.width: width
-//                }
+    states: [
+        State{
+            name: "normal"
+            AnchorChanges{ target: pageHeader; anchors.top: background.top }
+            AnchorChanges{ target: pageHeader; anchors.bottom: undefined }
+            AnchorChanges{ target: userPanel; anchors.bottom: undefined }
+//            PropertyChanges{ target: userPanel; y: pageHeader.y + height / 2 }
+            AnchorChanges{ target: appListView; anchors.top: pageHeader.bottom }
+            StateChangeScript{ name: "avatarFixationScript"; script: avatarPosFixation = true }
+        },
+        State{
+            name: "hidden"
+            AnchorChanges{ target: pageHeader; anchors.bottom: background.top }
+            AnchorChanges{ target: userPanel; anchors.bottom: pageHeader.top }
+            AnchorChanges{ target: appListView; anchors.top: background.bottom }
+            StateChangeScript{ name: "avatarFixationScript"; script: avatarPosFixation = false }
+        }
+    ]
+    state: "hidden"
 
-//                Rectangle{
-//                    id: memesExchange
-//                    width: parent.width
-//                    height: parent.height / 10
-//                    color: "lightgrey"
-//                    Text{
-//                        text:"Биржа мемов"
-//                        font.pixelSize: parent.height / 3
-//                        anchors.centerIn: parent
-//                    }
-//                    MouseArea{
-//                        anchors.fill: parent
-//                        onClicked:{
-//                            User.getMemesCategories()
-//                            stackView.push(rialtoPage)
-//                            slidingMenu.hide()
-//                        }
-//                    }
-//                }
-//            }
-//        ]
-//    }
+    transitions: [
+        Transition {
+            from: "hidden"; to: "normal"
+            SequentialAnimation{
+                AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
+                ScriptAction{ scriptName: "avatarFixationScript" }
+            }
+        },
+        Transition {
+            from: "normal"; to: "hidden"
+            SequentialAnimation{
+                ScriptAction{ scriptName: "avatarFixationScript" }
+                AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
+            }
+        }
+    ]
 
     Rectangle{
-        id:background
+        id: background
         anchors.fill: parent
         z: -2
         color: backColor
@@ -224,8 +220,8 @@ Page {
 
     Rectangle{
         id:userPanel
-        width:parent.width
-        height:(parent.height * 1/5)
+        width: parent.width
+        height: (parent.height * 1/5)
         //anchors.top: pageHeader.bottom
         y: pageHeader.y + height / 2
         z: pageHeader.z - 3
@@ -234,12 +230,12 @@ Page {
         states: [
             State{
                 when: appListView.contentY <= (appListView.originY - userPanel.height)
-                name:"normalState"
+                name: "normalState"
                 PropertyChanges { target: userPanel; y: pageHeader.y + height / 2 }
             },
             State{
                 when: appListView.contentY > (appListView.originY - userPanel.height)
-                name:"scrollUpState"
+                name: "scrollUpState"
                 PropertyChanges{ target: userPanel; y: - appListView.contentY - userPanel.height / 2 }
                 //PropertyChanges{ target: avatar; y: pageHeader.y}
             }
@@ -250,23 +246,23 @@ Page {
     Image {
         id: avatar
         visible:false
-        width: Math.ceil(userPanel.height * 0.95)/*userPanel.width * 1/3*/
+        width: Math.ceil(userPanel.height * 0.95)
         height: width
         x: userPanel.x + (userPanel.width - width) / 2
         y: userPanel.y + (userPanel.height - height) / 2
 
+
         source: "qrc:/photo/sexyPhoto.jpg"
         states:[
             State{
-                when: (userPanel.y + userPanel.height / 2) > (pageHeader.y + pageHeader.height)
+                when: !avatarPosFixation && (userPanel.y + userPanel.height / 2) > (pageHeader.y + pageHeader.height)
                 name: "normal"
                 PropertyChanges{ target: avatar; y: userPanel.y + (userPanel.height - height) / 2 }
                 PropertyChanges{ target: avatarLable; flipped: false}
             },
             State{
-                when: (userPanel.y + userPanel.height / 2) < (pageHeader.y + pageHeader.height)
+                when: avatarPosFixation && ((userPanel.y + userPanel.height / 2) < (pageHeader.y + pageHeader.height))
                 name: "tapToTop"
-//                PropertyChanges{ target: avatar; y: pageHeader.y }
                 AnchorChanges{ target: avatar; anchors.verticalCenter: pageHeader.bottom }
                 PropertyChanges{ target: avatarLable; flipped: true }
             }
@@ -453,16 +449,16 @@ Page {
         }
     }
 
-    DropShadow{
-        anchors.fill: userPanel
-        source: userPanel
-        radius: 13
-        samples: 17
-        color: "#000000"
-        opacity: 0.8
-        spread: 0.4
-        z: userPanel.z - 1
-    }
+//    DropShadow{
+//        anchors.fill: userPanel
+//        source: userPanel
+//        radius: 13
+//        samples: 17
+//        color: "#000000"
+//        opacity: 0.8
+//        spread: 0.4
+//        z: userPanel.z - 1
+//    }
 
     ListView {
         id: appListView
@@ -476,14 +472,6 @@ Page {
             bottom: parent.bottom
         }
         topMargin: userPanel.height
-
-//        onContentYChanged: {
-//            if(contentY > 0){
-//                userPanel.state = "scrollUpState"
-//            }
-//            else
-//                userPanel.state = "normalState"
-//        }
 
         model: memeListModel
 
@@ -543,6 +531,8 @@ Page {
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
+                    clickedMemeOnList = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
+                    clickedMemeImageSize = memeImage.width
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
                                     memeCreativity: Number(memeCreativityText)/*, memeFeedbackRate: parseFloat(memeFeedbackRateText)*/}})
@@ -560,36 +550,6 @@ Page {
     }
     ListModel{
         id: memeListModel
-//        ListElement{
-//            memeName: "Check"
-//            courseDirection: 100
-//            imageName: "exactlyMeme.jpg"
-//        }
-//        ListElement{
-//            memeName: "Check"
-//            courseDirection: 100
-//            imageName: "exactlyMeme.jpg"
-//        }
-//        ListElement{
-//            memeName: "Check"
-//            courseDirection: 100
-//            imageName: "exactlyMeme.jpg"
-//        }
-//        ListElement{
-//            memeName: "Check"
-//            courseDirection: 100
-//            imageName: "exactlyMeme.jpg"
-//        }
-//        ListElement{
-//            memeName: "Check"
-//            courseDirection: 100
-//            imageName: "exactlyMeme.jpg"
-//        }
-//        ListElement{
-//            memeName: "Check"
-//            courseDirection: 100
-//            imageName: "exactlyMeme.jpg"
-//        }
     }
 
     AdMobRewardedVideoAd {

@@ -10,10 +10,12 @@ Item {
     property alias labelSize: buttonLabel.font.pixelSize
     property alias radius: button.radius
     property alias buttArea: buttonArea
-    property bool clickable
+    property bool clickable: true
 
     property color clickableColor
     property color unclickableColor
+
+    signal clicked()
 
     Rectangle{
         id: button
@@ -29,6 +31,7 @@ Item {
     MouseArea{
         id: buttonArea
         anchors.fill: button
+        onClicked: control.clicked()
     }
 
     PaperRipple{

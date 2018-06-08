@@ -19,6 +19,7 @@
         <file>SignInPage.qml</file>
         <file>RialtoPage.qml</file>
         <file>CategoryMemeListPage.qml</file>
+        <file>UsersRatingPage.qml</file>
     </qresource>
     <qresource prefix="/qml">
         <file>main.qml</file>
