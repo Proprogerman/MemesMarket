@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtGraphicalEffects 1.0
 
 Item {
@@ -25,7 +25,11 @@ Item {
     Text{
         id: buttonLabel
         anchors.centerIn: button
+        width: button.width
+        height: button.height
+        fontSizeMode: Text.HorizontalFit
         horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
     }
 
     MouseArea{
@@ -45,7 +49,6 @@ Item {
         anchors.fill: button
         source: button
         color: "#80000000"
-        //color: "#000000"
         z: button.z - 1
         radius: 8.0
         samples: 17
@@ -63,5 +66,7 @@ Item {
     }
 
     Component.onCompleted:{ clickableCheck() }
-    onClickableChanged:{ clickableCheck() }
+    onClickableChanged: clickableCheck()
+    onClickableColorChanged: clickableCheck()
+    onUnclickableColorChanged: clickableCheck()
 }

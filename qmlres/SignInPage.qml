@@ -4,6 +4,8 @@ import QtQuick.Controls 2.2
 //import QtQuick.Controls.Material 2.2
 import QtGraphicalEffects 1.0
 
+import Qt.labs.settings 1.0
+
 import KlimeSoft.SingletonUser 1.0
 
 import "qrc:/qml/elements"
@@ -28,45 +30,54 @@ Page{
         onNameDoesNotExist: { nameOfGroup.state = indicateZone.state = "nameDoesNotExistState" }
         onSignUpAnswered: {
             console.log("created: ", created, " name: ", name)
-            if(name === nameInputRow.getText(0, nameInputRow.length)){
-                if(created){
-                    User.user_name = name
-                    stackView.push(mainUserPage)
-                }
-                else{
-                    console.log("не создано")
-                    signInPage.state = "normal"
-                }
+            if(created){
+                User.user_name = name
+                stackView.push(mainUserPage)
+                nameInputRow.clear()
+                passwordInputRow.clear()
+            }
+            else{
+                console.log("не создано")
+                indicateZone.state = "signUpErrorState"
+                signInPage.state = "normal"
             }
         }
 
         onSignInAnswered: {
             console.log("accessed: ", accessed, " name: ", name)
-            if(name === nameInputRow.getText(0, nameInputRow.length)){
-                if(accessed){
-                    console.log("вход выполнен")
-                    User.user_name = name
-                    stackView.push(mainUserPage)
-                }
-                else{
-                    console.log("вход не выполнен")
-                    signInPage.state = "normal"
-                }
+            if(accessed){
+                console.log("вход выполнен")
+                User.user_name = name
+                stackView.push(mainUserPage)
+                nameInputRow.clear()
+                passwordInputRow.clear()
+            }
+            else{
+                console.log("вход не выполнен")
+                indicateZone.state = "signInErrorState"
+                signInPage.state = "normal"
             }
         }
     }
 
-    Timer{
-        id: timer
-        interval: 1
-        repeat: false
-        onTriggered: {
-            signInPage.state = "normal"
-        }
+    Settings{
+        id: userSettings
+        category: "user"
+        property string name
+        property string passwordHash
     }
 
     Component.onCompleted: {
-        timer.start()
+        if(userSettings.name === "")
+            stateTimer.start()
+        else
+            User.autoSignIn()
+    }
+
+    Timer{
+        id: stateTimer
+        interval: 1
+        onTriggered: signInPage.state = "normal"
     }
 
     onModeChanged: {
@@ -96,7 +107,13 @@ Page{
             AnchorChanges{ target: dataSheet; anchors.top: indicateZone.bottom }
             PropertyChanges{ target: dataSheetShadow; opacity: 0.35 }
             PropertyChanges{ target: indicateZone; visible: true }
-            StateChangeScript{ name: "activeFocusChange"; script: nameInputRow.forceActiveFocus() }
+            StateChangeScript{
+                name: "activeFocusChange";
+                script: {
+                    if(nameInputRow.getText(0, nameInputRow.length) === "")
+                        nameInputRow.forceActiveFocus()
+                }
+            }
         },
         State{
             name: "hidden"
@@ -140,6 +157,7 @@ Page{
             font.pixelSize: parent.height * 1/6
             horizontalAlignment: Text.AlignRight
             wrapMode: Text.WordWrap
+            z: indicateImage.z + 1
         }
         Image{
             id: indicateImage
@@ -183,6 +201,16 @@ Page{
             State{
                 name: "passwordHasFewerCharsState"
                 PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
+            },
+            State{
+                name: "signUpErrorState"
+                PropertyChanges{ target: indicateMessage; text: "Ошибка при создании, попробуйте ещё" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
+            },
+            State{
+                name: "signInErrorState"
+                PropertyChanges{ target: indicateMessage; text: "Вход не выполнен, проверьте название и пароль" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
             }
         ]
@@ -375,7 +403,7 @@ Page{
             labelSize: height / 4
             radius: height/10
             clickableColor: mainColor
-            unclickableColor: dataColor
+            unclickableColor: "#edeef0"
             rippleColor: Qt.lighter(clickableColor, 1.5)
             clickable: false
 

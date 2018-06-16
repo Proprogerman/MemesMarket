@@ -6,6 +6,9 @@ import "qrc:/qml/elements"
 import KlimeSoft.SingletonUser 1.0
 
 Page{
+    id: categoryMemeListPage
+
+    objectName: "categoryMemeListPage"
 
     property color itemColor: "white"
     property color backColor: "#edeef0"
@@ -15,8 +18,13 @@ Page{
 
     property double weight: 0
 
+    property int clickedMemeOnListY
+    property int clickedMemeImageSize
+    property int clickedMemeIndex
+
+
     function updateMeme(meme_name, image_name){
-        memeListModel.append({ "memeName": meme_name, "image": "image://meme/" + image_name })
+        memeListModel.append({ "memeName": meme_name, "image": "image://meme/" + image_name, "vis" : true })
 
         console.log("update Meme: ", image_name)
     }
@@ -27,6 +35,10 @@ Page{
                 memeListModel.setProperty(i, "image", " ")
                 memeListModel.setProperty(i, "image", "image://meme/" + image_name)
             }
+    }
+
+    function setVisibilityImageOnList(vis){
+        memeListModel.setProperty(clickedMemeIndex, "vis", vis)
     }
 
     Component.onCompleted: {
@@ -78,7 +90,10 @@ Page{
         anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
         z: pageHeader.z + 1
         dynamic: false
-        onBackAction: stackView.pop()
+        onBackAction: {
+            if(stackView.__currentItem.objectName === "categoryMemeListPage")
+                stackView.pop()
+        }
     }
 
     Rectangle{
@@ -122,6 +137,10 @@ Page{
                 width: height
                 cache: false
                 source: image
+                visible: vis
+                onVisibleChanged: {
+                    appListView.forceLayout()
+                }
             }
             Text{
                 text: memeName
@@ -145,16 +164,12 @@ Page{
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
-                    if(User.findMeme(memeName)){
-                        stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
-                            memePopValues: memesPopValues[memeName], memeStartPopValue: memesPopValues[memeName],
-                            category: pageCategory, state: "mine" }})
-                    }
-                    else{
-                        stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
-                            memePopValues: memesPopValues[memeName], memeStartPopValue: memesPopValues[memeName],
-                            category: pageCategory, state: "general" }})
-                    }
+                    clickedMemeOnListY = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y).y
+                    clickedMemeImageSize = memeImage.width
+                    clickedMemeIndex = index
+                    stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
+                                    memePopValues: memesPopValues[memeName], memeStartPopValue: memesPopValues[memeName],
+                                    category: pageCategory }})
                 }
             }
             Rectangle{

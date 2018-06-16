@@ -21,6 +21,7 @@
 #include <QSettings>
 
 #include "meme.h"
+#include "ad.h"
 
 class User: public QObject
 {
@@ -46,7 +47,9 @@ public:
     Q_INVOKABLE void signOut();
     Q_INVOKABLE void getUserData();
     Q_INVOKABLE void setExistingMemeListWithCategory(const QString &category);
+    Q_INVOKABLE void setExistingAdList();
     Q_INVOKABLE void getMemeListWithCategory(const QString &category);
+    Q_INVOKABLE void getAdList();
     Q_INVOKABLE void getMemeDataForUser(const QString &memeName);
     Q_INVOKABLE void getMemeData(const QString &memeName);
     Q_INVOKABLE void getMemesCategories();
@@ -55,17 +58,21 @@ public:
                                const QString &category);
     Q_INVOKABLE void unforceMeme(const QString &memeName);
     Q_INVOKABLE void increaseLikesQuantity(const QString &memeName, const int &investedShekels);
+    Q_INVOKABLE void acceptAd(const QString &adName);
 
     Q_INVOKABLE bool memesWithCategoryIsEmpty(const QString &category);
+    Q_INVOKABLE bool adsIsEmpty();
 
     Q_INVOKABLE void localUpdateUserData();
 
     void setName(const QString &name);
-    void setPassword(const QString &password);
+    void setPasswordHash(const QString &hash);
     void setUserData(const QJsonObject &userData);
     void setMemeImage(const QJsonObject &jsonObj);
+    void setAdImage(const QJsonObject &jsonObj);
     //void setUpdatedDataForMemeOfUser(const QJsonObject);
     void setMemesWithCategory(const QVariantList &memeList, const QString &category);
+    void setAdList(const QVariantList &adList);
     void setMemeDataForUser(const QJsonObject &obj);
     void setMemeData(const QJsonObject &obj);
     void setUsersRating(const QJsonArray &userList, const int &userRating);
@@ -76,6 +83,11 @@ public:
 
     Q_INVOKABLE bool findMeme(const QString &name);
     Q_INVOKABLE bool findCategoryMeme(const QString &name, const QString &category);
+    Q_INVOKABLE bool findAd(const QString &name);
+
+    int getAdIndex(const QString &name);
+
+    Q_INVOKABLE void rewardUserWithShekels();
 
     QString hashPassword(const QString &password, const QString &login);
 
@@ -83,13 +95,13 @@ public:
 
 private:
     QString user_name;
-//    QString user_password;
     QString passwordHash;
     int pop_value = 0;
-    int creativity = 9;
+    int creativity = 0;
     int shekels = 0;
 
     QVector<Meme> memes;
+    QVector<Ad> ads;
 
     QVariantList categories;
     QMap<QString, QVector<Meme>> memesWithCategory;
@@ -112,12 +124,16 @@ signals:
     void memeForUserReceived(QString memeName, QString imageName, QVector<int> popValues, int startPopValue,
                              double memeFeedbackRate, int memeCreativity);
     void memeImageReceived(QString memeName, QString imageName);
+    void adImageReceived(QString adName, QString imageName);
     void memeReceived(QString memeName, QString imageName, QVector<int> popValues);
     void memeWithCategoryReceived(QString memeName, QString imageName, QVector<int> popValues, QString category);
-    void memePopValuesForUserUpdated(QString memeName, QVector<int> popValues, int startPopValue, double memeFeedbackRate,
-                                     int memeCreativity);
+    void adReceived(QString adName, QString imageName, QString reputation, int profit, int discontented,
+                    int secondsToReady = 0);
+    void memePopValuesForUserUpdated(QString memeName, QVector<int> popValues, int startPopValue,
+                                     double memeFeedbackRate, int memeCreativity);
     void memePopValuesUpdated(QString memeName, QVector<int> popValues);
     void memePopValuesWithCategoryUpdated(QString memeName, QVector<int> popValues, QString category);
+    void adUpdated(QString adName, QString reputation, int profit, int discontented, int secondsToReady = 0);
     void memesCategoriesReceived(QVariantList memesCategories);
     void usersRatingReceived(QVariantList usersList, int userRating);
     void memeUnforced(QString memeName);

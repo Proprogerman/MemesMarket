@@ -20,6 +20,8 @@
         <file>RialtoPage.qml</file>
         <file>CategoryMemeListPage.qml</file>
         <file>UsersRatingPage.qml</file>
+        <file>UpgradingPage.qml</file>
+        <file>AdsPage.qml</file>
     </qresource>
     <qresource prefix="/qml">
         <file>main.qml</file>

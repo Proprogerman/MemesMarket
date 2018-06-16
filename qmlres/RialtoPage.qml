@@ -7,6 +7,8 @@ import KlimeSoft.SingletonUser 1.0
 
 Page{
 
+    objectName: "rialtoPage"
+
     property color backColor: "#edeef0"
     property color mainColor: "#507299"
 
@@ -15,7 +17,7 @@ Page{
         onMemesCategoriesReceived:{
             var categories = memesCategories
             for(var i = 0; i < categories.length; i++){
-                categoryGridModel.append({ "categoryText": categories[i] })
+                categoryGridModel.set(i, { "categoryText": categories[i] })
             }
         }
     }
@@ -28,7 +30,10 @@ Page{
         anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
         z: pageHeader.z + 1
         dynamic: false
-        onBackAction: stackView.pop()
+        onBackAction: {
+            if(stackView.__currentItem.objectName === "rialtoPage")
+                stackView.pop()
+        }
     }
 
     Rectangle{

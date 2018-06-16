@@ -12,7 +12,8 @@ SOURCES += main.cpp \
     user.cpp \
     meme.cpp \
     imageprovider.cpp \
-    independentconnection.cpp
+    independentconnection.cpp \
+    ad.cpp
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
@@ -37,7 +38,8 @@ HEADERS += \
     user.h \
     meme.h \
     imageprovider.h \
-    independentconnection.h
+    independentconnection.h \
+    ad.h
 
 #OTHER_FILES += \
 #    qml/main.qml \

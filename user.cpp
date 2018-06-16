@@ -21,7 +21,6 @@ User::User(QObject *parent): QObject(parent), settings(new QSettings())
     clientSocket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 //    clientSocket->connectToHost("10.0.3.2", 1234);
     clientSocket->connectToHost("127.0.0.1", 1234);
-//    clientSocket->connectToHost("185.26.120.243", 131);
 
     connect(clientSocket, &QTcpSocket::readyRead, this, &User::onReadyRead);
     connect(clientSocket, &QTcpSocket::disconnected, this, &User::onDisconnected);
@@ -46,8 +45,8 @@ void User::setName(const QString &name){
     emit nameChanged();
 }
 
-void User::setPassword(const QString &password){
-//    user_password = password;
+void User::setPasswordHash(const QString &hash){
+    passwordHash = hash;
 }
 
 void User::setUserData(const QJsonObject &userData)
@@ -84,19 +83,11 @@ void User::setUserData(const QJsonObject &userData)
             memeValues.push_back(tempPop[i].toInt());
         }
         if(!findMeme(memeName)){
-            qDebug()<<"KKKKIIIEEEKK";
             QString imageName = memeObj.value("imageName").toString();
-//            QByteArray encoded = memeObj.value("imageData").toString().toLatin1();
-//            QImage memeImage;
-//            memeImage.loadFromData(QByteArray::fromBase64(encoded), "JPG");
-//            memeImage.save("C:/Development/clientImages/" + imageName, "JPG");
-            //qDebug() << "MEMEDATA: " << memeName << " - " << memeValues;
-            //int crsDir = memeValues[memeValues.length() - 1] -  memeValues[memeValues.length() - 2];
             memes.append(Meme(memeName, memeValues, imageName, startPopValue, memeCreativity, memeFeedbackRate));
             emit memeForUserReceived(memeName, imageName, memeValues, startPopValue, memeFeedbackRate, memeCreativity);
         }
         else{
-            qDebug()<<"LLLOOOOOLL";
             int indexOfMeme;
             for(int j = 0; j < memes.size(); j++){
                 if(memes[j].getName() == memeName){
@@ -105,7 +96,6 @@ void User::setUserData(const QJsonObject &userData)
                 }
             }
             memes[indexOfMeme].setPopValues(memeValues);
-            //int crsDir = memeValues[memeValues.size() - 1] - startPopValue;
             emit memePopValuesForUserUpdated(memeName, memeValues, startPopValue, memeFeedbackRate, memeCreativity);
             continue;
         }
@@ -128,17 +118,24 @@ void User::setMemeImage(const QJsonObject &jsonObj)
     QImage memeImage;
     memeImage.loadFromData(QByteArray::fromBase64(encoded), "JPG");
     memeImage.save("C:/Development/clientImages/" + imageName, "JPG");
-    //qDebug() << "MEMEDATA: " << memeName << " - " << memeValues;
-    //int crsDir = memeValues[memeValues.length() - 1] -  memeValues[memeValues.length() - 2];
     emit memeImageReceived(memeName, imageName);
-    qDebug()<<"SET MEME IMAGE";
+}
+
+void User::setAdImage(const QJsonObject &jsonObj)
+{
+    QString adName = jsonObj["adName"].toString();
+    QString imageName = jsonObj["imageName"].toString();
+    QByteArray encoded = jsonObj.value("imageData").toString().toLatin1();
+    QImage adImage;
+    adImage.loadFromData(QByteArray::fromBase64(encoded), "PNG");
+    adImage.save("C:/Development/clientImages/" + imageName, "PNG");
+    emit adImageReceived(adName, imageName);
 }
 
 void User::setMemesWithCategory(const QVariantList &memeList, const QString &category)
 {
     for(int i = 0; i < memeList.size(); i++)
     {
-        qDebug()<<"SET MEMES WITH CATEGORY";
         QVariantMap memeObj = memeList[i].toMap();
         QString memeName = memeObj.value("memeName").toString();
         QVariantList tempPop = memeObj.value("popValues").value<QVariantList>();
@@ -147,37 +144,46 @@ void User::setMemesWithCategory(const QVariantList &memeList, const QString &cat
             memeValues.push_back(tempPop[i].toInt());
         }
         if(!findCategoryMeme(memeName, category)){
-            qDebug()<<"KKKKIIIEEEKK";
             QString imageName = memeObj.value("imageName").toString();
-            QByteArray encoded = memeObj.value("imageData").toString().toLatin1();
-            QImage memeImage;
-            memeImage.loadFromData(QByteArray::fromBase64(encoded), "JPG");
-            memeImage.save("C:/Development/clientImages/" + imageName, "JPG");
-            //qDebug() << "MEMEDATA: " << memeName << " - " << memeValues;
-            //int crsDir = memeValues[memeValues.length() - 1] -  memeValues[memeValues.length() - 2];
             memesWithCategory[category].append(Meme(memeName, memeValues, imageName));
             emit memeWithCategoryReceived(memeName, imageName, memeValues, category);
         }
         else{
-            qDebug()<<"LLLOOOOOLL";
-            int indexOfMeme;
             for(int j = 0; j < memesWithCategory[category].size(); j++){
                 if(memesWithCategory[category][j].getName() == memeName){
-                    indexOfMeme = j;
+                    memesWithCategory[category][j].setPopValues(memeValues);
+                    emit memePopValuesWithCategoryUpdated(memeName, memeValues, category);
                     break;
                 }
             }
-            memesWithCategory[category][indexOfMeme].setPopValues(memeValues);
-            memePopValuesWithCategoryUpdated(memeName, memeValues, category);
-            continue;
         }
+    }
+}
 
+void User::setAdList(const QVariantList &adList)
+{
+    for(int i = 0; i < adList.size(); i++){
+        QVariantMap adObj = adList[i].toMap();
+        QString adName = adObj["adName"].toString();
+        QString imageName = adObj["imageName"].toString();
+        QString adReputation = adObj["reputation"].toString();
+        int adProfit = adObj["profit"].toInt();
+        int adDiscontented = adObj["discontented"].toInt();
+        int adSecondsToReady = adObj["secondsToReady"].toInt();
+        int indexOfAd = getAdIndex(adName);
+        if(indexOfAd != -1){
+            ads.replace(indexOfAd, Ad(adName, imageName, adReputation, adProfit, adDiscontented, adSecondsToReady));
+            emit adUpdated(adName, adReputation, adProfit, adDiscontented, adSecondsToReady);
+        }
+        else{
+            ads.append(Ad(adName, imageName, adReputation, adProfit, adDiscontented, adSecondsToReady));
+            emit adReceived(adName, imageName, adReputation, adProfit, adDiscontented, adSecondsToReady);
+        }
     }
 }
 
 void User::setMemeDataForUser(const QJsonObject &obj)
 {
-    qDebug()<<"responseType == getMemeDataForUserResponse";
     QVariantList tempPop = obj["popValues"].toArray().toVariantList();
     const int startPopValue = obj["startPopValue"].toInt();
     const double memeFeedbackRate = obj["feedbackRate"].toDouble();
@@ -195,12 +201,10 @@ void User::setMemeDataForUser(const QJsonObject &obj)
         emit memePopValuesForUserUpdated(obj["memeName"].toString(), memeValues, startPopValue, memeFeedbackRate,
                                          memeCreativity);
     }
-    qDebug()<<"MEME VALUES:::::::::::::::::::::::::::: " << memeValues << "::::::" << tempPop;
 }
 
 void User::setMemeData(const QJsonObject &obj)
 {
-    qDebug()<<"responseType == getMemeDataResponse";
     QVariantList tempPop = obj["popValues"].toArray().toVariantList();
     QVector<int> memeValues;
     for(int i = 0; i < tempPop.size(); i++){
@@ -213,7 +217,6 @@ void User::setMemeData(const QJsonObject &obj)
         }
         emit memePopValuesUpdated(obj["memeName"].toString(), memeValues);
     }
-    qDebug()<<"MEME VALUES:::::::::::::::::::::::::::: " << memeValues << "::::::" << tempPop;
 }
 
 void User::setUsersRating(const QJsonArray &userList, const int &userRating)
@@ -231,12 +234,44 @@ bool User::findCategoryMeme(const QString &name, const QString &category){
     return false;
 }
 
+bool User::findAd(const QString &name)
+{
+    foreach(Ad adCont, ads){
+        if(adCont.getName() == name)
+            return true;
+    }
+    return false;
+}
+
+int User::getAdIndex(const QString &name)
+{
+    for(int i = 0; i < ads.size(); i++){
+        if(ads[i].getName() == name)
+            return i;
+    }
+    return -1;
+}
+
+void User::rewardUserWithShekels()
+{
+    if(clientSocket->waitForConnected(3000)){
+
+        QJsonObject jsonObj {
+                                {"requestType", "rewardUserWithShekels"},
+                                {"user_name", getName()},
+                                {"shekels", 100}
+                            };
+
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->flush();
+    }
+}
+
 QString User::hashPassword(const QString &password, const QString &login){
     QByteArray passwordHash = QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Sha224);
 
     for(int i = 0; i < 4; i++){
         passwordHash = QCryptographicHash::hash(login.toUtf8() + passwordHash, QCryptographicHash::Sha224);
-        qDebug()<<"HASH: "<<passwordHash;
     }
 
     return QString::fromStdString(passwordHash.toHex().toStdString());
@@ -295,6 +330,14 @@ void User::signOut()
     settings->setValue("user/name", "");
     settings->setValue("user/passwordHash", "");
     settings->sync();
+    setName("");
+    setPasswordHash("");
+    pop_value = 0;
+    creativity = 0;
+    shekels = 0;
+    memes.clear();
+    memesWithCategory.clear();
+
     if(clientSocket->waitForConnected(3000)){
         QJsonObject jsonObj {
                                 {"requestType", "signOut"},
@@ -332,8 +375,6 @@ void User::getUserData()
 void User::onReadyRead(){
     QByteArray byteArr = clientSocket->readAll();
     QJsonObject jsonObj = QJsonDocument::fromBinaryData(byteArr).object();
-    qDebug()<<"RESPONSE TYPE: "<<jsonObj.value("responseType").toString();
-    //qDebug()<<"JSON OBJ: "<<jsonObj;
     processingResponse(jsonObj);
 }
 
@@ -373,17 +414,12 @@ int User::getShekels(){
 void User::processingResponse(QJsonObject &jsonObj)
 {
     const QString responseType = jsonObj["responseType"].toString();
-    if(responseType.isEmpty()){
-        qDebug()<<"PUSTOI BLYAT: "<<jsonObj;
-    }
+    qDebug()<<responseType;
     if(responseType == "checkNameResponse"){
-        qDebug()<<"responseType == checkNameResponse";
         if(jsonObj["nameAvailable"] == true){
-            qDebug()<<"emit nameDoesNotExist();";
             emit nameDoesNotExist();
         }
         else if(jsonObj["nameAvailable"] == false){
-            qDebug()<<"emit nameExist();";
             emit nameExist();
         }
     }
@@ -403,18 +439,23 @@ void User::processingResponse(QJsonObject &jsonObj)
         setMemeImage(jsonObj);
 //        toOtherThread(jsonObj);
     }
+    else if(responseType == "adImageResponse"){
+        setAdImage(jsonObj);
+    }
     else if(responseType == "getMemeDataResponse"){
         setMemeData(jsonObj);
     }
     else if(responseType == "getMemeListWithCategoryResponse"){
         setMemesWithCategory(jsonObj["memeList"].toArray().toVariantList(), jsonObj["category"].toString());
     }
+    else if(responseType == "getAdListResponse"){
+        setAdList(jsonObj["adList"].toArray().toVariantList());
+    }
     else if(responseType == "getMemesCategoriesResponse"){
         categories = jsonObj["categories"].toArray().toVariantList();
         emit memesCategoriesReceived(categories);
     }
     else if(responseType == "getUsersRatingResponse"){
-        qDebug()<<"getUsersRatingResponse";
         setUsersRating(jsonObj["usersList"].toArray(), jsonObj["user_rating"].toInt());
     }
 }
@@ -443,15 +484,22 @@ QObject* User::qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine){
 void User::setExistingMemeListWithCategory(const QString &category)
 {
     QVector<Meme> tempMemes = memesWithCategory[category];
-    for(int i = 0; i < tempMemes.size(); i++){
-        emit memeWithCategoryReceived(tempMemes[i].getName(), tempMemes[i].getImageName(),
-                                      tempMemes[i].getPopValues(), category);
+    foreach(Meme memeCont, tempMemes){
+        emit memeWithCategoryReceived(memeCont.getName(), memeCont.getImageName(),
+                                      memeCont.getPopValues(), category);
+    }
+}
+
+void User::setExistingAdList()
+{
+    foreach(Ad adCont, ads){
+        emit adReceived(adCont.getName(), adCont.getImageName(), adCont.getReputation(), adCont.getProfit(),
+                        adCont.getDiscontented(), adCont.getSecondsToReady());
     }
 }
 
 void User::getMemeListWithCategory(const QString &category)
 {
-    qDebug() << "getMeme List With Category: " << category;
     QJsonArray memesToUpdate;
     if(!memesWithCategory[category].isEmpty()){
         for(int i = 0; i < memesWithCategory[category].size(); i++){
@@ -468,7 +516,29 @@ void User::getMemeListWithCategory(const QString &category)
                                 {"category", category},
                                 {"updateOnlyPopValues", memesToUpdate}
         };
-        qDebug() << "MEMES TO UPDATE: " << memesToUpdate;
+        clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+        clientSocket->flush();
+    }
+}
+
+void User::getAdList()
+{
+    QJsonArray adsWithImages;
+    if(!ads.isEmpty()){
+        for(int i = 0; i < ads.size(); i++){
+            QImage adImage;
+            if(adImage.load("C:/Development/clientImages/" + ads[i].getImageName()))
+                adsWithImages.append(ads[i].getName());
+        }
+    }
+
+    if(clientSocket->waitForConnected(3000)){
+
+        QJsonObject jsonObj {
+                                {"requestType", "getAdList"},
+                                {"adsWithImages", adsWithImages},
+                                {"user_name", getName()}
+        };
         clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
         clientSocket->flush();
     }
@@ -476,8 +546,6 @@ void User::getMemeListWithCategory(const QString &category)
 
 void User::getMemeDataForUser(const QString &meme_name)
 {
-    qDebug() << "getMeme : "<< meme_name;
-
     if(clientSocket->waitForConnected(3000)){
 
         QJsonObject jsonObj {
@@ -608,11 +676,9 @@ void User::increaseLikesQuantity(const QString &memeName, const int &investedShe
                 memeValues[i] = memeValues[i + 1];
             }
             memeValues.last() = likeIncrement;
-            qDebug()<<"РАВНО 12";
         }
         else{
             memeValues.append(likeIncrement);
-            qDebug()<<"НЕ РАВНО 12";
         }
 
         memes[indexOfMeme].setPopValues(memeValues);
@@ -622,8 +688,33 @@ void User::increaseLikesQuantity(const QString &memeName, const int &investedShe
     }
 }
 
+void User::acceptAd(const QString &adName)
+{
+    Ad  tempAd;
+    foreach(Ad adCont, ads){
+        if(adCont.getName() == adName){
+            tempAd = adCont;
+            break;
+        }
+    }
+    QJsonObject jsonObj {
+                            {"requestType", "acceptAd"},
+                            {"user_name", getName()},
+                            {"adName", adName},
+                            {"adProfit", tempAd.getProfit()},
+                            {"adDiscontented", tempAd.getDiscontented()}
+                        };
+    clientSocket->write(QJsonDocument(jsonObj).toBinaryData());
+    clientSocket->flush();
+}
+
 bool User::memesWithCategoryIsEmpty(const QString &category){
     return memesWithCategory[category].isEmpty();
+}
+
+bool User::adsIsEmpty()
+{
+    return ads.isEmpty();
 }
 
 void User::localUpdateUserData()

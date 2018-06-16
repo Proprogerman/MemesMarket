@@ -22,5 +22,6 @@
     <qresource prefix="/uiIcons">
         <file>up-arrow.svg</file>
         <file>wave.svg</file>
+        <file>shekel.svg</file>
     </qresource>
 </RCC>

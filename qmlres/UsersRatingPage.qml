@@ -8,23 +8,30 @@ import "qrc:/qml/elements"
 
 Page {
     id: usersRatingPage
+    objectName: "usersRatingPage"
 
     property color itemColor: "white"
     property color mainColor: "#7fa0ca"
     property color backColor: "#edeef0"
 
-    property int thisRating: 0
+    property int thisRating: -1
+    property bool centered: false
+
 
     function updateRatingList(rating, userName, popValue){
         usersListModel.set(rating - 1, {"ratingText": rating, "userNameText": userName,
                                         "userPopValueText": popValue })
+        if((thisRating != -1) && thisRating === rating && !centered){
+            goToIndex(rating - 1)
+            centered = true
+        }
     }
 
-    function goToBegin(){
+    function goToIndex(index){
         listViewAnim.running = false
         var pos = ratingListView.contentY
         var destPos
-        ratingListView.positionViewAtIndex(0, ListView.Center)
+        ratingListView.positionViewAtIndex(index, ListView.Center)
         destPos = ratingListView.contentY
         listViewAnim.from = pos
         listViewAnim.to = destPos
@@ -71,7 +78,10 @@ Page {
         anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
         z: pageHeader.z + 1
         dynamic: false
-        onBackAction: stackView.pop()
+        onBackAction: {
+            if(stackView.__currentItem.objectName === "usersRatingPage")
+                stackView.pop()
+        }
     }
 
     PageHeader{
@@ -80,6 +90,12 @@ Page {
         height: parent.height / 10
         headerText: "Рейтинг"
         z: 7
+        MouseArea{
+            anchors.fill: parent
+            onClicked: {
+                goToIndex(0)
+            }
+        }
     }
 
     DropShadow{

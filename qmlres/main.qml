@@ -3,7 +3,6 @@ import QtQuick.Controls 1.4
 import QtQuick.Window 2.0
 import QtQuick.Dialogs 1.2
 
-import Qt.labs.settings 1.0
 
 import "qrc:/qml/pages"
 import "qrc:/qml/elements"
@@ -23,33 +22,18 @@ ApplicationWindow{
 
     property color mainColor: "#507299"
 
-    Settings{
-        id: userSettings
-        category: "user"
-        property string name
-        property string passwordHash
-    }
-
-//    Component.onCompleted:{
-//        if(userSettings.signed){
-//            User.autoSignIn()
-//            stackView.initialItem = mainUserPage
-//        }
-//        else
-//            stackView.initialItem = signInPage
-//    }
 
     StackView{
         id: stackView
         anchors.fill: parent
-        initialItem: userSettings.name === "" ? signInPage : mainUserPage
+        initialItem: signInPage
 
         onCurrentItemChanged: {
-            hamburger.visible = stackView.currentItem.objectName == "mainUserPage" ? true : false
-            slidingMenu.active = stackView.currentItem.objectName == "signInPage" ? false : true
+            if(stackView.currentItem !== null){
+                hamburger.visible = stackView.currentItem.objectName == "mainUserPage" ? true : false
+                slidingMenu.active = stackView.currentItem.objectName == "signInPage" ? false : true
+            }
         }
-
-
 
         delegate: StackViewDelegate{
             function getTransition(properties){
@@ -60,6 +44,11 @@ ApplicationWindow{
                     currTransition = fromMainToSignTransition
                 else if(properties.enterItem.objectName === "memePage")
                     currTransition = memePageTransition
+                else if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "mainUserPage"
+                        && User.findMeme(properties.exitItem.name))
+                    currTransition = fromMemePageTransition
+                else if(properties.exitItem.objectName === "memePage"&& properties.enterItem.objectName === "categoryMemeListPage")
+                    currTransition = fromMemePageTransition
 
                 return currTransition
             }
@@ -67,42 +56,49 @@ ApplicationWindow{
                 properties.exitItem.x = 0
                 properties.exitItem.y = 0
                 properties.exitItem.opacity = 1
+                if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "mainUserPage"
+                || properties.enterItem.objectName === "categoryMemeListPage")
+                    properties.enterItem.setVisibilityImageOnList(true)
             }
             property Component someTransition: StackViewTransition{
-//                ScriptAction{ script: console.log("exitItem: ", exitItem.Stack.index) }
-//                ScriptAction{ script: console.log("enterItem: ", enterItem.Stack.index) }
                 PropertyAnimation{
                     target: exitItem
                     property: "x"
                     from: target.Stack.index > enterItem.Stack.index ? 0 : 0
                     to: target.Stack.index > enterItem.Stack.index ? target.width : -target.width
-                    duration: 100
+                    duration: 250
+                    easing.type: Easing.OutCirc
                 }
                 PropertyAnimation{
                     target: enterItem
                     property: "x"
                     from: target.Stack.index < exitItem.Stack.index ? -exitItem.width : exitItem.width
                     to: target.Stack.index < exitItem.Stack.index ? 0 : 0
-                    duration: 100
+                    duration: 250
+                    easing.type: Easing.OutCirc
                 }
             }
 
             property Component fromSignToMainTransition: StackViewTransition {
                 SequentialAnimation{
+                    ScriptAction{ script: hamburger.opacity = false }
                     PropertyAnimation{
                         target: enterItem
                         property: "opacity"
                         from: 0
                         to: 1
-                        duration: 100
+                        duration: 1000
                     }
                     ScriptAction{ script: enterItem.state = "normal" }
+                    PauseAnimation{ duration: 750 }
+                    PropertyAnimation{ target: hamburger; property: "opacity"; from: 0; to: 1; duration: 100 }
                 }
             }
 
             property Component fromMainToSignTransition: StackViewTransition {
                 SequentialAnimation{
                     ScriptAction{ script: exitItem.state = "hidden" }
+                    PauseAnimation{ duration: 750 }
                     PropertyAnimation{
                         target: exitItem
                         property: "opacity"
@@ -116,39 +112,68 @@ ApplicationWindow{
 
             property Component memePageTransition: StackViewTransition {
                 SequentialAnimation{
-                    ScriptAction{ script: enterItem.transformOrigin = Item.TopLeft }
-                    ScriptAction{ script: enterItem.state = "hidden" }
+                    ScriptAction{ script: enterItem.state = User.findMeme(enterItem.name) ? "mine" : "general" }
+                    ScriptAction{ script: exitItem.setVisibilityImageOnList(false) }
                     ParallelAnimation{
                         PropertyAnimation{
                             target: enterItem
-                            property: "y"
-                            from: exitItem.clickedMemeOnList - target.height / 10 * target.scale
-                            to: 0
-                            duration: 350
+                            property: "memeImageY"
+                            from: exitItem.clickedMemeOnListY
+                            to: target.imageBackY
+                            duration: 200
+                            easing.type: Easing.OutCirc
                         }
                         PropertyAnimation{
                             target: enterItem
-                            property: "scale"
+                            property: "memeImageScale"
                             from: exitItem.clickedMemeImageSize / (target.width / 2)
                             to: 1
-                            duration: 350
+                            duration: 200
+                            easing.type: Easing.OutCirc
                         }
                         PropertyAnimation{
                             target: enterItem
-                            property: "x"
-                            from: -target.width / 4 * target.scale
-                            to: 0
-                            duration: 350
-                        }
-                        PropertyAnimation{
-                            target: enterItem
-                            property: "opacity"
-                            from: 0.5
-                            to: 1
-                            duration: 350
+                            property: "memeImageX"
+                            from: 0
+                            to: target.width / 4
+                            duration: 200
+                            easing.type: Easing.OutCirc
                         }
                     }
-                    ScriptAction{ script: enterItem.state = "normal" }
+                }
+            }
+
+            property Component fromMemePageTransition: StackViewTransition {
+                SequentialAnimation{
+                    ScriptAction{ script: exitItem.state = "hidden" }
+                    ScriptAction{ script: enterItem.setVisibilityImageOnList(false) }
+                        ParallelAnimation{
+                            PropertyAnimation{
+                                target: exitItem
+                                property: "memeImageY"
+                                from: exitItem.imageBackY
+                                to: enterItem.clickedMemeOnListY
+                                duration: 200
+                                easing.type: Easing.OutCirc
+                            }
+                            PropertyAnimation{
+                                target: exitItem
+                                property: "memeImageScale"
+                                from: 1
+                                to: enterItem.clickedMemeImageSize / (target.width / 2)
+                                duration: 200
+                                easing.type: Easing.OutCirc
+                            }
+                            PropertyAnimation{
+                                target: exitItem
+                                property: "memeImageX"
+                                from: target.width / 4
+                                to: 0
+                                duration: 200
+                                easing.type: Easing.OutCirc
+                            }
+                    }
+                    ScriptAction{ script: enterItem.setVisibilityImageOnList(true) }
                 }
             }
         }
@@ -177,6 +202,11 @@ ApplicationWindow{
             CategoryMemeListPage{}
         }
         Component{
+            id: adsPage
+            AdsPage{}
+        }
+
+        Component{
             id: usersRatingPage
             UsersRatingPage{}
         }
@@ -184,9 +214,9 @@ ApplicationWindow{
 
     Hamburger{
         id: hamburger
-        height: slidingMenu.height / 40//pageHeader.height / 4
+        height: slidingMenu.height / 40
         width: height * 3 / 2
-        anchors{ left: slidingMenu.right; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
+        anchors{ left: slidingMenu.right; leftMargin: width; }
         y: slidingMenu.y + height * 1.5
         z: slidingMenu.z
         onOpenAction: slidingMenu.show()
@@ -227,6 +257,30 @@ ApplicationWindow{
                         onClicked:{
                             User.getMemesCategories()
                             stackView.push(rialtoPage)
+                            slidingMenu.hide()
+                        }
+                    }
+                }
+                Rectangle{
+                    width: parent.width
+                    height: 1
+                    color: Qt.darker("lightgrey", 1.2)
+                }
+                Rectangle{
+                    id: ads
+                    width: parent.width
+                    height: parent.height / 10
+                    color: "lightgrey"
+                    Text{
+                        text:"реклама"
+                        font.pixelSize: parent.height / 3
+                        anchors.centerIn: parent
+                    }
+                    MouseArea{
+                        anchors.fill: parent
+                        onClicked:{
+                            User.getAdList()
+                            stackView.push(adsPage)
                             slidingMenu.hide()
                         }
                     }
@@ -290,11 +344,12 @@ ApplicationWindow{
                 anchors.fill: parent
                 Text{
                     text: "Вы уверены, что хотите выйти?"
+                    height: parent.height / 2
+                    width: parent.width
                 }
                 Row{
                     height: parent.height / 2
                     width: parent.width
-                    anchors{ left: parent.left; right: parent.right; bottom: parent.bottom }
                     MaterialButton{
                         label: "выйти"
                         labelSize: height / 4

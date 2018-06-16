@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 
 Item {
 
@@ -16,8 +16,13 @@ Item {
         Text{
             id: headerLabel
             anchors{ horizontalCenter: parent.horizontalCenter; top: parent.top;
-                topMargin: height/4 }
-            font.pixelSize: parent.height/2
+                topMargin: (pageHeader.height - font.pixelSize) / 2 }
+            font.family: "Roboto"
+            font.pixelSize: parent.height / 2
+            height: parent.height
+            width: parent.width * 5 / 8
+            fontSizeMode: Text.HorizontalFit
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 }

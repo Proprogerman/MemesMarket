@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 
@@ -29,20 +29,26 @@ Page {
 
     property bool avatarPosFixation: true
 
-    property int clickedMemeOnList
+    property int clickedMemeOnListY
     property int clickedMemeImageSize
+    property int clickedMemeIndex
 
 
-    function valueToShort(value){
-        var count = 0
-        while(Math.floor(value / 1000) > 0){
-            count++
-            value = Math.floor(value / 1000)
-            print(value)
+    function valueToShort(num) {
+        var digits = 1
+        var si = [
+            { value: 1, symbol: "" },
+            { value: 1E3, symbol: "k" },
+            { value: 1E6, symbol: "M" },
+        ];
+        var rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+        var i;
+        for (i = si.length - 1; i > 0; i--) {
+            if (num >= si[i].value) {
+                break;
+            }
         }
-        for(var i = 0; i < count; i++)
-            value += 'K'
-        return value
+        return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
     }
 
 
@@ -58,7 +64,7 @@ Page {
         if(!findMeme(meme_name)){
             memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
                                    "imageNameText": image_name, "image": "image://meme/" + image_name,
-                                   /*"memeFeedbackRateText": memeFeedbackRate,*/ "memeCreativityText": memeCreativity
+                                   "memeCreativityText": memeCreativity, "vis" : true
                                  })
         }
 
@@ -95,6 +101,10 @@ Page {
         return false
     }
 
+    function setVisibilityImageOnList(vis){
+        memeListModel.setProperty(clickedMemeIndex, "vis", vis)
+    }
+
     Connections{
         target: User
         onMemeForUserReceived:{
@@ -129,9 +139,9 @@ Page {
     Connections{
         target: stackView
         onCurrentItemChanged: {
-            if(stackView.currentItem.objectName == "mainUserPage"){
-                User.localUpdateUserData()
-            }
+            if(stackView.currentItem !== null)
+                if(stackView.currentItem.objectName == "mainUserPage")
+                    User.localUpdateUserData()
         }
     }
 
@@ -148,8 +158,6 @@ Page {
 //            if(stackView.currentItem.objectName == "mainUserPage"){
                 console.log("GET USER DATA TIMER")
                 User.getUserData()
-                if(!creativeInd.running)
-                    creativeInd.running = true
 //            }
         }
     }
@@ -163,6 +171,7 @@ Page {
 //            PropertyChanges{ target: userPanel; y: pageHeader.y + height / 2 }
             AnchorChanges{ target: appListView; anchors.top: pageHeader.bottom }
             StateChangeScript{ name: "avatarFixationScript"; script: avatarPosFixation = true }
+            StateChangeScript{ name: "waveAnimationRunningScript"; script: creativeInd.running = true }
         },
         State{
             name: "hidden"
@@ -170,6 +179,7 @@ Page {
             AnchorChanges{ target: userPanel; anchors.bottom: pageHeader.top }
             AnchorChanges{ target: appListView; anchors.top: background.bottom }
             StateChangeScript{ name: "avatarFixationScript"; script: avatarPosFixation = false }
+            StateChangeScript{ name: "waveAnimationRunningScript"; script: creativeInd.running = false }
         }
     ]
     state: "hidden"
@@ -178,6 +188,7 @@ Page {
         Transition {
             from: "hidden"; to: "normal"
             SequentialAnimation{
+                ScriptAction{ scriptName: "waveAnimationRunningScript" }
                 AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
                 ScriptAction{ scriptName: "avatarFixationScript" }
             }
@@ -187,6 +198,7 @@ Page {
             SequentialAnimation{
                 ScriptAction{ scriptName: "avatarFixationScript" }
                 AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
+                ScriptAction{ scriptName: "waveAnimationRunningScript" }
             }
         }
     ]
@@ -205,7 +217,6 @@ Page {
         headerText: User.user_name
         z: 7
     }
-
 
     DropShadow{
         anchors.fill: pageHeader
@@ -350,25 +361,27 @@ Page {
 
     Flipable{
         id: avatarLable
-        width: avatar.width / 4
-        height: avatar.height / 4
-        anchors{ bottom: avatar.bottom; bottomMargin: height / 2; horizontalCenter: avatar.horizontalCenter}
+        width: avatar.width / 2
+        height: avatar.height / 2
+        anchors{ bottom: avatar.bottom; horizontalCenter: avatar.horizontalCenter }
         z: pageHeader.z + 2
 
         property bool flipped: false
 
         front: Text{
             text: userPopValue
-            width: parent.width
-            height: parent.height
-            font.pixelSize: parent.height
+            width: Math.floor(parent.width * 1.25)
+            height: Math.floor(parent.height * 1.25)
+            anchors{ horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
+            font.pixelSize: parent.height / 2
+            fontSizeMode: Text.HorizontalFit
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             color: "white"
         }
         back: Image{
-            width: Math.ceil(parent.width * 1.25)
-            height: Math.ceil(parent.height * 1.25)
+            width: Math.ceil(parent.width * 0.75)
+            height: Math.ceil(parent.height * 0.75)
             anchors{ horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
             source: "qrc:/uiIcons/up-arrow.svg"
             antialiasing: true
@@ -387,21 +400,22 @@ Page {
             when: avatarLable.flipped
         }
         transitions: Transition{
-            NumberAnimation{ target: rotation; property: "angle"; duration: 350 }
+            NumberAnimation{ target: rotation; property: "angle"; duration: 250 }
         }
     }
 
-    /////////////////////////////////////////////////////////////////////////
-    Rectangle{
+    Image{
         id: moneyInd
-        width: (avatar.height * 1 / 2)
+        width: Math.ceil(avatar.height * 1 / 2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.left: avatar.right
         anchors.leftMargin: width * 1 / 2
         z: userPanel.z + 1
-        color: "#fdd835"
-        radius: width / 2
+        source: "qrc:/uiIcons/shekel.svg"
+        antialiasing: true
+        smooth: true
+        mipmap: true
         Text{
             id: moneyLabel
             anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
@@ -409,29 +423,17 @@ Page {
             text: userShekels.toString()
             color: "#ffffff"
         }
+        MouseArea{
+            anchors.fill: parent
+            onClicked: {
+                rewardedVideoAd.show()
+            }
+        }
     }
-    ////////////////////////////////////////////////////////////////////////
-//    Rectangle{
-//        id:creativeInd
-//        width: (avatar.height * 1/2)
-//        height: width
-//        anchors.verticalCenter: userPanel.verticalCenter
-//        anchors.right: avatar.left
-//        anchors.rightMargin: width * 1/2
-//        z: userPanel.z + 1
-//        color:"lime"
-//        radius: width/2
-//        Text{
-//            id: creativityLabel
-//            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
-//            font.pixelSize: parent.height / 5
-//            text: userCreativity.toString()
-//            color: "#ffffff"
-//        }
-//    }
+
     WaveIndicator{
         id: creativeInd
-        width: (avatar.height * 1 / 2)
+        width: Math.ceil(avatar.height * 1 / 2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.right: avatar.left
@@ -448,17 +450,6 @@ Page {
             color: "#ffffff"
         }
     }
-
-//    DropShadow{
-//        anchors.fill: userPanel
-//        source: userPanel
-//        radius: 13
-//        samples: 17
-//        color: "#000000"
-//        opacity: 0.8
-//        spread: 0.4
-//        z: userPanel.z - 1
-//    }
 
     ListView {
         id: appListView
@@ -480,12 +471,22 @@ Page {
             height: userPanel.height
             color: itemColor
 
+//            property bool imageVisible: true
+//            onImageVisibleChanged: {
+//                memeImage.height = 0
+//                console.log("BBBBBBBBLLLLLLLAAt")
+//            }
+
             Image{
                 id: memeImage
                 height: parent.height
                 width: height
                 cache: false
                 source: image
+                visible: vis
+                onVisibleChanged: {
+                    appListView.forceLayout()
+                }
             }
             Rectangle{
                 id: unforceButton
@@ -495,6 +496,7 @@ Page {
                 opacity: 0.5
                 radius: width
                 color: "#000000"
+                visible: vis
             }
 
             Text{
@@ -531,8 +533,9 @@ Page {
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
-                    clickedMemeOnList = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
+                    clickedMemeOnListY = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
                     clickedMemeImageSize = memeImage.width
+                    clickedMemeIndex = index
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
                                     memeCreativity: Number(memeCreativityText)/*, memeFeedbackRate: parseFloat(memeFeedbackRateText)*/}})
@@ -597,6 +600,9 @@ Page {
         }
         onLoading: {
             showFullScreen()
+        }
+        onRewarded: {
+            User.rewardUserWithShekels()
         }
     }
 }

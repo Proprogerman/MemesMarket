@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 import QtCharts 2.2
@@ -26,13 +26,12 @@ Page{
     property int memeCreativity: 0
     property double memeFeedbackRate: 0
 
-    onMemeFeedbackRateChanged: {
-        console.log("memeFeedbackRate: ", memeFeedbackRate)
-    }
-
     property color mainColor: "#507299"
     property color backColor: "#edeef0"
-    property int itemSpacing: 0//pageHeader.height * 1/4
+    property color goldenColor: "#f9a602"
+    property color fadedGoldenColor: "#ffd74a"
+
+    property int itemSpacing: 0
 
     property int timePeriod: 10
 
@@ -41,6 +40,11 @@ Page{
     property int currentValue: 0
 
     property bool axisCondition: true
+
+    property alias memeImageX: imageItem.x
+    property alias memeImageY: imageItem.y
+    property alias memeImageScale: imageItem.scale
+    property int imageBackY: imageBack.y
 
 
     function updateMemePopGraph(){
@@ -67,13 +71,24 @@ Page{
         radioButtons.button4Label = source
     }
 
+    function setManipItemColor(){
+        if(User.findMeme(memePage.name)){
+            memeActionButton.clickableColor = radioButtons.itemCheckedColor = goldenColor//"#fdd835"
+            memeActionButton.unclickableColor = radioButtons.itemUncheckedColor = fadedGoldenColor//"#ffff6b"
+        }
+        else{
+            memeActionButton.clickableColor = radioButtons.itemCheckedColor = "#00bcd4"
+            memeActionButton.unclickableColor = radioButtons.itemUncheckedColor = "#62efff"
+        }
+    }
+
     function setStartPopValueAxis(){
         startPopValueLine.clear()
         startPopValueLine.append(xAxis.min, memeStartPopValue)
         startPopValueLine.append(xAxis.max, memeStartPopValue)
     }
 
-    function showLikesIncrement(shekels){
+    function showPopIncrement(shekels){
         if(shekels !== 0){
             likesIncrement.clear()
             var popCount = popGraphLineSeries.count - 1
@@ -122,22 +137,24 @@ Page{
                 axisCondition = false
             }
             else if(maxElement > yAxis.max){
-                yAxis.max += Math.ceil((maxElement - yAxis.max) * 1.25)
-                yAxis.min += Math.ceil((maxElement - yAxis.max) * 1.25)
+                var maxDiff = Math.ceil((maxElement - yAxis.max) * 1.25)
+                yAxis.max += maxDiff
+                yAxis.min += maxDiff
             }
             else if(minElement < yAxis.min){
-                yAxis.min -= Math.ceil((yAxis.min - minElement) * 1.25)
-                yAxis.max -= Math.ceil((yAxis.min - minElement) * 1.25)
+                var minDiff = Math.ceil((yAxis.min - minElement) * 1.25)
+                yAxis.min -= minDiff
+                yAxis.max -= minDiff
             }
         }
         else if(memePage.state == "mine" && radioButtons.value != 0){
             yAxis.max = Math.ceil(maxElement + userShekels * 1.25)
-            yAxis.min = Math.ceil(minElement - diff / 2)
+            yAxis.min = minElement - diff
             axisCondition = true
         }
         else if(memePage.state == "general" && radioButtons.value != 0){
             yAxis.max = Math.ceil(maxElement * (1 + userCreativity / 100 * 1.25))
-            yAxis.min = Math.ceil(minElement - diff / 2)
+            yAxis.min = minElement - diff
             axisCondition = true
         }
     }
@@ -156,7 +173,6 @@ Page{
         repeat: true
         onTriggered:{
             console.log(stackView.currentItem.objectName)
-            //console.log("stackView.currentItem: ", stackView.currentItem, " ------- memePage: ", memePage)
             if(stackView.currentItem.objectName == "memePage"){
                 if(memePage.state == "mine")
                     User.getMemeDataForUser(name.toString())
@@ -169,7 +185,7 @@ Page{
     onMemePopValuesChanged: {
         updateMemePopGraph()
         if(state == "mine")
-            showLikesIncrement(radioButtons.value)
+            showPopIncrement(radioButtons.value)
         else
             showCreativityEffect(radioButtons.value)
     }
@@ -219,10 +235,15 @@ Page{
         height: pageHeader.height / 4
         width: height * 3 / 2
         y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
+        anchors{ left: pageHeader.left; leftMargin: width }
         z: pageHeader.z + 1
         dynamic: false
-        onBackAction: stackView.pop()
+        onBackAction: {
+            if(stackView.__currentItem.objectName === "memePage"){
+                stackView.pop()
+                visible = false
+            }
+        }
     }
 
     Rectangle{
@@ -246,39 +267,34 @@ Page{
             text: "Meme's name"//ServerConnection.user_name
             font.pixelSize: parent.height/2
         }
-
-//        MouseArea{
-//            anchors.fill: parent
-//            onClicked:{
-//                stackView.pop()
-//            }
-//        }
     }
-
 
     DropShadow{
         id: headerShadow
         anchors.fill: pageHeader
-        //verticalOffset: staticLine.height * 1/5
         radius: Math.floor(pageHeader.height / 10)
         samples: radius * 2 + 1
-        color:"#000000"
+        color: "#000000"
         source: pageHeader
         opacity: 0.5
         z: 3
     }
     Rectangle{
-        id: imageItem
+        id: imageBack
         width: parent.width
-        height: Math.ceil(width / 2)
+        height: width / 2
         anchors.top: pageHeader.bottom
         //anchors.topMargin:
         color: backColor//"white"
     }
     Item{
-        height: imageItem.height
+        id: imageItem
+        height: imageBack.height
         width: height
-        anchors.centerIn: imageItem
+        x: imageBack.x + imageItem.width / 2
+        y: imageBack.y
+        transformOrigin: Item.TopLeft
+        z: 100
         Image {
             id: image
             anchors.fill: parent
@@ -308,8 +324,7 @@ Page{
         id: popGraphItem
         width: parent.width
         height: parent.height * 3/8
-        anchors.top: imageItem.bottom
-//        anchors.bottom: manipItem.top
+        anchors.top: imageBack.bottom
         color: backColor
 
         clip: true
@@ -325,6 +340,7 @@ Page{
 
 //            animationOptions: ChartView.AllAnimations
             animationOptions: ChartView.NoAnimation
+
             ValueAxis{
                 id: xAxis
                 min: 0.0
@@ -333,34 +349,6 @@ Page{
                 gridVisible: false
                 visible: false
             }
-
-            LineSeries{
-                id: popGraphLineSeries
-                axisX: xAxis
-                axisY: yAxis
-                pointsVisible: false
-            }
-
-            LineSeries{
-                id: startPopValueLine
-                XYPoint{ id: xy1; x: xAxis.min; y: memeStartPopValue }
-                XYPoint{ id: xy2; x: xAxis.max; y: memeStartPopValue }
-                color: "blue"
-            }
-
-            LineSeries{
-                id: likesIncrement
-                color: "#fdd835"
-                visible: false
-            }
-
-            LineSeries{
-                id: creativityEffect
-                color: "#00BCD4"
-                visible: false
-                pointsVisible: true
-            }
-
             ValueAxis{
                 id: yAxis
                 min: 0
@@ -369,23 +357,37 @@ Page{
                 gridVisible: false
                 visible: false
             }
-
-//            LineSeries{
-//                id: startPopValueLine
-//                axisY: CategoryAxis{
-//                    min: - 200
-//                    max: 200
-//                    labelsVisible: false
-//                    gridVisible: false
-//                    gridLineColor: "red"
-//                    minorGridLineColor: "blue"
-//                    titleVisible: false
-//                    CategoryRange{
-//                        id: startPopValueRange
-//                        endValue: memeStartPopValue
-//                    }
-//                }
-//            }
+            AreaSeries{
+                id: redZone
+                color: "#40ff0000"
+                axisX: xAxis
+                axisY: yAxis
+                upperSeries: startPopValueLine
+            }
+            LineSeries{
+                id: popGraphLineSeries
+                axisX: xAxis
+                axisY: yAxis
+                pointsVisible: false
+                color: "blue"
+            }
+            LineSeries{
+                id: startPopValueLine
+                XYPoint{ id: xy1; x: xAxis.min; y: memeStartPopValue }
+                XYPoint{ id: xy2; x: xAxis.max; y: memeStartPopValue }
+                color: "green"
+            }
+            LineSeries{
+                id: likesIncrement
+                color: goldenColor//"#fdd835"
+                visible: false
+            }
+            LineSeries{
+                id: creativityEffect
+                color: "#00BCD4"
+                visible: false
+                pointsVisible: true
+            }
         }
     }
 
@@ -398,30 +400,21 @@ Page{
 
         RadioButtons{
             id: radioButtons
-            width: parent.width;
-//            height: memeActionButton.height
+            width: parent.width
             anchors.top: parent.top
             anchors.bottom: memeActionButton.top
             anchors.horizontalCenter: parent.horizontalCenter
-            itemUncheckedColor: "#ECEFF1"
-            itemCheckedColor: "#607D8B"
             backgroundColor: backColor
             spacing: width/70
 
-            onCheckedItemChanged:{
-                if(memePage.state == "mine"){
-                    memeActionButton.clickable = radioButtons.checkedItem != 0 ? true : false
-                }
-                else{
-                    memeActionButton.clickable = true
-                }
-            }
             onValueChanged: {
                 if(memePage.state == "mine"){
-                    showLikesIncrement(value)
+                    memeActionButton.clickable = radioButtons.value != 0 ? true : false
+                    showPopIncrement(value)
                     creativityEffect.visible = false
                 }
                 else{
+                    memeActionButton.clickable = true
                     showCreativityEffect(value)
                     likesIncrement.visible = false
                 }
@@ -438,104 +431,78 @@ Page{
                 left: parent.left
                 right: parent.right
             }
-    //        color: "#F48FB1"
             radius: height / 20
             labelSize: height / 4
-            rippleColor: "#F8BBD0"
-            unclickableColor: "#F48FB1"
-            clickableColor: "#EC407A"
         }
     }
 
     DropShadow{
+        id: manipItemShadow
         anchors.fill: manipItem
         source: manipItem
         color: "#80000000"
         visible: manipItem.visible
     }
 
-//    Loader{
-//        id: likeActLoader
-//        sourceComponent: LikeAct{
-//            anchors.fill: parent
-//            buttonStartSize: parent.width/5
-//            maxTap: 10
-//            relaxInterval: 400
-//            increase: 0.1
-//        }
-
-//        anchors{ top: pageHeader.bottom; bottom: background.bottom;
-//            left: parent.left; right: parent.right }
-//        active: false
-//        z: 5
-//    }
-
     states:[
         State{
             name: "general"
             PropertyChanges{ target: memeActionButton; label: "ЗАФОРСИТЬ" }
             PropertyChanges{ target: memeActionButton; clickable: true }
-            PropertyChanges{ target: radioButtons; itemCheckedColor: "#00bcd4"; itemUncheckedColor: "#62efff"}
+            PropertyChanges{ target: radioButtons; itemCheckedColor: "#00bcd4"; itemUncheckedColor: "#62efff" }
+            PropertyChanges{ target: memeActionButton; clickableColor: radioButtons.itemCheckedColor;
+                unclickableColor: radioButtons.itemUncheckedColor; rippleColor: Qt.lighter(clickableColor, 2) }
             PropertyChanges{ target: radioButtons; activeButton: 0 }
             PropertyChanges{ target: unforceButton; visible: false }
             PropertyChanges{ target: startPopValueLine; visible: false }
-            PropertyChanges{ target: memePage; memeStartPopValue: 0 }
-//            PropertyChanges{
-//                target: yAxis
-//                max: minValue != maxValue ?
-//                         maxValue * (1 + userCreativity / 100 * 1.25):
-//                         maxValue * 2
-//                min: minValue != maxValue ? minValue - (maxValue - minValue) * 0.25 : minValue / 2
-
-//            }
+            PropertyChanges{ target: redZone; visible: false}
             StateChangeScript{ script: setYAxis() }
             StateChangeScript{ script: setRadioButtonsItems(userCreativity)}
         },
         State{
             name: "mine"
             PropertyChanges{ target: memeActionButton; label: "НАКРУТИТЬ ЛАЙКИ" }
-            PropertyChanges{ target: radioButtons; itemCheckedColor: "#fdd835"; itemUncheckedColor: "#ffff6b"}
+            PropertyChanges{ target: radioButtons; itemCheckedColor: goldenColor; itemUncheckedColor: fadedGoldenColor }
+            PropertyChanges{ target: memeActionButton; clickableColor: radioButtons.itemCheckedColor;
+                unclickableColor: radioButtons.itemUncheckedColor; rippleColor: Qt.lighter(clickableColor, 2) }
             PropertyChanges{ target: radioButtons; activeButton: 1 }
             PropertyChanges{ target: unforceButton; visible: true }
             PropertyChanges{ target: startPopValueLine; visible: true }
-//            PropertyChanges{ target: memePage; memeStartPopValue: memePopValues[memePopValues.length - 1] }
-            StateChangeScript{ script: setRadioButtonsItems(userShekels)}
-//            PropertyChanges{
-//                target: yAxis
-//                max: currentValue + userShekels * 1.25
-//                min: memeStartPopValue - max
-//            }
+            PropertyChanges{ target: redZone; visible: true }
             StateChangeScript{ script: setYAxis() }
+            StateChangeScript{ script: setRadioButtonsItems(userShekels)}
             StateChangeScript{ script: setStartPopValueAxis() }
         },
         State{
             name: "hidden"
-            PropertyChanges{ target: pageHeader; visible: false }
-            PropertyChanges{ target: popGraphItem; visible: false }
-            PropertyChanges{ target: manipItem; visible: false }
-            PropertyChanges{ target: backgroundItem; visible: false }
-            PropertyChanges{ target: headerShadow; visible: false }
-            PropertyChanges{ target: imageItem; visible: false }
-            PropertyChanges{ target: hamburger; visible: false }
-        },
-        State{
-            name: "normal"
-            PropertyChanges{ target: pageHeader; visible: true }
-            PropertyChanges{ target: popGraphItem; visible: true }
-            PropertyChanges{ target: manipItem; visible: true }
-            PropertyChanges{ target: backgroundItem; visible: true }
-            PropertyChanges{ target: headerShadow; visible: true }
-            PropertyChanges{ target: imageItem; visible: true }
-            PropertyChanges{ target: hamburger; visible: true }
+            PropertyChanges{ target: pageHeader; opacity: 0 }
+            PropertyChanges{ target: popGraphItem; opacity: 0 }
+            PropertyChanges{ target: manipItem; opacity: 0 }
+            PropertyChanges{ target: manipItemShadow; opacity: 0 }
+            PropertyChanges{ target: backgroundItem; opacity: 0 }
+            PropertyChanges{ target: headerShadow; opacity: 0 }
+            PropertyChanges{ target: imageBack; opacity: 0 }
+            PropertyChanges{ target: hamburger; opacity: 0 }
+            PropertyChanges{ target: unforceButton; opacity: 0 }
+            PropertyChanges{ target: unforceButton; visible: unforceButton.visible }
+            PropertyChanges{ target: radioButtons; activeButton: radioButtons.activeButton }
+            StateChangeScript{ script: setManipItemColor() }
         }
     ]
-    state: "mine"
+    state: "hidden"
+
+    transitions: Transition {
+        PropertyAnimation{
+            property: "opacity"
+            duration: 250
+        }
+    }
 
     Connections{
         target: memeActionButton.buttArea
         onClicked: {
-            //likeActLoader.active = true
             if(state == "general"){
+                axisCondition = true
                 memeCreativity = radioButtons.value
                 memeStartPopValue = memePopValues[memePopValues.length - 1]
                 User.forceMeme(name, memeCreativity, memeStartPopValue, category)
@@ -543,6 +510,7 @@ Page{
                 state = "mine"
             }
             else if(state == "mine"){
+                axisCondition = true
                 User.increaseLikesQuantity(name, radioButtons.value)
             }
             setYAxis()
