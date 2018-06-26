@@ -22,20 +22,21 @@ Page {
 
 
     function setAd(adName, imageName, adProfit, adReputation, adDiscontented, secondsToReady){
+        for(var i = 0; i < adListModel.count; i++){
+            if(adListModel.get(i).adNameText === adName){
+                adListModel.set(i, { "adNameText": adName, "image": "image://meme/" + imageName, "adProfitText": adProfit,
+                                     "adReputationText": adReputation, "adDiscontented": adDiscontented, "buttonClickable": true,
+                                     "secondsToReady": secondsToReady })
+                if(secondsToReady || !adProfit)
+                    adListModel.setProperty(i, "buttonClickable", false)
+                return;
+            }
+        }
         adListModel.append({ "adNameText": adName, "image": "image://meme/" + imageName, "adProfitText": adProfit,
                              "adReputationText": adReputation, "adDiscontented": adDiscontented, "buttonClickable": true,
                              "secondsToReady": secondsToReady })
-        if(secondsToReady)
+        if(secondsToReady || !adProfit)
             adListModel.setProperty(findAd(adName), "buttonClickable", false)
-    }
-
-    function updateAd(adName, adProfit, adReputation, adDiscontented, secondsToReady){
-        var adIndex = findAd(adName)
-        adListModel.set(adIndex, { "adNameText": adName, "adProfitText": adProfit, "adReputationText": adReputation,
-                            "adDiscontented": adDiscontented, "buttonClickable": true,
-                            "secondsToReady": secondsToReady })
-        if(secondsToReady)
-            adListModel.setProperty(adIndex, "buttonClickable", false)
     }
 
     function updateAdImage(adName, imageName){
@@ -67,11 +68,9 @@ Page {
         onAdReceived: {
             setAd(adName, imageName, profit, reputation, discontented, secondsToReady)
         }
-        onAdUpdated: {
-            updateAd(adName, profit, reputation, discontented, secondsToReady)
-        }
-        onMemeImageReceived: {
-            updateAdImage(adName, imageName)
+        onImageReceived: {
+            if(type === "ad")
+                updateAdImage(name, imageName)
         }
     }
 
@@ -96,7 +95,7 @@ Page {
         height: pageHeader.height / 4
         width: height * 3 / 2
         y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
+        anchors{ left: pageHeader.left; leftMargin: width }
         z: pageHeader.z + 1
         dynamic: false
         onBackAction: {
@@ -213,6 +212,7 @@ Page {
                 }
                 onClickableChanged: {
                     seconds.visible = clickable ? false : true
+                    labelVisible = clickable ? true : false
                 }
             }
             Text{

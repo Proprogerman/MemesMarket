@@ -1,6 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
+import QtQuick.Dialogs 1.2
 
 import KlimeSoft.SingletonUser 1.0
 
@@ -19,6 +20,7 @@ Page {
 
     property color backColor: "#edeef0"
     property color itemColor: "white"
+    property color mainColor: "#507299"
 
     property var memesPopValues: []
     property var startPopValues: []
@@ -31,7 +33,6 @@ Page {
 
     property int clickedMemeOnListY
     property int clickedMemeImageSize
-    property int clickedMemeIndex
 
 
     function valueToShort(num) {
@@ -60,15 +61,17 @@ Page {
         return directionFormat
     }
 
-    function updateMeme(meme_name, image_name, crsDir, /*memeFeedbackRate,*/ memeCreativity){
-        if(!findMeme(meme_name)){
-            memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
-                                   "imageNameText": image_name, "image": "image://meme/" + image_name,
-                                   "memeCreativityText": memeCreativity, "vis" : true
-                                 })
-        }
-
-        console.log("update Meme: ", image_name)
+    function setMeme(meme_name, image_name, crsDir, memeCreativity, loyalty){
+        for(var i = 0; i < memeListModel.count; i++)
+            if(memeListModel.get(i).memeNameText === meme_name){
+                memeListModel.set(i, {"courseDirectionText": courseWithSign(crsDir), "loyaltyText": parseFloat(loyalty / 100),
+                                      "memeCreativityText": memeCreativity})
+                return;
+            }
+        memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
+                               "imageNameText": image_name, "image": "image://meme/" + image_name,
+                               "memeCreativityText": memeCreativity, "loyaltyText": parseFloat(loyalty / 100),
+                             })
     }
 
     function updateMemeImage(meme_name, image_name){
@@ -76,13 +79,6 @@ Page {
             if(memeListModel.get(i).memeNameText === meme_name){
                 memeListModel.setProperty(i, "image", " ")
                 memeListModel.setProperty(i, "image", "image://meme/" + image_name)
-            }
-    }
-
-    function updatePopValues(meme_name, crsDir){
-        for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeNameText === meme_name){
-                memeListModel.setProperty(i, "courseDirectionText", courseWithSign(crsDir))
             }
     }
 
@@ -101,26 +97,43 @@ Page {
         return false
     }
 
-    function setVisibilityImageOnList(vis){
-        memeListModel.setProperty(clickedMemeIndex, "vis", vis)
+    function setVisibilityImageOnList(mName, vis){
+        for(var i = 0; i < appListView.contentItem.children.length; i++){
+            if(appListView.contentItem.children[i].name === mName)
+                appListView.contentItem.children[i].imageVisible = vis
+        }
+    }
+
+    function getClosingMemePosition(mName){
+        for(var i = 0; i < appListView.contentItem.children.length; i++){
+            if(appListView.contentItem.children[i].name === mName){
+                var mItem = appListView.contentItem.children[i]
+                var currentYPos = mapFromItem(appListView, mItem.x, mItem.y).y
+                if(appListView.y > currentYPos - appListView.contentY)
+                    appListView.positionViewAtIndex(i, ListView.Beginning)
+                else if(appListView.y + appListView.height < currentYPos + mItem.height - appListView.contentY)
+                    appListView.positionViewAtIndex(i, ListView.End)
+                return clickedMemeOnListY = mapFromItem(appListView, mItem.x, mItem.y).y - appListView.contentY
+            }
+        }
     }
 
     Connections{
         target: User
-        onMemeForUserReceived:{
-            var crsDir = Math.ceil(popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100))/*memeFeedbackRate*/ - startPopValue)
-            updateMeme(memeName, imageName, crsDir, /*memeFeedbackRate,*/ memeCreativity)
-            memesPopValues[memeName] = popValues
-            startPopValues[memeName] = startPopValue
+        onMemeReceived:{
+            if(User.findMeme(memeName)){
+                var crsDir = Math.ceil((popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100)) - startPopValue)
+                                       * parseFloat(loyalty / 100))
+                memesPopValues[memeName] = popValues
+                startPopValues[memeName] = startPopValue
+                setMeme(memeName, imageName, crsDir, memeCreativity, loyalty)
+            }
         }
-        onMemePopValuesForUserUpdated:{
-            var crsDir = Math.ceil(popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100))/*memeFeedbackRate*/ - startPopValue)
-            updatePopValues(memeName, crsDir, startPopValue)
-            memesPopValues[memeName] = popValues
-            startPopValues[memeName] = startPopValue
-        }
-        onMemeImageReceived:{
-            updateMemeImage(memeName, imageName)
+        onImageReceived:{
+            if(type === "meme")
+                updateMemeImage(name, imageName)
+            else if(type === "user")
+                avatar.source = "image://meme/" + imageName
         }
         onPopValueChanged:{
             userPopValue = valueToShort(User.pop_values)
@@ -155,10 +168,7 @@ Page {
         interval: 10000
         repeat: true
         onTriggered:{
-//            if(stackView.currentItem.objectName == "mainUserPage"){
-                console.log("GET USER DATA TIMER")
-                User.getUserData()
-//            }
+            User.getUserData()
         }
     }
 
@@ -168,7 +178,6 @@ Page {
             AnchorChanges{ target: pageHeader; anchors.top: background.top }
             AnchorChanges{ target: pageHeader; anchors.bottom: undefined }
             AnchorChanges{ target: userPanel; anchors.bottom: undefined }
-//            PropertyChanges{ target: userPanel; y: pageHeader.y + height / 2 }
             AnchorChanges{ target: appListView; anchors.top: pageHeader.bottom }
             StateChangeScript{ name: "avatarFixationScript"; script: avatarPosFixation = true }
             StateChangeScript{ name: "waveAnimationRunningScript"; script: creativeInd.running = true }
@@ -220,21 +229,18 @@ Page {
 
     DropShadow{
         anchors.fill: pageHeader
-        //verticalOffset: staticLine.height * 1/5
         radius: 13
         samples: 17
         color:"#000000"
         source: pageHeader
         opacity: 0.5
-        z: avatarMask.z + 1/*pageHeader.z - 1*/
+        z: avatarMask.z + 1
     }
 
     Rectangle{
         id:userPanel
         width: parent.width
         height: (parent.height * 1/5)
-        //anchors.top: pageHeader.bottom
-        y: pageHeader.y + height / 2
         z: pageHeader.z - 3
         color:"#507299"
 
@@ -248,7 +254,6 @@ Page {
                 when: appListView.contentY > (appListView.originY - userPanel.height)
                 name: "scrollUpState"
                 PropertyChanges{ target: userPanel; y: - appListView.contentY - userPanel.height / 2 }
-                //PropertyChanges{ target: avatar; y: pageHeader.y}
             }
         ]
         state: "normalState"
@@ -261,9 +266,8 @@ Page {
         height: width
         x: userPanel.x + (userPanel.width - width) / 2
         y: userPanel.y + (userPanel.height - height) / 2
+        source: "image://meme/"
 
-
-        source: "qrc:/photo/sexyPhoto.jpg"
         states:[
             State{
                 when: !avatarPosFixation && (userPanel.y + userPanel.height / 2) > (pageHeader.y + pageHeader.height)
@@ -281,11 +285,11 @@ Page {
         state: "normal"
     }
 
-    function goToBegin(){
+    function goToIndex(index, mode){
         listViewAnim.running = false
         var pos = appListView.contentY
         var destPos
-        appListView.positionViewAtIndex(0, ListView.Center)
+        appListView.positionViewAtIndex(index, mode)
         destPos = appListView.contentY
         listViewAnim.from = pos
         listViewAnim.to = destPos
@@ -297,7 +301,7 @@ Page {
         anchors.fill: avatar
         onClicked:{
             if(avatar.state == "tapToTop"){
-                goToBegin()
+                goToIndex(0, ListView.Center)
             }
         }
     }
@@ -400,7 +404,7 @@ Page {
             when: avatarLable.flipped
         }
         transitions: Transition{
-            NumberAnimation{ target: rotation; property: "angle"; duration: 250 }
+            NumberAnimation{ target: rotation; property: "angle"; duration: 150 }
         }
     }
 
@@ -411,23 +415,46 @@ Page {
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.left: avatar.right
         anchors.leftMargin: width * 1 / 2
-        z: userPanel.z + 1
         source: "qrc:/uiIcons/shekel.svg"
         antialiasing: true
-        smooth: true
         mipmap: true
+        z: userPanel.z + 1
         Text{
             id: moneyLabel
-            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
-            font.pixelSize: parent.height / 5
+            anchors{ horizontalCenter: moneyInd.horizontalCenter; top: moneyInd.bottom }
+            font.pixelSize: moneyInd.height / 4
             text: userShekels.toString()
             color: "#ffffff"
         }
         MouseArea{
             anchors.fill: parent
             onClicked: {
-                rewardedVideoAd.show()
+                rewardDialog.open()
             }
+        }
+    }
+
+    Rectangle{
+        id: moneyGlowForm
+        anchors.fill: moneyInd
+        radius: width / 2
+        z: moneyInd.z - 1
+        color: "black"
+        visible: false
+    }
+
+    RectangularGlow{
+        id: moneyGlow
+        anchors.fill: moneyGlowForm
+        color: Qt.lighter("#FFD74A")
+        glowRadius: moneyGlowForm.width / 8
+        smooth: glowRadius * 2 + 1
+        spread: 0.7
+        cornerRadius: moneyGlowForm.radius + glowRadius
+        z: moneyGlowForm.z
+        opacity: rewardedVideoAd.ready ? 1 : 0
+        Behavior on opacity{
+            NumberAnimation{ duration: 250 }
         }
     }
 
@@ -445,7 +472,7 @@ Page {
         Text{
             id: creativityLabel
             anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
-            font.pixelSize: parent.height / 5
+            font.pixelSize: parent.height / 4
             text: userCreativity.toString()
             color: "#ffffff"
         }
@@ -455,7 +482,7 @@ Page {
         id: appListView
         height: parent.height - pageHeader.height
         width: parent.width
-        spacing: parent.height/50
+        spacing: parent.height / 50
         anchors{
             top: pageHeader.bottom
             right: parent.right
@@ -471,11 +498,8 @@ Page {
             height: userPanel.height
             color: itemColor
 
-//            property bool imageVisible: true
-//            onImageVisibleChanged: {
-//                memeImage.height = 0
-//                console.log("BBBBBBBBLLLLLLLAAt")
-//            }
+            property string name: memeNameText
+            property bool imageVisible: true
 
             Image{
                 id: memeImage
@@ -483,31 +507,24 @@ Page {
                 width: height
                 cache: false
                 source: image
-                visible: vis
+                visible: imageVisible
                 onVisibleChanged: {
                     appListView.forceLayout()
                 }
-            }
-            Rectangle{
-                id: unforceButton
-                width: memeImage.width
-                height: memeImage.height
-                anchors.centerIn: memeImage
-                opacity: 0.5
-                radius: width
-                color: "#000000"
-                visible: vis
             }
 
             Text{
                 id: memeNameLabel
                 text: memeNameText
                 anchors{ left: memeImage.right; top: parent.top }
+                font.pixelSize: parent.height / 8
+                fontSizeMode: Text.HorizontalFit
+                font.family: "Roboto"
             }
             Text{
                 id: courseDirectionLabel
                 text: courseDirectionText
-                anchors{ right: parent.right; verticalCenter: parent.verticalCenter }
+                anchors{ bottom: loyaltyLabel.top; right: parent.right }
 
                 onTextChanged:{
                     if(text.charAt(0) == "-"){
@@ -519,32 +536,32 @@ Page {
                 }
             }
             Text{
+                id: loyaltyLabel
+                text: loyaltyText
+                anchors{ verticalCenter: parent.verticalCenter; right: parent.right }
+                color: "#000000"
+            }
+            Text{
                 id: memeCreativityLabel
                 text: memeCreativityText
-                anchors{ top: courseDirectionLabel.bottom; right: parent.right }
+                anchors{ top: loyaltyLabel.bottom; right: parent.right }
                 color: "#00BCD4"
             }
-//            Text{
-//                text: memeFeedbackRateText
-//                anchors{ top: memeCreativityLabel.bottom; right: parent.right }
-//                color: "#000000"
-//            }
 
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
+                    var currentYPos = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
+                    if(appListView.y > currentYPos - appListView.contentY)
+                        appListView.positionViewAtIndex(index, ListView.Beginning)
+                    else if(appListView.y + appListView.height < currentYPos + parent.height - appListView.contentY)
+                        appListView.positionViewAtIndex(index, ListView.End)
                     clickedMemeOnListY = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
                     clickedMemeImageSize = memeImage.width
-                    clickedMemeIndex = index
+//                    clickedMemeIndex = index
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
-                                    memeCreativity: Number(memeCreativityText)/*, memeFeedbackRate: parseFloat(memeFeedbackRateText)*/}})
-                }
-            }
-            MouseArea{
-                anchors.fill: unforceButton
-                onClicked:{
-                    User.unforceMeme(memeNameText)
+                                    memeCreativity: Number(memeCreativityText)}})
                 }
             }
         }
@@ -558,10 +575,16 @@ Page {
     AdMobRewardedVideoAd {
         id: rewardedVideoAd
 
-        adUnitId: "ca-app-pub-3940256099942544/5224354917"
-//            Qt.platform.os == "android" ? "ca-app-pub-6606648560678905/5628948780" : "ca-app-pub-6606648560678905/2850564595"
+        adUnitId: "ca-app-pub-5551381749080346/6707293633"
 
-        onReadyChanged: if(ready) load()
+        onReadyChanged:{
+            if(ready){
+                load()
+                moneyGlow.opacity = 1
+            }
+            else
+                moneyGlow.opacity = 0
+        }
 
         onClosed: load()
 
@@ -569,25 +592,12 @@ Page {
             gender: AdMob.GenderUnknown
             childDirectedTreatment: AdMob.ChildDirectedTreatmentUnknown
 
-            // NOTE remember JS Date months are 0 based
-            // 8th of December 1979:
-            birthday: new Date(1979,11,8)
-
-            keywords: [
-                "Qt",
-                "Firebase"
-            ]
-
-            extras: [
-                { "something_extra1": "extra_stuff1" },
-                { "something_extra2": "extra_stuff2" }
-            ]
+            keywords: [ "memes" ]
         }
 
         onError: {
             App.log("RewardedVideoAd failed with error code",code,"and message",message)
 
-            // See AdMob.Error* enums
             if(code === AdMob.ErrorNetworkError)
                 App.log("No network available");
         }
@@ -603,6 +613,55 @@ Page {
         }
         onRewarded: {
             User.rewardUserWithShekels()
+        }
+    }
+
+    Dialog {
+        id: rewardDialog
+        title: "Вознаграждение"
+        contentItem: Rectangle{
+            width: mainUserPage.width * 5 / 6
+            height: width / 3
+            Column{
+                anchors.fill: parent
+                Text{
+                    text: "Получить 100 shekelcoin за просмотр короткого видео?"
+                    height: parent.height / 2
+                    width: parent.width
+                    font.pixelSize: height / 4
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.WordWrap
+                }
+                Row{
+                    height: parent.height / 2
+                    width: parent.width
+                    MaterialButton{
+                        label: "получить"
+                        labelSize: height / 4
+                        width: parent.width / 2
+                        height: parent.height
+                        clickableColor: Qt.lighter(mainColor, 1.5)
+                        rippleColor: Qt.lighter(clickableColor)
+                        z: cancelButton.z + 1
+                        onClicked: {
+                            rewardedVideoAd.show()
+                            rewardDialog.close()
+                        }
+                    }
+                    MaterialButton{
+                        id: cancelButton
+                        label: "отмена"
+                        labelSize: height / 4
+                        width: parent.width / 2
+                        height: parent.height
+                        clickableColor: Qt.lighter(mainColor, 1.5)
+                        rippleColor: Qt.lighter(clickableColor)
+                        onClicked: {
+                            rewardDialog.close()
+                        }
+                    }
+                }
+            }
         }
     }
 }

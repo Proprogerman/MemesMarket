@@ -14,7 +14,7 @@ Page{
     background: backgroundItem
 
     property alias img: image.source
-    property alias name: memeNameLabel.text
+    property alias name: pageHeader.headerText
     property string category
 
     property var memePopValues:[]
@@ -47,19 +47,24 @@ Page{
     property int imageBackY: imageBack.y
 
 
+    onUserShekelsChanged: {
+        if(userShekels === 0)
+            memeActionButton.clickable = false
+    }
+
     function updateMemePopGraph(){
         popGraphLineSeries.clear()
-        minValue = memePopValues[0]
-        maxValue = memePopValues[0]
+        minValue = memePopValues[0] * (1 + memeCreativity / 100)
+        maxValue = memePopValues[0] * (1 + memeCreativity / 100)
         if(state == "mine")
             setStartPopValueAxis()
-        currentValue = memePopValues[memePopValues.length - 1]
+        currentValue = Math.ceil(memePopValues[memePopValues.length - 1] * (1 + memeCreativity / 100))
         for(var i = 0; i < memePopValues.length; i++){
-            if(memePopValues[i] < minValue)
-                minValue = memePopValues[i]
-            if(memePopValues[i] > maxValue)
-                maxValue = memePopValues[i]
-            popGraphLineSeries.insert(i, i * timePeriod, Math.ceil(memePopValues[i] * (1 + parseFloat(memeCreativity / 100))))
+            if(memePopValues[i] * (1 + memeCreativity / 100) < minValue)
+                minValue = Math.ceil(memePopValues[i] * (1 + memeCreativity / 100))
+            if(memePopValues[i] * (1 + memeCreativity / 100) > maxValue)
+                maxValue = Math.ceil(memePopValues[i] * (1 + memeCreativity / 100))
+            popGraphLineSeries.insert(i, i * timePeriod, Math.ceil(memePopValues[i] * (1 + memeCreativity / 100)))
         }
         setYAxis()
     }
@@ -72,11 +77,11 @@ Page{
     }
 
     function setManipItemColor(){
-        if(User.findMeme(memePage.name)){
-            memeActionButton.clickableColor = radioButtons.itemCheckedColor = goldenColor//"#fdd835"
-            memeActionButton.unclickableColor = radioButtons.itemUncheckedColor = fadedGoldenColor//"#ffff6b"
+        if(state === "mine" || User.findMeme(memePage.name)){
+            memeActionButton.clickableColor = radioButtons.itemCheckedColor = goldenColor
+            memeActionButton.unclickableColor = radioButtons.itemUncheckedColor = fadedGoldenColor
         }
-        else{
+        else {
             memeActionButton.clickableColor = radioButtons.itemCheckedColor = "#00bcd4"
             memeActionButton.unclickableColor = radioButtons.itemUncheckedColor = "#62efff"
         }
@@ -92,7 +97,6 @@ Page{
         if(shekels !== 0){
             likesIncrement.clear()
             var popCount = popGraphLineSeries.count - 1
-//            var pop = shekels * (1 + memeCreativity / 100)
             var pop = shekels + memeCreativity
             likesIncrement.append(popGraphLineSeries.at(popCount).x, popGraphLineSeries.at(popCount).y)
             likesIncrement.append((popCount + 1) * timePeriod, popGraphLineSeries.at(popCount).y + pop)
@@ -123,17 +127,17 @@ Page{
         if(memePage.state == "mine"){
             minElement = minValue < memeStartPopValue ? minValue : memeStartPopValue
             maxElement = maxValue > memeStartPopValue ? maxValue : memeStartPopValue
+            diff = maxElement !== minElement ? (maxElement - minElement) : (userShekels != 0 ? userShekels : 100)
         }
         else{
             minElement = minValue
             maxElement = maxValue
+            diff = maxElement !== minElement ? (maxElement - minElement) : 100
         }
-        diff = maxElement !== minElement ? (maxElement - minElement) : 100
-
         if(radioButtons.value == 0){
             if(axisCondition){
-                yAxis.max = Math.ceil(maxElement + diff / 2)
-                yAxis.min = Math.ceil(minElement - diff / 2)
+                yAxis.max = maxElement + Math.ceil(diff / 2)
+                yAxis.min = minElement - Math.ceil(diff / 2)
                 axisCondition = false
             }
             else if(maxElement > yAxis.max){
@@ -147,23 +151,39 @@ Page{
                 yAxis.max -= minDiff
             }
         }
-        else if(memePage.state == "mine" && radioButtons.value != 0){
-            yAxis.max = Math.ceil(maxElement + userShekels * 1.25)
-            yAxis.min = minElement - diff
+        else if(memePage.state == "mine"){
+            var shekelsIncr = Math.ceil(radioButtons.value * 1.25)
+            if(yAxis.max <= (currentValue + radioButtons.value)){
+                yAxis.max = maxElement + Math.ceil(diff / 2) + shekelsIncr
+                yAxis.min = minElement - Math.ceil(diff / 2) + shekelsIncr
+            }
+            if(yAxis.min >= maxElement){
+                yAxis.max = maxElement + Math.ceil(diff / 2) + shekelsIncr
+                yAxis.min = minElement - Math.ceil(diff / 2)
+            }
             axisCondition = true
         }
-        else if(memePage.state == "general" && radioButtons.value != 0){
-            yAxis.max = Math.ceil(maxElement * (1 + userCreativity / 100 * 1.25))
-            yAxis.min = minElement - diff
+        else if(memePage.state == "general"){
+            var creativityIncr = Math.ceil(maxElement * radioButtons.value / 100 * 1.25)
+            if(yAxis.max <= (maxElement + creativityIncr)){
+                yAxis.max = maxElement + Math.ceil(diff / 2) + creativityIncr
+                yAxis.min = minElement - Math.ceil(diff / 2) + creativityIncr
+            }
+            if(yAxis.min >= currentValue){
+                yAxis.max = maxElement + Math.ceil(diff / 2) + creativityIncr
+                yAxis.min = minElement - Math.ceil(diff / 2)
+            }
             axisCondition = true
         }
     }
 
+    function checkShekelsButton(){
+        if(state === "mine" && (userShekels === 0 || radioButtons.value === 0))
+            memeActionButton.clickable = false
+    }
+
     Component.onCompleted:{
-        if(state == "mine")
-            User.getMemeDataForUser(name.toString())
-        else if(state == "general")
-            User.getMemeData(name.toString())
+        User.getMemeData(name.toString())
         getMemeDataTimer.start()
     }
 
@@ -172,12 +192,8 @@ Page{
         interval: 10000
         repeat: true
         onTriggered:{
-            console.log(stackView.currentItem.objectName)
             if(stackView.currentItem.objectName == "memePage"){
-                if(memePage.state == "mine")
-                    User.getMemeDataForUser(name.toString())
-                else if(memePage.state == "general")
-                    User.getMemeData(name.toString())
+                User.getMemeData(name.toString())
             }
         }
     }
@@ -192,26 +208,16 @@ Page{
 
     onMemeStartPopValueChanged: {
         setStartPopValueAxis()
-        console.log("MEME START POP VALUE", memeStartPopValue)
     }
 
     Connections{
         target: User
-        onMemePopValuesForUserUpdated:{
-            console.log("UPDATING MEME WITH NAME: ", memeName)
-            if(memeName == memeNameLabel.text){
-                console.log("qqqqqqqqqqqqqqqqqqqqqqqq")
+        onMemeReceived:{
+            if(memeName === pageHeader.headerText){
                 memePopValues = popValues
-                memeStartPopValue = startPopValue
-                setYAxis()
-            }
-        }
-        onMemePopValuesUpdated:{
-            console.log("UPDATING MEME WITH NAME: ", memeName)
-            if(memeName == memeNameLabel.text){
-                console.log("pppppppppppppppppppppppp")
-                memePopValues = popValues
-                setYAxis()
+                if(memePage.state === "mine" && startPopValue != 0)
+                    memeStartPopValue = startPopValue
+                updateMemePopGraph()
             }
         }
         onCreativityChanged:{
@@ -219,14 +225,23 @@ Page{
             if(memePage.state == "general"){
                 setRadioButtonsItems(userCreativity)
             }
-            setYAxis()
+            updateMemePopGraph()
         }
         onShekelsChanged:{
             userShekels = User.shekels
             if(memePage.state == "mine"){
                 setRadioButtonsItems(userShekels)
             }
-            setYAxis()
+            updateMemePopGraph()
+        }
+    }
+
+    Connections{
+        target: stackView
+        onCurrentItemChanged: {
+            if(stackView.currentItem !== null)
+                if(stackView.currentItem.objectName == "memePage")
+                    User.localUpdateMeme(name)
         }
     }
 
@@ -252,21 +267,12 @@ Page{
         color: backColor
     }
 
-    Rectangle{
+    PageHeader{
         id: pageHeader
         width: parent.width
-        height: parent.height * 1/10
-        anchors.top: parent.top
-        color: mainColor
-        z: 4
-
-        Text{
-            id: memeNameLabel
-            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.top;
-                topMargin: height/4 }
-            text: "Meme's name"//ServerConnection.user_name
-            font.pixelSize: parent.height/2
-        }
+        height: parent.height / 10
+        headerText: User.user_name
+        z: 7
     }
 
     DropShadow{
@@ -302,14 +308,22 @@ Page{
         Rectangle{
             id: unforceButton
             width: image.width
-            height: image.height
+            height: image.height / 2
             anchors{ left: image.left; bottom: image.bottom }
-            opacity: 0.5
-            radius: width
+            opacity: 0.7
             color: "#000000"
+            layer.enabled: true
+            visible: false
+            Image{
+                source: "qrc:/uiIcons/deleteIcon.svg"
+                height: parent.height
+                width: height
+                anchors.centerIn: parent
+            }
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
+                    axisCondition = true
                     User.unforceMeme(name)
                     memePage.state = "general"
                     memeCreativity = 0
@@ -331,14 +345,12 @@ Page{
 
         ChartView{
             id: popGraph
-            //title: "Популярность мема:"
             anchors.fill: parent
             antialiasing: true
             legend.visible: false
             margins{ top: 0; bottom: 0; left: 0; right: 0 }
             backgroundRoundness: 0.0
 
-//            animationOptions: ChartView.AllAnimations
             animationOptions: ChartView.NoAnimation
 
             ValueAxis{
@@ -346,7 +358,6 @@ Page{
                 min: 0.0
                 max: 13.0 * timePeriod
                 labelsVisible: false
-                gridVisible: false
                 visible: false
             }
             ValueAxis{
@@ -354,7 +365,6 @@ Page{
                 min: 0
                 max: 0
                 labelsVisible: false
-                gridVisible: false
                 visible: false
             }
             AreaSeries{
@@ -363,13 +373,21 @@ Page{
                 axisX: xAxis
                 axisY: yAxis
                 upperSeries: startPopValueLine
+                visible: false
+            }
+            LineSeries{
+                id: likesIncrement
+                color: goldenColor
+                visible: false
+                width: popGraphLineSeries.width
             }
             LineSeries{
                 id: popGraphLineSeries
                 axisX: xAxis
                 axisY: yAxis
-                pointsVisible: false
-                color: "blue"
+                color: mainColor
+                width: popGraph.height / 100
+                pointsVisible: true
             }
             LineSeries{
                 id: startPopValueLine
@@ -378,15 +396,11 @@ Page{
                 color: "green"
             }
             LineSeries{
-                id: likesIncrement
-                color: goldenColor//"#fdd835"
-                visible: false
-            }
-            LineSeries{
                 id: creativityEffect
                 color: "#00BCD4"
                 visible: false
-                pointsVisible: true
+                pointsVisible: false
+                width: popGraphLineSeries.width
             }
         }
     }
@@ -405,7 +419,7 @@ Page{
             anchors.bottom: memeActionButton.top
             anchors.horizontalCenter: parent.horizontalCenter
             backgroundColor: backColor
-            spacing: width/70
+            spacing: width / 70
 
             onValueChanged: {
                 if(memePage.state == "mine"){
@@ -418,7 +432,11 @@ Page{
                     showCreativityEffect(value)
                     likesIncrement.visible = false
                 }
+                checkShekelsButton()
                 setYAxis()
+            }
+            onActiveButtonChanged: {
+                checkShekelsButton()
             }
         }
 
@@ -426,6 +444,7 @@ Page{
             id: memeActionButton
             width: parent.width
             height: pageHeader.height
+            clickable: false
             anchors{
                 bottom: parent.bottom
                 left: parent.left
@@ -449,28 +468,19 @@ Page{
             name: "general"
             PropertyChanges{ target: memeActionButton; label: "ЗАФОРСИТЬ" }
             PropertyChanges{ target: memeActionButton; clickable: true }
-            PropertyChanges{ target: radioButtons; itemCheckedColor: "#00bcd4"; itemUncheckedColor: "#62efff" }
-            PropertyChanges{ target: memeActionButton; clickableColor: radioButtons.itemCheckedColor;
-                unclickableColor: radioButtons.itemUncheckedColor; rippleColor: Qt.lighter(clickableColor, 2) }
-            PropertyChanges{ target: radioButtons; activeButton: 0 }
             PropertyChanges{ target: unforceButton; visible: false }
             PropertyChanges{ target: startPopValueLine; visible: false }
             PropertyChanges{ target: redZone; visible: false}
-            StateChangeScript{ script: setYAxis() }
             StateChangeScript{ script: setRadioButtonsItems(userCreativity)}
         },
         State{
             name: "mine"
             PropertyChanges{ target: memeActionButton; label: "НАКРУТИТЬ ЛАЙКИ" }
-            PropertyChanges{ target: radioButtons; itemCheckedColor: goldenColor; itemUncheckedColor: fadedGoldenColor }
-            PropertyChanges{ target: memeActionButton; clickableColor: radioButtons.itemCheckedColor;
-                unclickableColor: radioButtons.itemUncheckedColor; rippleColor: Qt.lighter(clickableColor, 2) }
-            PropertyChanges{ target: radioButtons; activeButton: 1 }
             PropertyChanges{ target: unforceButton; visible: true }
             PropertyChanges{ target: startPopValueLine; visible: true }
             PropertyChanges{ target: redZone; visible: true }
-            StateChangeScript{ script: setYAxis() }
             StateChangeScript{ script: setRadioButtonsItems(userShekels)}
+            StateChangeScript{ script: checkShekelsButton()}
             StateChangeScript{ script: setStartPopValueAxis() }
         },
         State{
@@ -484,12 +494,17 @@ Page{
             PropertyChanges{ target: imageBack; opacity: 0 }
             PropertyChanges{ target: hamburger; opacity: 0 }
             PropertyChanges{ target: unforceButton; opacity: 0 }
-            PropertyChanges{ target: unforceButton; visible: unforceButton.visible }
-            PropertyChanges{ target: radioButtons; activeButton: radioButtons.activeButton }
-            StateChangeScript{ script: setManipItemColor() }
         }
     ]
     state: "hidden"
+
+    onStateChanged:{
+        axisCondition = true
+        radioButtons.setButtonActive(0)
+        setManipItemColor()
+        if(state != "hidden")
+            updateMemePopGraph()
+    }
 
     transitions: Transition {
         PropertyAnimation{
@@ -501,19 +516,15 @@ Page{
     Connections{
         target: memeActionButton.buttArea
         onClicked: {
+            axisCondition = true
             if(state == "general"){
-                axisCondition = true
                 memeCreativity = radioButtons.value
                 memeStartPopValue = memePopValues[memePopValues.length - 1]
-                User.forceMeme(name, memeCreativity, memeStartPopValue, category)
-                updateMemePopGraph()
+                User.forceMeme(name, memeCreativity, memeStartPopValue)
                 state = "mine"
             }
-            else if(state == "mine"){
-                axisCondition = true
+            else if(state == "mine")
                 User.increaseLikesQuantity(name, radioButtons.value)
-            }
-            setYAxis()
         }
     }
 }

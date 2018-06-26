@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtQuick.Controls 2.2
 
 import "qrc:/qml/elements"
@@ -14,42 +14,74 @@ Page{
     property color backColor: "#edeef0"
 
     property string pageCategory
+
     property var memesPopValues: []
+    property var startPopValues: []
+
+    property string directionFormat
 
     property double weight: 0
 
     property int clickedMemeOnListY
     property int clickedMemeImageSize
-    property int clickedMemeIndex
 
 
-    function updateMeme(meme_name, image_name){
-        memeListModel.append({ "memeName": meme_name, "image": "image://meme/" + image_name, "vis" : true })
+    function setMeme(meme_name, image_name, loyalty, crsDir, memeCreativity){
+        if(memeListModel.count){
+            for(var i = 0; i < memeListModel.count; i++)
+                if(memeListModel.get(i).memeNameText === meme_name){
+                    memeListModel.set(i, {"courseDirectionText": courseWithSign(crsDir), "loyaltyText": parseFloat(loyalty / 100),
+                                          "memeCreativityText": memeCreativity, "mine": User.findMeme(meme_name) ? true : false})
+                    return;
+                }
+        }
+        memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
+                               "imageNameText": image_name, "image": "image://meme/" + image_name,
+                               "memeCreativityText": memeCreativity, "loyaltyText": parseFloat(loyalty / 100),
+                               "mine": User.findMeme(meme_name) ? true : false
+                             })
+    }
 
-        console.log("update Meme: ", image_name)
+    function courseWithSign(direction){
+        if(direction > 0)
+            directionFormat = '+' + direction.toString()
+        else
+            directionFormat = direction.toString()
+        return directionFormat
     }
 
     function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeName === meme_name){
+            if(memeListModel.get(i).memeNameText === meme_name){
                 memeListModel.setProperty(i, "image", " ")
                 memeListModel.setProperty(i, "image", "image://meme/" + image_name)
             }
     }
 
-    function setVisibilityImageOnList(vis){
-        memeListModel.setProperty(clickedMemeIndex, "vis", vis)
+    function setVisibilityImageOnList(mName, vis){
+        for(var i = 0; i < appListView.contentItem.children.length; i++){
+            if(appListView.contentItem.children[i].name === mName)
+                appListView.contentItem.children[i].imageVisible = vis
+        }
+    }
+
+    function getClosingMemePosition(mName){
+        for(var i = 0; i < appListView.contentItem.children.length; i++){
+            if(appListView.contentItem.children[i].name === mName){
+                var mItem = appListView.contentItem.children[i]
+                var currentYPos = mapFromItem(appListView, mItem.x, mItem.y).y
+                if(appListView.y > currentYPos - appListView.contentY)
+                    appListView.positionViewAtIndex(i, ListView.Beginning)
+                else if(appListView.y + appListView.height < currentYPos + mItem.height - appListView.contentY)
+                    appListView.positionViewAtIndex(i, ListView.End)
+                return clickedMemeOnListY = mapFromItem(appListView, mItem.x, mItem.y).y - appListView.contentY
+            }
+        }
     }
 
     Component.onCompleted: {
-        if(User.memesWithCategoryIsEmpty(pageCategory)){
-            User.getMemeListWithCategory(pageCategory)
-            console.log("MEMES WITH CATEGORY IS EMPTY111111111111111111111111")
-        }
-        else{
-            User.setExistingMemeListWithCategory(pageCategory)
-            console.log("MEMES WITH CATEGORY ISN'T EMPTY222222222222222222222")
-        }
+        User.setExistingMemeListWithCategory(pageCategory)
+        User.getMemeListWithCategory(pageCategory)
         getMemesWithCategoryTimer.start()
     }
 
@@ -64,21 +96,29 @@ Page{
 
     Connections{
         target: User
-        onMemeWithCategoryReceived:{
-            if(category == pageCategory){
-                updateMeme(memeName, imageName)
-                memesPopValues[memeName] = popValues
-                console.log("onMemeWithCategoryReceived")
-            }
-        }
-        onMemeImageReceived:{
-            updateMemeImage(memeName, imageName)
-        }
-        onMemePopValuesWithCategoryUpdated:{
+        onMemeReceived:{
+            var crsDir = Math.ceil((popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100)) - startPopValue)
+                                   * parseFloat(loyalty / 100))
             if(category == pageCategory){
                 memesPopValues[memeName] = popValues
-                console.log("onMemePopValuesWithCategoryUpdated")
+                startPopValues[memeName] = startPopValue
+                setMeme(memeName, imageName, loyalty, crsDir, memeCreativity)
             }
+        }
+        onImageReceived:{
+            if(type == "meme")
+                updateMemeImage(name, imageName)
+        }
+    }
+
+    Connections{
+        target: stackView
+        onCurrentItemChanged: {
+            if(stackView.currentItem !== null)
+                if(stackView.currentItem.objectName === "categoryMemeListPage"){
+                    memeListModel.clear()
+                    User.setExistingMemeListWithCategory(pageCategory)
+                }
         }
     }
 
@@ -87,7 +127,7 @@ Page{
         height: pageHeader.height / 4
         width: height * 3 / 2
         y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
+        anchors{ left: pageHeader.left; leftMargin: width }
         z: pageHeader.z + 1
         dynamic: false
         onBackAction: {
@@ -130,6 +170,9 @@ Page{
             width: pageHeader.width
             height: pageHeader.height * 2
 
+            property string name: memeNameText
+            property bool imageVisible: true
+
             color: itemColor
             Image{
                 id: memeImage
@@ -137,39 +180,61 @@ Page{
                 width: height
                 cache: false
                 source: image
-                visible: vis
+                visible: imageVisible
                 onVisibleChanged: {
                     appListView.forceLayout()
                 }
             }
             Text{
-                text: memeName
+                id: memeNameLabel
+                text: memeNameText
                 anchors{ left: memeImage.right; top: parent.top }
+                font.pixelSize: parent.height / 8
+                fontSizeMode: Text.HorizontalFit
+                font.family: "Roboto"
             }
+            Text{
+                id: courseDirectionLabel
+                text: courseDirectionText
+                anchors{ bottom: loyaltyLabel.top; right: parent.right}
+                visible: mine
 
-//            Text{
-//                text: courseDirection
-//                anchors{ right: parent.right; verticalCenter: parent.verticalCenter }
-
-//                onTextChanged:{
-//                    if(text.charAt(0) == "-"){
-//                        color = "red"
-//                    }
-//                    else{
-//                        color = "green"
-//                    }
-//                }
-//            }
+                onTextChanged:{
+                    if(text.charAt(0) == "-"){
+                        color = "red"
+                    }
+                    else{
+                        color = "green"
+                    }
+                }
+            }
+            Text{
+                id: loyaltyLabel
+                text: loyaltyText
+                anchors{ verticalCenter: parent.verticalCenter; right: parent.right }
+                color: "#000000"
+            }
+            Text{
+                id: memeCreativityLabel
+                text: memeCreativityText
+                anchors{ top: loyaltyLabel.bottom; right: parent.right }
+                color: "#00BCD4"
+                visible: mine
+            }
 
             MouseArea{
                 anchors.fill: parent
                 onClicked:{
+                    var currentYPos = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y).y
+                    if(appListView.y > currentYPos - appListView.contentY)
+                        appListView.positionViewAtIndex(index, ListView.Beginning)
+                    else if(appListView.y + appListView.height < currentYPos + parent.height - appListView.contentY)
+                        appListView.positionViewAtIndex(index, ListView.End)
                     clickedMemeOnListY = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y).y
                     clickedMemeImageSize = memeImage.width
-                    clickedMemeIndex = index
-                    stackView.push({item: memePage, properties: {img: memeImage.source, name: memeName,
-                                    memePopValues: memesPopValues[memeName], memeStartPopValue: memesPopValues[memeName],
-                                    category: pageCategory }})
+                    stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
+                                    memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
+                                    memeCreativity: Number(memeCreativityText), category: pageCategory}})
                 }
             }
             Rectangle{

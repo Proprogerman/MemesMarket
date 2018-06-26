@@ -1,5 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 1.4
+import QtQuick.Controls.Material 2.2
+import QtQuick.Controls.Universal 2.2
 import QtQuick.Window 2.0
 import QtQuick.Dialogs 1.2
 
@@ -22,6 +24,13 @@ ApplicationWindow{
 
     property color mainColor: "#507299"
 
+    Connections{
+        target: User
+        onImageReceived:{
+            if(type === "user")
+                bigAvatar.source = "image://meme/" + imageName
+        }
+    }
 
     StackView{
         id: stackView
@@ -30,8 +39,8 @@ ApplicationWindow{
 
         onCurrentItemChanged: {
             if(stackView.currentItem !== null){
-                hamburger.visible = stackView.currentItem.objectName == "mainUserPage" ? true : false
-                slidingMenu.active = stackView.currentItem.objectName == "signInPage" ? false : true
+                hamburger.visible = stackView.currentItem.objectName === "mainUserPage" ? true : false
+                slidingMenu.active = stackView.currentItem.objectName === "signInPage" ? false : true
             }
         }
 
@@ -45,7 +54,7 @@ ApplicationWindow{
                 else if(properties.enterItem.objectName === "memePage")
                     currTransition = memePageTransition
                 else if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "mainUserPage"
-                        && User.findMeme(properties.exitItem.name))
+                && User.findMeme(properties.exitItem.name))
                     currTransition = fromMemePageTransition
                 else if(properties.exitItem.objectName === "memePage"&& properties.enterItem.objectName === "categoryMemeListPage")
                     currTransition = fromMemePageTransition
@@ -81,7 +90,7 @@ ApplicationWindow{
 
             property Component fromSignToMainTransition: StackViewTransition {
                 SequentialAnimation{
-                    ScriptAction{ script: hamburger.opacity = false }
+                    ScriptAction{ script: hamburger.opacity = 0 }
                     PropertyAnimation{
                         target: enterItem
                         property: "opacity"
@@ -90,7 +99,6 @@ ApplicationWindow{
                         duration: 1000
                     }
                     ScriptAction{ script: enterItem.state = "normal" }
-                    PauseAnimation{ duration: 750 }
                     PropertyAnimation{ target: hamburger; property: "opacity"; from: 0; to: 1; duration: 100 }
                 }
             }
@@ -113,7 +121,7 @@ ApplicationWindow{
             property Component memePageTransition: StackViewTransition {
                 SequentialAnimation{
                     ScriptAction{ script: enterItem.state = User.findMeme(enterItem.name) ? "mine" : "general" }
-                    ScriptAction{ script: exitItem.setVisibilityImageOnList(false) }
+                    ScriptAction{ script: exitItem.setVisibilityImageOnList(enterItem.name, false) }
                     ParallelAnimation{
                         PropertyAnimation{
                             target: enterItem
@@ -146,13 +154,13 @@ ApplicationWindow{
             property Component fromMemePageTransition: StackViewTransition {
                 SequentialAnimation{
                     ScriptAction{ script: exitItem.state = "hidden" }
-                    ScriptAction{ script: enterItem.setVisibilityImageOnList(false) }
+                    ScriptAction{ script: enterItem.getClosingMemePosition(exitItem.name)}
                         ParallelAnimation{
                             PropertyAnimation{
                                 target: exitItem
                                 property: "memeImageY"
                                 from: exitItem.imageBackY
-                                to: enterItem.clickedMemeOnListY
+                                to: enterItem.getClosingMemePosition(exitItem.name)
                                 duration: 200
                                 easing.type: Easing.OutCirc
                             }
@@ -173,7 +181,7 @@ ApplicationWindow{
                                 easing.type: Easing.OutCirc
                             }
                     }
-                    ScriptAction{ script: enterItem.setVisibilityImageOnList(true) }
+                    ScriptAction{ script: enterItem.setVisibilityImageOnList(exitItem.name, true) }
                 }
             }
         }
@@ -228,6 +236,7 @@ ApplicationWindow{
         onOpenChanged: {
             hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
         }
+        color: Qt.lighter("#7fa0ca")
 
         itemData:[
             Column{
@@ -235,99 +244,63 @@ ApplicationWindow{
                 height: parent.height
                 Image{
                     id: bigAvatar
-                    source: "qrc:/photo/sexyPhoto.jpg"
+                    source: "image://meme/"
                     width: parent.width
                     height: width
                     sourceSize.height: height
                     sourceSize.width: width
                 }
-
-                Rectangle{
+                MaterialButton{
                     id: memesExchange
                     width: parent.width
                     height: parent.height / 10
                     color: "lightgrey"
-                    Text{
-                        text:"биржа мемов"
-                        font.pixelSize: parent.height / 3
-                        anchors.centerIn: parent
-                    }
-                    MouseArea{
-                        anchors.fill: parent
-                        onClicked:{
-                            User.getMemesCategories()
-                            stackView.push(rialtoPage)
-                            slidingMenu.hide()
-                        }
+                    label: "биржа мемов"
+                    labelSize: height / 4
+                    z: bigAvatar.z - 1
+                    onClicked:{
+                        User.getMemesCategories()
+                        stackView.push(rialtoPage)
+                        slidingMenu.hide()
                     }
                 }
-                Rectangle{
-                    width: parent.width
-                    height: 1
-                    color: Qt.darker("lightgrey", 1.2)
-                }
-                Rectangle{
+                MaterialButton{
                     id: ads
                     width: parent.width
                     height: parent.height / 10
                     color: "lightgrey"
-                    Text{
-                        text:"реклама"
-                        font.pixelSize: parent.height / 3
-                        anchors.centerIn: parent
-                    }
-                    MouseArea{
-                        anchors.fill: parent
-                        onClicked:{
-                            User.getAdList()
-                            stackView.push(adsPage)
-                            slidingMenu.hide()
-                        }
+                    label: "реклама"
+                    labelSize: height / 4
+                    z: memesExchange.z - 1
+                    onClicked:{
+                        User.getAdList()
+                        stackView.push(adsPage)
+                        slidingMenu.hide()
                     }
                 }
-                Rectangle{
-                    width: parent.width
-                    height: 1
-                    color: Qt.darker("lightgrey", 1.2)
-                }
-                Rectangle{
+                MaterialButton{
                     id: usersRating
                     width: parent.width
                     height: parent.height / 10
                     color: "lightgrey"
-                    Text{
-                        text:"рейтинг"
-                        font.pixelSize: parent.height / 3
-                        anchors.centerIn: parent
-                    }
-                    MouseArea{
-                        anchors.fill: parent
-                        onClicked:{
-                            stackView.push(usersRatingPage)
-                            slidingMenu.hide()
-                        }
+                    label: "рейтинг"
+                    labelSize: height / 4
+                    z: ads.z - 1
+                    onClicked:{
+                        stackView.push(usersRatingPage)
+                        slidingMenu.hide()
                     }
                 }
-                Rectangle{
-                    width: parent.width
-                    height: 1
-                    color: Qt.darker("lightgrey", 1.2)
-                }
-                Rectangle{
+                MaterialButton{
                     id: signOut
                     width: parent.width
                     height: parent.height / 10
                     color: "lightgrey"
-                    Text{
-                        text:"выход"
-                        font.pixelSize: parent.height / 3
-                        anchors.centerIn: parent
-                    }
-                    MouseArea{
-                        anchors.fill: parent
-                        onClicked:{
-                            exitDialog.open()
-                        }
+                    label: "выход"
+                    labelSize: height / 4
+                    z: usersRating.z - 1
+                    onClicked:{
+                        exitDialog.open()
                     }
                 }
             }
@@ -346,6 +319,9 @@ ApplicationWindow{
                     text: "Вы уверены, что хотите выйти?"
                     height: parent.height / 2
                     width: parent.width
+                    font.pixelSize: height / 4
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.WordWrap
                 }
                 Row{
                     height: parent.height / 2
@@ -385,11 +361,5 @@ ApplicationWindow{
 
     AdMob {
         appId: "ca-app-pub-5551381749080346~2416103256"
-            //Qt.platform.os == "android" ? "ca-app-pub-6606648560678905~6485875670" : "ca-app-pub-6606648560678905~1693919273"
-
-        testDevices: [
-            "01987FA9D5F5CEC3542F54FB2DDC89F6",
-            "d206f9511ffc1bc2c7b6d6e0d0e448cc"
-        ]
     }
 }

@@ -1,4 +1,4 @@
-QT += network sql charts qml quick
+QT += network sql charts qml quick svg quickcontrols2
 
 QTFIREBASE_SDK_PATH = C:/Development/firebase_cpp_sdk
 
@@ -12,8 +12,8 @@ SOURCES += main.cpp \
     user.cpp \
     meme.cpp \
     imageprovider.cpp \
-    independentconnection.cpp \
-    ad.cpp
+    ad.cpp \
+    imagerunnable.cpp
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
@@ -38,8 +38,8 @@ HEADERS += \
     user.h \
     meme.h \
     imageprovider.h \
-    independentconnection.h \
-    ad.h
+    ad.h \
+    imagerunnable.h
 
 #OTHER_FILES += \
 #    qml/main.qml \
