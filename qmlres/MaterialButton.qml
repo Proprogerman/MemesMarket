@@ -8,6 +8,7 @@ Item {
     property alias rippleColor: ripple.color
     property alias label: buttonLabel.text
     property alias labelSize: buttonLabel.font.pixelSize
+    property alias labelVisible: buttonLabel.visible
     property alias radius: button.radius
     property alias buttArea: buttonArea
     property bool clickable: true
@@ -43,6 +44,7 @@ Item {
         anchors.fill: button
         mouseArea: buttonArea
         radius: button.radius
+        color: Qt.lighter(button.color)
     }
 
     DropShadow{
@@ -51,7 +53,7 @@ Item {
         color: "#80000000"
         z: button.z - 1
         radius: 8.0
-        samples: 17
+        samples: radius * 2 + 1
     }
 
     function clickableCheck(){

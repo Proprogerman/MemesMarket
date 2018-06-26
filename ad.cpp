@@ -10,7 +10,7 @@ Ad::Ad(QString adName, QString adImageName, QString adReputation, int adProfit, 
     name(adName), imageName(adImageName), reputation(adReputation), profit(adProfit), discontented(adDiscontented),
     secondsToReady(adSecondsToReady)
 {
-    qDebug()<<secondsToReady;
+
 }
 
 void Ad::setName(const QString &mName)

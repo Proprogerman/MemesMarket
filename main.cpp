@@ -3,6 +3,8 @@
 #include <QApplication>
 
 #include <QQmlApplicationEngine>
+#include <QtQuickControls2>
+#include <QQuickStyle>
 
 #include "imageprovider.h"
 
@@ -17,11 +19,7 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-//    qmlRegisterType<ServerConnection>("io.qt.ServerConnection", 1, 0,"ServerConnection");
-
-//    qmlRegisterSingletonType(QUrl("qrc:/qml/SingletonConnection.qml"),
-//                             "io.qt.SingletonConnection",1,0,"ServerConnection");
-
+//    QQuickStyle::setStyle("Material");
 
     qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser", 1, 0, "User", User::qmlInstance);
 

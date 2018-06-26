@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.9
 
 
 Item{
@@ -71,7 +71,9 @@ Item{
     ]
 
     MouseArea{
-        anchors.fill: parent
+        anchors.centerIn: parent
+        height: parent.height * 2
+        width: parent.width * 2
         onClicked:{
             if(parent.state == "menu"){
                 parent.state = "back"

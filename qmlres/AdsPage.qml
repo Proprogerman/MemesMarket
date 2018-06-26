@@ -32,8 +32,8 @@ Page {
     function updateAd(adName, adProfit, adReputation, adDiscontented, secondsToReady){
         var adIndex = findAd(adName)
         adListModel.set(adIndex, { "adNameText": adName, "adProfitText": adProfit, "adReputationText": adReputation,
-                            "adDiscontented": adDiscontented, "buttonClickable": true,
-                            "secondsToReady": secondsToReady })
+                                   "adDiscontented": adDiscontented, "buttonClickable": true,
+                                   "secondsToReady": secondsToReady })
         if(secondsToReady)
             adListModel.setProperty(adIndex, "buttonClickable", false)
     }
@@ -41,7 +41,7 @@ Page {
     function updateAdImage(adName, imageName){
         for(var i = 0; i < adListModel.count; i++)
             if(adListModel.get(i).adNameText === adName){
-                adListModel.setProperty(i, "image", " ")
+//                adListModel.setProperty(i, "image", " ")
                 adListModel.setProperty(i, "image", "image://meme/" + imageName)
             }
     }
@@ -70,8 +70,9 @@ Page {
         onAdUpdated: {
             updateAd(adName, profit, reputation, discontented, secondsToReady)
         }
-        onMemeImageReceived: {
-            updateAdImage(adName, imageName)
+        onImageReceived: {
+            if(type === "ad")
+                updateAdImage(name, imageName)
         }
     }
 
@@ -213,6 +214,7 @@ Page {
                 }
                 onClickableChanged: {
                     seconds.visible = clickable ? false : true
+                    labelVisible = clickable ? true : false
                 }
             }
             Text{

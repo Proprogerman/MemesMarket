@@ -8,7 +8,6 @@ Item {
     property color itemUncheckedColor
     property color itemCheckedColor
     property color backgroundColor
-    property int checkedItem
     property alias spacing: radioButtons.spacing
     property int activeButton: 0
 
@@ -17,31 +16,25 @@ Item {
     property alias button3Label: butt3.label
     property alias button4Label: butt4.label
 
+    onActiveButtonChanged: {
+        setButtonActive
+    }
+
     function setButtonActive(button){
-        if(button === butt1){
-            if(radioButtons.state !== "butt1Checked"){
-                radioButtons.state = "butt1Checked"
-            }
-            else
-                radioButtons.state = "unchecked"
+        if(button === 0){
+            radioButtons.state = "unchecked"
         }
-        else if(button === butt2){
-            if(radioButtons.state !== "butt2Checked")
-                radioButtons.state = "butt2Checked"
-            else
-                radioButtons.state = "unchecked"
+        else if(button === 1){
+            radioButtons.state = radioButtons.state !== "butt1Checked" ? "butt1Checked" : "unchecked"
         }
-        else if(button === butt3){
-            if(radioButtons.state !== "butt3Checked")
-                radioButtons.state = "butt3Checked"
-            else
-                radioButtons.state = "unchecked"
+        else if(button === 2){
+            radioButtons.state = radioButtons.state !== "butt2Checked" ? "butt2Checked" : "unchecked"
         }
-        else if(button === butt4){
-            if(radioButtons.state !== "butt4Checked")
-                radioButtons.state = "butt4Checked"
-            else
-                radioButtons.state = "unchecked"
+        else if(button === 3){
+            radioButtons.state = radioButtons.state !== "butt3Checked" ? "butt3Checked" : "unchecked"
+        }
+        else if(button === 4){
+            radioButtons.state = radioButtons.state !== "butt4Checked" ? "butt4Checked" : "unchecked"
         }
     }
 
@@ -72,14 +65,13 @@ Item {
         CheckButton{
             id: butt1;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: itemCheckedColor//"#90A4AE"
-            uncheckedColor: itemUncheckedColor//"#CFD8DC"
+            checkedColor: itemCheckedColor
+            uncheckedColor: itemUncheckedColor
 
             Connections{
                 target: butt1.buttArea
                 onReleased:{
-                    setButtonActive(butt1)
-                    console.log("checkedItem: ", checkedItem)
+                    setButtonActive(1)
                 }
             }
         }
@@ -87,14 +79,13 @@ Item {
         CheckButton{
             id: butt2;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: itemCheckedColor//"#90A4AE"
-            uncheckedColor: itemUncheckedColor//"#CFD8DC"
+            checkedColor: itemCheckedColor
+            uncheckedColor: itemUncheckedColor
 
             Connections{
                 target: butt2.buttArea
                 onReleased:{
-                    setButtonActive(butt2)
-                    console.log("checkedItem: ", checkedItem)
+                    setButtonActive(2)
                 }
             }
         }
@@ -102,14 +93,13 @@ Item {
         CheckButton{
             id: butt3;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: itemCheckedColor//"#90A4AE"
-            uncheckedColor: itemUncheckedColor//"#CFD8DC"
+            checkedColor: itemCheckedColor
+            uncheckedColor: itemUncheckedColor
 
             Connections{
                 target: butt3.buttArea
                 onReleased:{
-                    setButtonActive(butt3)
-                    console.log("checkedItem: ", checkedItem)
+                    setButtonActive(3)
                 }
             }
         }
@@ -117,14 +107,13 @@ Item {
         CheckButton{
             id: butt4;
             width: parent.rowWidth/4; height: parent.height
-            checkedColor: itemCheckedColor//"#90A4AE"
-            uncheckedColor: itemUncheckedColor//"#CFD8DC"
+            checkedColor: itemCheckedColor
+            uncheckedColor: itemUncheckedColor
 
             Connections{
                 target: butt4.buttArea
                 onReleased:{
-                    setButtonActive(butt4)
-                    console.log("checkedItem: ", checkedItem)
+                    setButtonActive(4)
                 }
             }
         }
@@ -132,7 +121,7 @@ Item {
         states:[
             State{
                 name: "unchecked" 
-                PropertyChanges{ target: control; checkedItem: 0}
+                PropertyChanges{ target: control; activeButton: 0}
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt2; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
@@ -141,7 +130,7 @@ Item {
             },
             State{
                 name: "butt1Checked"
-                PropertyChanges{ target: control; checkedItem: 1 }
+                PropertyChanges{ target: control; activeButton: 1 }
                 PropertyChanges{ target: butt1; checked: true }
                 PropertyChanges{ target: butt2; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
@@ -150,7 +139,7 @@ Item {
             },
             State{
                 name: "butt2Checked"
-                PropertyChanges{ target: control; checkedItem: 2 }
+                PropertyChanges{ target: control; activeButton: 2 }
                 PropertyChanges{ target: butt2; checked: true }
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt3; checked: false }
@@ -159,7 +148,7 @@ Item {
             },
             State{
                 name: "butt3Checked"
-                PropertyChanges{ target: control; checkedItem: 3 }
+                PropertyChanges{ target: control; activeButton: 3 }
                 PropertyChanges{ target: butt3; checked: true }
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt2; checked: false }
@@ -168,7 +157,7 @@ Item {
             },
             State{
                 name: "butt4Checked"
-                PropertyChanges{ target: control; checkedItem: 4 }
+                PropertyChanges{ target: control; activeButton: 4 }
                 PropertyChanges{ target: butt4; checked: true }
                 PropertyChanges{ target: butt1; checked: false }
                 PropertyChanges{ target: butt2; checked: false }

@@ -6,56 +6,95 @@ Meme::Meme()
 
 }
 
-Meme::Meme(QString memeName, QVector<int> memeValues, QString memeImageName, int memeStartPopValue,
-           double memeCreativity, double memeFeedbackRate):
-    name(memeName), popValues(memeValues), imageName(memeImageName),
-    startPopValue(memeStartPopValue), creativity(memeCreativity), feedbackRate(memeFeedbackRate)
+Meme::Meme(QString memeName, QVector<int> memeValues, QString memeImageName, QString memeCategory, int memeLoyalty,
+           int memeCreativity, int memeShekels, bool memeForced, int memeStartPopValue):
+    name(memeName), popValues(memeValues), imageName(memeImageName), category(memeCategory), loyalty(memeLoyalty),
+    creativity(memeCreativity), shekels(memeShekels), forced(memeForced), startPopValue(memeStartPopValue)
 {
-    qDebug() << "Meme constructor:\n" << "name: "<< name << "\npopValues:" << popValues;
+
 }
 
-void Meme::setName(const QString &memeName)
-{
+
+void Meme::setName(const QString &memeName){
     name = memeName;
 }
 
-void Meme::setPopValues(const QVector<int> &memePopValues)
-{
+void Meme::setPopValues(const QVector<int> &memePopValues){
     popValues = memePopValues;
-    qDebug()<<"MEME: "<<getName()<<"SET POP VALUES: "<<memePopValues;
 }
 
-void Meme::setStartPopValue(const int &memeStartPopValue)
+void Meme::setImageName(const QString &memeImageName)
 {
+    imageName = memeImageName;
+    qDebug()<<"image name changed: "<<imageName;
+}
+
+void Meme::setCategory(const QString &memeCategory)
+{
+    category = memeCategory;
+}
+
+void Meme::setLoyalty(const int &memeLoyalty){
+    loyalty = memeLoyalty;
+}
+
+void Meme::setCreativity(const int &memeCreativity)
+{
+    creativity = memeCreativity;
+}
+
+void Meme::setShekels(const int &memeShekels)
+{
+    shekels = memeShekels;
+}
+
+void Meme::setForced(const bool &memeForced)
+{
+    forced = memeForced;
+}
+
+void Meme::setStartPopValue(const int &memeStartPopValue){
     startPopValue = memeStartPopValue;
 }
 
-QString Meme::getName()
-{
+
+QString Meme::getName(){
     return name;
 }
 
-QVector<int> Meme::getPopValues()
-{
+QVector<int> Meme::getPopValues(){
     return popValues;
 }
 
-QString Meme::getImageName()
-{
+QString Meme::getImageName(){
     return imageName;
 }
 
-int Meme::getStartPopValue()
+QString Meme::getCategory()
 {
-    return startPopValue;
+    return category;
 }
 
-int Meme::getCreativity()
-{
+int Meme::getLoyalty(){
+    return loyalty;
+}
+
+
+int Meme::getCreativity(){
     return creativity;
 }
 
-double Meme::getFeedbackRate()
+int Meme::getShekels()
 {
-    return feedbackRate;
+    return shekels;
 }
+
+bool Meme::getForced()
+{
+    return forced;
+}
+
+int Meme::getStartPopValue(){
+    return startPopValue;
+}
+

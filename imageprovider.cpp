@@ -1,15 +1,19 @@
+#include <QStandardPaths>
+#include <QDir>
+
 #include "imageprovider.h"
-#include <QDebug>
 
 ImageProvider::ImageProvider(): QQuickImageProvider(QQuickImageProvider::Pixmap){}
 
 QPixmap ImageProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize)
 {
-    qDebug()<<"IMAGE PROVIDER REQUEST PIXMAP --------- "<<"C:/Development/clientImages/" + id;
     QPixmap result;
-    if(!result.load("C:/Development/clientImages/" + id)){
-        result.load("C:/Development/clientImages/loader.png");
-        qDebug()<<"НЕ НАЙДЕНО ИЗОБРАЖЕНИЕ!!!!";
+    QString homePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0];
+    QDir imgs(homePath + "/imgs");
+    if(!imgs.exists())
+        imgs.mkpath(imgs.path());
+    if(!result.load(imgs.path() + '/' + id)){
+        result.load(":/uiIcons/loader.png");
     }
     return result;
 }

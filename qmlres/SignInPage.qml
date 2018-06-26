@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtQuick.Controls 2.2
 //import QtQuick.Controls.Styles 1.4
 //import QtQuick.Controls.Material 2.2
@@ -18,43 +18,27 @@ Page{
     property color mainColor: "#507299"
     property color backColor: "#78909C"
     property color dataColor: "#CFD8DC"
-    property color errColor: "#EA7171"//"#F8BBD0"
+    property color errColor: "#EA7171"
 
     property string mode: "signUp"
 
     property alias backgroundColor: background.color
 
+
     Connections{
         target: User
         onNameExist: { nameOfGroup.state = indicateZone.state = "nameExistState" }
         onNameDoesNotExist: { nameOfGroup.state = indicateZone.state = "nameDoesNotExistState" }
-        onSignUpAnswered: {
-            console.log("created: ", created, " name: ", name)
-            if(created){
+        onSignAnswered: {
+            checkForAnswerTimer.stop()
+            if(progress){
                 User.user_name = name
                 stackView.push(mainUserPage)
                 nameInputRow.clear()
                 passwordInputRow.clear()
             }
             else{
-                console.log("не создано")
-                indicateZone.state = "signUpErrorState"
-                signInPage.state = "normal"
-            }
-        }
-
-        onSignInAnswered: {
-            console.log("accessed: ", accessed, " name: ", name)
-            if(accessed){
-                console.log("вход выполнен")
-                User.user_name = name
-                stackView.push(mainUserPage)
-                nameInputRow.clear()
-                passwordInputRow.clear()
-            }
-            else{
-                console.log("вход не выполнен")
-                indicateZone.state = "signInErrorState"
+                indicateZone.state = mode == "signUp" ? "signUpErrorState" : "signInErrorState"
                 signInPage.state = "normal"
             }
         }
@@ -70,14 +54,28 @@ Page{
     Component.onCompleted: {
         if(userSettings.name === "")
             stateTimer.start()
-        else
+        else{
             User.autoSignIn()
+            nameInputRow.insert(0, userSettings.name)
+            checkForAnswerTimer.start()
+        }
     }
 
     Timer{
         id: stateTimer
         interval: 1
         onTriggered: signInPage.state = "normal"
+    }
+
+    Timer{
+        id: checkForAnswerTimer
+        interval: 10000
+        repeat: false
+        onTriggered: {
+            signInPage.state = "normal"
+            indicateZone.state = mode === "signUp" ? "signUpErrorState" : "signInErrorState"
+            User.connectToHost()
+        }
     }
 
     onModeChanged: {
@@ -124,6 +122,7 @@ Page{
     ]
 
     transitions: Transition{
+        id: signTransition
         SequentialAnimation{
             ParallelAnimation{
                 AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
@@ -218,13 +217,12 @@ Page{
 
     Rectangle{
         id: dataSheet
-        width: background.width; height: background.height /** 2/3*/
-//        anchors.bottom: background.bottom
+        width: background.width; height: background.height
         color: dataColor
 
         Rectangle{
             id: nameOfGroup
-            width: parent.width; height: nameInputRow.height * 2
+            width: parent.width; height: Math.ceil(signInPage.height / 8)
             anchors.top: parent.top
             color: "#edeef0"
 
@@ -250,11 +248,10 @@ Page{
 
             TextField{
                 id: nameInputRow
-                width: parent.width * 3/4; height: width * 1/7;
+                width: parent.width * 3 / 4; height: parent.height / 2
                 anchors.centerIn: parent
-                //radius: height * 1/4
                 font.family: "Roboto"
-                font.pixelSize: height * 1/2
+                font.pixelSize: height / 2
                 placeholderText: "Название группы"
                 maximumLength: 16
                 validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
@@ -262,7 +259,7 @@ Page{
 
                 background: Rectangle{
                     anchors.fill: parent
-                    radius: parent.height/2
+                    radius: parent.height / 2
                     color: parent.backgroundColor
                 }
 
@@ -281,6 +278,8 @@ Page{
                     if(activeFocus == true){
                         indicateZone.state = nameOfGroup.state
                         backgroundColor = "lightgrey"
+                        if(nameInputRow.getText(0, nameInputRow.length) !== '')
+                            User.checkName(nameInputRow.getText(0, nameInputRow.length))
                     }
                     else
                         backgroundColor = "#ffffff"
@@ -295,7 +294,7 @@ Page{
 
         Rectangle{
             id: password
-            width: parent.width; height: nameInputRow.height * 2
+            width: parent.width; height: Math.ceil(signInPage.height / 8)
             anchors.top: nameOfGroup.bottom
             anchors.topMargin: height * 1/20
             color: "#edeef0"
@@ -322,11 +321,10 @@ Page{
 
             TextField{
                 id: passwordInputRow
-                width: parent.width * 3/4; height: width * 1/7
+                width: parent.width * 3 / 4; height: parent.height / 2
                 anchors.centerIn: parent
-                //radius: height * 1/4
                 font.family:"Roboto"
-                font.pixelSize: height * 1/2
+                font.pixelSize: height / 2
                 placeholderText:"Пароль"
                 maximumLength: 16
                 validator: RegExpValidator{regExp:/[a-zA-Z1-9\!\@\#\$\%\^\&\*\(\)\-\_\+\=\;\:\,\.\/\?\\\|\`\~\[\]\{\}]{6,}/}
@@ -334,8 +332,9 @@ Page{
                 echoMode: TextInput.Password
 
                 background: Rectangle{
+                    id: passwordBackground
                     anchors.fill: parent
-                    radius: Math.ceil(parent.height / 2)
+                    radius: height / 2
                     color: parent.backgroundColor
                 }
 
@@ -368,14 +367,23 @@ Page{
                     property color activeColor:"#757575"
                     property color inactiveColor:"#BDBDBD"
 
-                    height: parent.height; width: height
-                    anchors{right: parent.right; top: parent.top}
-                    radius: Math.ceil(passwordInputRow.height / 2)
+                    height: parent.height + 2; width: height
+                    anchors{ left: parent.left; leftMargin: parent.width - width + 1; verticalCenter: parent.verticalCenter }
+                    radius: passwordInputRow.height / 2
                     color: inactiveColor
                     Rectangle{
-                        height: parent.height; width: height * 1/2
-                        anchors{left: parent.left; top: parent.top}
+                        height: parent.height; width: height / 2
+                        anchors{ left: parent.left; verticalCenter: parent.verticalCenter }
+                        radius: height / 10
                         color: parent.color
+                    }
+                    Image{
+                        anchors.centerIn: parent
+                        height: parent.height * 3 / 4
+                        width: height
+                        antialiasing: true
+                        mipmap: true
+                        source: "qrc:/uiIcons/eyeIcon.svg"
                     }
                     MouseArea{
                         anchors.fill: parent
@@ -396,7 +404,6 @@ Page{
 
         MaterialButton{
             id: signUpButton
-//            width: password.width/1.5; height: password.height/1.5
             width: password.width; height: password.height
             anchors{ top: password.bottom; topMargin: height/20; horizontalCenter: parent.horizontalCenter }
             label: mode == "signUp" ? "создать" : "войти"
@@ -408,10 +415,7 @@ Page{
             clickable: false
 
             onClicked:{
-                console.log("signUpButton")
-
                 signInPage.state = "hidden"
-
                 if(mode == "signUp"){
                     User.signUp(nameInputRow.getText(0, nameInputRow.length),
                                 passwordInputRow.getText(0, passwordInputRow.length))
@@ -420,6 +424,7 @@ Page{
                     User.signIn(nameInputRow.getText(0, nameInputRow.length),
                                 passwordInputRow.getText(0, passwordInputRow.length))
                 }
+                checkForAnswerTimer.start()
             }
         }
 

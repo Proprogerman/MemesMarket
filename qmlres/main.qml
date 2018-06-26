@@ -1,5 +1,7 @@
 import QtQuick 2.11
 import QtQuick.Controls 1.4
+import QtQuick.Controls.Material 2.2
+import QtQuick.Controls.Universal 2.2
 import QtQuick.Window 2.0
 import QtQuick.Dialogs 1.2
 
@@ -30,8 +32,8 @@ ApplicationWindow{
 
         onCurrentItemChanged: {
             if(stackView.currentItem !== null){
-                hamburger.visible = stackView.currentItem.objectName == "mainUserPage" ? true : false
-                slidingMenu.active = stackView.currentItem.objectName == "signInPage" ? false : true
+                hamburger.visible = stackView.currentItem.objectName === "mainUserPage" ? true : false
+                slidingMenu.active = stackView.currentItem.objectName === "signInPage" ? false : true
             }
         }
 
@@ -45,7 +47,7 @@ ApplicationWindow{
                 else if(properties.enterItem.objectName === "memePage")
                     currTransition = memePageTransition
                 else if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "mainUserPage"
-                        && User.findMeme(properties.exitItem.name))
+                && User.findMeme(properties.exitItem.name))
                     currTransition = fromMemePageTransition
                 else if(properties.exitItem.objectName === "memePage"&& properties.enterItem.objectName === "categoryMemeListPage")
                     currTransition = fromMemePageTransition
@@ -81,7 +83,7 @@ ApplicationWindow{
 
             property Component fromSignToMainTransition: StackViewTransition {
                 SequentialAnimation{
-                    ScriptAction{ script: hamburger.opacity = false }
+                    ScriptAction{ script: hamburger.opacity = 0 }
                     PropertyAnimation{
                         target: enterItem
                         property: "opacity"
@@ -90,7 +92,6 @@ ApplicationWindow{
                         duration: 1000
                     }
                     ScriptAction{ script: enterItem.state = "normal" }
-                    PauseAnimation{ duration: 750 }
                     PropertyAnimation{ target: hamburger; property: "opacity"; from: 0; to: 1; duration: 100 }
                 }
             }
@@ -113,7 +114,7 @@ ApplicationWindow{
             property Component memePageTransition: StackViewTransition {
                 SequentialAnimation{
                     ScriptAction{ script: enterItem.state = User.findMeme(enterItem.name) ? "mine" : "general" }
-                    ScriptAction{ script: exitItem.setVisibilityImageOnList(false) }
+                    ScriptAction{ script: exitItem.setVisibilityImageOnList(enterItem.name, false) }
                     ParallelAnimation{
                         PropertyAnimation{
                             target: enterItem
@@ -146,13 +147,14 @@ ApplicationWindow{
             property Component fromMemePageTransition: StackViewTransition {
                 SequentialAnimation{
                     ScriptAction{ script: exitItem.state = "hidden" }
-                    ScriptAction{ script: enterItem.setVisibilityImageOnList(false) }
+//                    ScriptAction{ script: enterItem.setVisibilityImageOnList(exitItem.name, false) }
+                    ScriptAction{ script: enterItem.getClosingMemePosition(exitItem.name)}
                         ParallelAnimation{
                             PropertyAnimation{
                                 target: exitItem
                                 property: "memeImageY"
                                 from: exitItem.imageBackY
-                                to: enterItem.clickedMemeOnListY
+                                to: enterItem.getClosingMemePosition(exitItem.name)//enterItem.clickedMemeOnListY
                                 duration: 200
                                 easing.type: Easing.OutCirc
                             }
@@ -173,7 +175,7 @@ ApplicationWindow{
                                 easing.type: Easing.OutCirc
                             }
                     }
-                    ScriptAction{ script: enterItem.setVisibilityImageOnList(true) }
+                    ScriptAction{ script: enterItem.setVisibilityImageOnList(exitItem.name, true) }
                 }
             }
         }

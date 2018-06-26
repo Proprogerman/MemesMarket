@@ -4,8 +4,6 @@
         <file>PopGraphElement.qml</file>
         <file>SlidingMenu.qml</file>
         <file>PaperRipple.qml</file>
-        <file>LikeAct.qml</file>
-        <file>RippleButton.qml</file>
         <file>CheckButton.qml</file>
         <file>RadioButtons.qml</file>
         <file>MaterialButton.qml</file>
