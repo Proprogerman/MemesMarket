@@ -1,4 +1,4 @@
-QT += network sql charts qml quick svg quickcontrols2
+QT += network sql charts qml quick svg
 
 QTFIREBASE_SDK_PATH = C:/Development/firebase_cpp_sdk
 
@@ -26,7 +26,6 @@ ios {
     OTHER_FILES += $$QMAKE_INFO_PLIST
 }
 
-# set application icons for win and macx
 win32 {
     RC_FILE += win/app_icon.rc
 }
@@ -40,19 +39,6 @@ HEADERS += \
     imageprovider.h \
     ad.h \
     imagerunnable.h
-
-#OTHER_FILES += \
-#    qml/main.qml \
-#    qml/pages/MemesPage.qml \
-#    qml/pages/SignInPage.qml \
-#    qml/pages/MainUserPage.qml \
-#    qml/elements/PopGraphElement.qml \
-#    qml/elements/SlidingMenu.qml \
-#    qml/elements/RippleEffect.qml
-
-#    qml/* \
-#    qml/elements/* \
-#    qml/pages/*
 
 DISTFILES += \
     android/AndroidManifest.xml \

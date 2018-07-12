@@ -1,7 +1,5 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.2
-//import QtQuick.Controls.Styles 1.4
-//import QtQuick.Controls.Material 2.2
 import QtGraphicalEffects 1.0
 
 import Qt.labs.settings 1.0
@@ -150,7 +148,7 @@ Page{
 
         Text{
             id: indicateMessage
-            anchors{ left: parent.left; right: parent.right; top: parent.top}
+            anchors{ left: indicateImage.right; right: parent.right; top: parent.top}
             font.family: "Impact"
             color: "#ffffff"
             font.pixelSize: parent.height * 1/6
@@ -254,6 +252,7 @@ Page{
                 placeholderText: "Название группы"
                 maximumLength: 16
                 validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
+                inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                 property color backgroundColor: "#ffffff"
 
                 background: Rectangle{
@@ -283,7 +282,7 @@ Page{
                     else
                         backgroundColor = "#ffffff"
                     }
-                onTextChanged:{
+                onTextChanged: {
                     nameOfGroup.state = indicateZone.state = "nameInputState"
                     if(nameInputRow.getText(0, nameInputRow.length) !== '')
                         submitTimer.start()
@@ -329,6 +328,7 @@ Page{
                 validator: RegExpValidator{regExp:/[a-zA-Z1-9\!\@\#\$\%\^\&\*\(\)\-\_\+\=\;\:\,\.\/\?\\\|\`\~\[\]\{\}]{6,}/}
                 property color backgroundColor: "#ffffff"
                 echoMode: TextInput.Password
+                inputMethodHints: Qt.ImhNoAutoUppercase
 
                 background: Rectangle{
                     id: passwordBackground

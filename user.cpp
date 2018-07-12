@@ -57,7 +57,11 @@ void User::setPasswordHash(const QString &hash){
 
 void User::setUserData(const QJsonObject &userData)
 {
-    emit imageReceived("user", getName(), userData["imageName"].toString());
+    QString imgName = userData["imageName"].toString();
+    if(imgName != user_imageName){
+        user_imageName = imgName;
+        emit imageReceived("user", getName(), imgName);
+    }
     int tempPopValue = userData["pop_value"].toInt();
     int tempCreativity = userData["creativity"].toInt();
     int tempShekels = userData["shekels"].toInt();
@@ -266,14 +270,17 @@ int User::getAdIndex(const QString &name)
 void User::rewardUserWithShekels()
 {
     if(socketIsReady()){
+        const int shekelsReward = 100;
 
         QJsonObject jsonObj {
                                 {"requestType", "rewardUserWithShekels"},
                                 {"user_name", getName()},
-                                {"shekels", 100}
+                                {"shekels", shekelsReward}
                             };
 
         writeData(QJsonDocument(jsonObj).toBinaryData());
+        shekels += shekelsReward;
+        emit shekelsChanged();
     }
 }
 
@@ -393,6 +400,7 @@ void User::signOut()
     pop_value = 0;
     creativity = 0;
     shekels = 0;
+    user_imageName = "";
     memes.clear();
 
     if(socketIsReady()){

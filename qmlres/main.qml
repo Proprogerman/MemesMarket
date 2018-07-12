@@ -2,7 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 1.4
 import QtQuick.Controls.Material 2.2
 import QtQuick.Controls.Universal 2.2
-import QtQuick.Window 2.0
+import QtQuick.Window 2.3
 import QtQuick.Dialogs 1.2
 
 
@@ -16,21 +16,37 @@ import QtFirebase 1.0
 ApplicationWindow{
     id: mainWindow
     visible: true
-    height: 720                                 //
-    width: 405                                  // for desktop
-    x: 300 ; y: 50                              //
+    height: 720
+    width: 405
+//    x: 300 ; y: 50                           //for desktop
 
-//    visibility: Window.FullScreen               // for mobile
+    visibility: ApplicationWindow.FullScreen               // for mobile
+
+    Item{
+        focus: true
+        Keys.onReleased: {
+            if(event.key === Qt.Key_Back)
+            {
+                event.accepted = true;
+                var currItm = stackView.currentItem.objectName
+                if(stackView.currentItem.objectName !== "mainUserPage" || stackView.currentItem.objectName !== "signInPage")
+                {
+                    stackView.pop()
+                }
+                else
+                {
+                    Qt.quit();
+                }
+            }
+        }
+    }
+
+    onClosing: {
+        close.accepted = true
+    }
 
     property color mainColor: "#507299"
 
-    Connections{
-        target: User
-        onImageReceived:{
-            if(type === "user")
-                bigAvatar.source = "image://meme/" + imageName
-        }
-    }
 
     StackView{
         id: stackView
@@ -244,17 +260,17 @@ ApplicationWindow{
                 height: parent.height
                 Image{
                     id: bigAvatar
-                    source: "image://meme/"
                     width: parent.width
                     height: width
                     sourceSize.height: height
                     sourceSize.width: width
+                    cache: false
                 }
                 MaterialButton{
                     id: memesExchange
                     width: parent.width
                     height: parent.height / 10
-                    color: "lightgrey"
+                    clickableColor: slidingMenu.color
                     label: "биржа мемов"
                     labelSize: height / 4
                     z: bigAvatar.z - 1
@@ -268,7 +284,7 @@ ApplicationWindow{
                     id: ads
                     width: parent.width
                     height: parent.height / 10
-                    color: "lightgrey"
+                    clickableColor: slidingMenu.color
                     label: "реклама"
                     labelSize: height / 4
                     z: memesExchange.z - 1
@@ -282,7 +298,7 @@ ApplicationWindow{
                     id: usersRating
                     width: parent.width
                     height: parent.height / 10
-                    color: "lightgrey"
+                    clickableColor: slidingMenu.color
                     label: "рейтинг"
                     labelSize: height / 4
                     z: ads.z - 1
@@ -295,7 +311,7 @@ ApplicationWindow{
                     id: signOut
                     width: parent.width
                     height: parent.height / 10
-                    color: "lightgrey"
+                    clickableColor: slidingMenu.color
                     label: "выход"
                     labelSize: height / 4
                     z: usersRating.z - 1

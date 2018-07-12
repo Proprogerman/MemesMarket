@@ -53,7 +53,7 @@ Page{
     function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
             if(memeListModel.get(i).memeNameText === meme_name){
-                memeListModel.setProperty(i, "image", " ")
+                memeListModel.setProperty(i, "image", "")
                 memeListModel.setProperty(i, "image", "image://meme/" + image_name)
             }
     }
@@ -185,6 +185,13 @@ Page{
                     appListView.forceLayout()
                 }
             }
+
+            ProgressIndicator{
+                height: parent.height
+                width: height
+                running: memeImage.status !== Image.Ready
+                visible: memeImage.status !== Image.Ready
+            }
             Text{
                 id: memeNameLabel
                 text: memeNameText
@@ -196,7 +203,7 @@ Page{
             Text{
                 id: courseDirectionLabel
                 text: courseDirectionText
-                anchors{ bottom: loyaltyLabel.top; right: parent.right}
+                anchors{ bottom: loyaltyLabel.top; right: parent.right; rightMargin: font.pixelSize / 2 }
                 visible: mine
 
                 onTextChanged:{
@@ -208,16 +215,27 @@ Page{
                     }
                 }
             }
+
+            Text{
+                text: "лояльность: "
+                anchors{ verticalCenter: parent.verticalCenter; right: loyaltyLabel.left }
+            }
             Text{
                 id: loyaltyLabel
                 text: loyaltyText
-                anchors{ verticalCenter: parent.verticalCenter; right: parent.right }
+                anchors{ verticalCenter: parent.verticalCenter; right: parent.right; rightMargin: font.pixelSize / 2 }
                 color: "#000000"
+            }
+
+            Text{
+                text: "креативность: "
+                anchors{ top: memeCreativityLabel.top; right: memeCreativityLabel.left }
+                visible: mine
             }
             Text{
                 id: memeCreativityLabel
                 text: memeCreativityText
-                anchors{ top: loyaltyLabel.bottom; right: parent.right }
+                anchors{ top: loyaltyLabel.bottom; right: parent.right; rightMargin: font.pixelSize / 2 }
                 color: "#00BCD4"
                 visible: mine
             }

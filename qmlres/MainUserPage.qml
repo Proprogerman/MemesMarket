@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 import QtQuick.Dialogs 1.2
+import QtQuick.Controls.Styles 1.4
 
 import KlimeSoft.SingletonUser 1.0
 
@@ -19,7 +20,7 @@ Page {
     property string userShekels: "100"
 
     property color backColor: "#edeef0"
-    property color itemColor: "white"
+    property color itemColor: "#ffffff"
     property color mainColor: "#507299"
 
     property var memesPopValues: []
@@ -77,9 +78,16 @@ Page {
     function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
             if(memeListModel.get(i).memeNameText === meme_name){
-                memeListModel.setProperty(i, "image", " ")
+                memeListModel.setProperty(i, "image", "")
                 memeListModel.setProperty(i, "image", "image://meme/" + image_name)
             }
+    }
+
+    function updateAvatar(image_name){
+        avatar.source = ""
+        bigAvatar.source = ""
+        avatar.source = "image://meme/" + image_name
+        bigAvatar.source = "image://meme/" + image_name
     }
 
     function unforceMeme(meme_name){
@@ -133,7 +141,7 @@ Page {
             if(type === "meme")
                 updateMemeImage(name, imageName)
             else if(type === "user")
-                avatar.source = "image://meme/" + imageName
+                updateAvatar(imageName)
         }
         onPopValueChanged:{
             userPopValue = valueToShort(User.pop_values)
@@ -169,6 +177,8 @@ Page {
         repeat: true
         onTriggered:{
             User.getUserData()
+            if(!rewardedVideoAd.loaded && rewardedVideoAd.ready)
+                rewardedVideoAd.load()
         }
     }
 
@@ -264,9 +274,9 @@ Page {
         visible:false
         width: Math.ceil(userPanel.height * 0.95)
         height: width
+        cache: false
         x: userPanel.x + (userPanel.width - width) / 2
         y: userPanel.y + (userPanel.height - height) / 2
-        source: "image://meme/"
 
         states:[
             State{
@@ -283,6 +293,16 @@ Page {
             }
         ]
         state: "normal"
+    }
+
+    ProgressIndicator{
+        width: Math.ceil(userPanel.height * 0.95)
+        height: width
+        x: userPanel.x + (userPanel.width - width) / 2
+        y: userPanel.y + (userPanel.height - height) / 2
+        z: pageHeader.z - 1
+        running: avatar.status !== Image.Ready
+        visible: avatar.status !== Image.Ready
     }
 
     function goToIndex(index, mode){
@@ -339,7 +359,7 @@ Page {
         radius: 10
         samples: 21
         visible: false
-        cached: true
+//        cached: true
     }
 
     Item{
@@ -368,7 +388,7 @@ Page {
         width: avatar.width / 2
         height: avatar.height / 2
         anchors{ bottom: avatar.bottom; horizontalCenter: avatar.horizontalCenter }
-        z: pageHeader.z + 2
+        z: pageHeader.z
 
         property bool flipped: false
 
@@ -452,7 +472,7 @@ Page {
         spread: 0.7
         cornerRadius: moneyGlowForm.radius + glowRadius
         z: moneyGlowForm.z
-        opacity: rewardedVideoAd.ready ? 1 : 0
+        opacity: rewardedVideoAd.loaded ? 1 : 0
         Behavior on opacity{
             NumberAnimation{ duration: 250 }
         }
@@ -512,6 +532,12 @@ Page {
                     appListView.forceLayout()
                 }
             }
+            ProgressIndicator{
+                height: parent.height
+                width: height
+                running: memeImage.status !== Image.Ready
+                visible: memeImage.status !== Image.Ready
+            }
 
             Text{
                 id: memeNameLabel
@@ -521,10 +547,11 @@ Page {
                 fontSizeMode: Text.HorizontalFit
                 font.family: "Roboto"
             }
+
             Text{
                 id: courseDirectionLabel
                 text: courseDirectionText
-                anchors{ bottom: loyaltyLabel.top; right: parent.right }
+                anchors{ bottom: loyaltyLabel.top; right: parent.right; rightMargin: font.pixelSize / 2 }
 
                 onTextChanged:{
                     if(text.charAt(0) == "-"){
@@ -535,16 +562,26 @@ Page {
                     }
                 }
             }
+
+            Text{
+                text: "лояльность: "
+                anchors{ verticalCenter: parent.verticalCenter; right: loyaltyLabel.left }
+            }
             Text{
                 id: loyaltyLabel
                 text: loyaltyText
-                anchors{ verticalCenter: parent.verticalCenter; right: parent.right }
+                anchors{ verticalCenter: parent.verticalCenter; right: parent.right; rightMargin: font.pixelSize / 2 }
                 color: "#000000"
+            }
+
+            Text{
+                text: "креативность: "
+                anchors{ top: memeCreativityLabel.top; right: memeCreativityLabel.left }
             }
             Text{
                 id: memeCreativityLabel
                 text: memeCreativityText
-                anchors{ top: loyaltyLabel.bottom; right: parent.right }
+                anchors{ top: loyaltyLabel.bottom; right: parent.right; rightMargin: font.pixelSize / 2 }
                 color: "#00BCD4"
             }
 
@@ -558,7 +595,6 @@ Page {
                         appListView.positionViewAtIndex(index, ListView.End)
                     clickedMemeOnListY = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
                     clickedMemeImageSize = memeImage.width
-//                    clickedMemeIndex = index
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
                                     memeCreativity: Number(memeCreativityText)}})
@@ -577,14 +613,7 @@ Page {
 
         adUnitId: "ca-app-pub-5551381749080346/6707293633"
 
-        onReadyChanged:{
-            if(ready){
-                load()
-                moneyGlow.opacity = 1
-            }
-            else
-                moneyGlow.opacity = 0
-        }
+        onReadyChanged: if(ready) load()
 
         onClosed: load()
 

@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 
@@ -140,7 +140,18 @@ Page {
 
             Text{
                 text: userPopValueText
-                anchors{ right: parent.right; verticalCenter: parent.verticalCenter }
+                anchors{ right: shekelIcon.left; rightMargin: shekelIcon.width / 2; verticalCenter: parent.verticalCenter }
+            }
+
+            Image{
+                id: shekelIcon
+                height: parent.height / 2
+                width: height
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                source: "qrc:/uiIcons/shekel.svg"
+                antialiasing: true
+                mipmap: true
             }
         }
         NumberAnimation{ id: listViewAnim; target: ratingListView; property: "contentY"; duration: 400;

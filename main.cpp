@@ -3,8 +3,6 @@
 #include <QApplication>
 
 #include <QQmlApplicationEngine>
-#include <QtQuickControls2>
-#include <QQuickStyle>
 
 #include "imageprovider.h"
 
@@ -19,13 +17,11 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-//    QQuickStyle::setStyle("Material");
-
     qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser", 1, 0, "User", User::qmlInstance);
 
-    engine.load(QUrl("qrc:/qml/main.qml"));
-
     engine.addImageProvider("meme", new ImageProvider());
+
+    engine.load(QUrl("qrc:/qml/main.qml"));
 
     return app.exec();
 }

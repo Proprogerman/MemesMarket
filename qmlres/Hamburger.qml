@@ -72,8 +72,8 @@ Item{
 
     MouseArea{
         anchors.centerIn: parent
-        height: parent.height * 2
-        width: parent.width * 2
+        height: parent.height * 3
+        width: parent.width * 3
         onClicked:{
             if(parent.state == "menu"){
                 parent.state = "back"

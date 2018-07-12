@@ -13,7 +13,7 @@ QPixmap ImageProvider::requestPixmap(const QString &id, QSize *size, const QSize
     if(!imgs.exists())
         imgs.mkpath(imgs.path());
     if(!result.load(imgs.path() + '/' + id)){
-        result.load(":/uiIcons/loader.png");
+        result.load(":/photo/memePlaceholder.png");
     }
     return result;
 }

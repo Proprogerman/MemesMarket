@@ -59,8 +59,6 @@ public:
     Q_INVOKABLE void increaseLikesQuantity(const QString &memeName, const int &investedShekels);
     Q_INVOKABLE void acceptAd(const QString &adName);
 
-//    Q_INVOKABLE int getMemeCreativity(const QString &memeName);
-
     Q_INVOKABLE bool memesWithCategoryIsEmpty(const QString &category);
     Q_INVOKABLE bool adsIsEmpty();
 
@@ -111,6 +109,7 @@ public:
 private:
     QString user_name;
     QString passwordHash;
+    QString user_imageName;
     int pop_value = 0;
     int creativity = 0;
     int shekels = 0;
