@@ -1,5 +1,6 @@
 #include <QStandardPaths>
 #include <QDir>
+#include <QDebug>
 
 #include "imageprovider.h"
 

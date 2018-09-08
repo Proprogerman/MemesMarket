@@ -140,18 +140,7 @@ Page {
 
             Text{
                 text: userPopValueText
-                anchors{ right: shekelIcon.left; rightMargin: shekelIcon.width / 2; verticalCenter: parent.verticalCenter }
-            }
-
-            Image{
-                id: shekelIcon
-                height: parent.height / 2
-                width: height
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                source: "qrc:/uiIcons/shekel.svg"
-                antialiasing: true
-                mipmap: true
+                anchors{ right: parent.right; rightMargin: height; verticalCenter: parent.verticalCenter }
             }
         }
         NumberAnimation{ id: listViewAnim; target: ratingListView; property: "contentY"; duration: 400;

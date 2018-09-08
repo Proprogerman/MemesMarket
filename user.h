@@ -22,6 +22,9 @@
 
 #include <QThreadPool>
 
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+
 #include "meme.h"
 #include "ad.h"
 
@@ -125,6 +128,8 @@ private:
     QSettings *settings;
 
     QThreadPool *imgPool;
+
+    QNetworkAccessManager *mngr;
 signals:
     void nameExist();
     void nameDoesNotExist();
@@ -149,6 +154,7 @@ public slots:
     void onReadyRead();
     void onDisconnected();
     void storeUserSettings(QString name, bool isSigned);
+    void getImageFromVk(QNetworkReply *reply, QString type, QString itemName, QString imageName);
 };
 
 

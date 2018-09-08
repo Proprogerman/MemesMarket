@@ -369,7 +369,8 @@ Page{
             }
             AreaSeries{
                 id: redZone
-                color: "#40ff0000"
+                color: "#ff81ae"//"#40ff0000"
+                opacity: 0.65
                 axisX: xAxis
                 axisY: yAxis
                 upperSeries: startPopValueLine
@@ -394,6 +395,7 @@ Page{
                 XYPoint{ id: xy1; x: xAxis.min; y: memeStartPopValue }
                 XYPoint{ id: xy2; x: xAxis.max; y: memeStartPopValue }
                 color: "green"
+                visible: false
             }
             LineSeries{
                 id: creativityEffect

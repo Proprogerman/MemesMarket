@@ -63,13 +63,15 @@ ApplicationWindow{
         delegate: StackViewDelegate{
             function getTransition(properties){
                 var currTransition = someTransition
-                if(properties.exitItem.objectName === "signInPage" && properties.enterItem.objectName === "mainUserPage")
+                var exitItemName = properties.exitItem.objectName
+                var enterItemName = properties.enterItem.objectName
+                if(exitItemName === "signInPage" && enterItemName === "mainUserPage")
                     currTransition = fromSignToMainTransition
-                else if(properties.exitItem.objectName === "mainUserPage" && properties.enterItem.objectName === "signInPage")
+                else if(exitItemName === "mainUserPage" && enterItemName === "signInPage")
                     currTransition = fromMainToSignTransition
-                else if(properties.enterItem.objectName === "memePage")
+                else if(enterItemName === "memePage")
                     currTransition = memePageTransition
-                else if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "mainUserPage"
+                else if(exitItemName === "memePage" && enterItemName === "mainUserPage"
                 && User.findMeme(properties.exitItem.name))
                     currTransition = fromMemePageTransition
                 else if(properties.exitItem.objectName === "memePage"&& properties.enterItem.objectName === "categoryMemeListPage")
@@ -78,12 +80,16 @@ ApplicationWindow{
                 return currTransition
             }
             function transitionFinished(properties){
+                var exitItemName = properties.exitItem.objectName
+                var enterItemName = properties.enterItem.objectName
                 properties.exitItem.x = 0
                 properties.exitItem.y = 0
                 properties.exitItem.opacity = 1
-                if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "mainUserPage"
-                || properties.enterItem.objectName === "categoryMemeListPage")
+                if(exitItemName === "memePage" && enterItemName === "mainUserPage"
+                || enterItemName === "categoryMemeListPage")
                     properties.enterItem.setVisibilityImageOnList(true)
+                else if(exitItemName === "signInPage")
+                    properties.exitItem.clearUserData()
             }
             property Component someTransition: StackViewTransition{
                 PropertyAnimation{
@@ -112,7 +118,7 @@ ApplicationWindow{
                         property: "opacity"
                         from: 0
                         to: 1
-                        duration: 1000
+                        duration: 650
                     }
                     ScriptAction{ script: enterItem.state = "normal" }
                     PropertyAnimation{ target: hamburger; property: "opacity"; from: 0; to: 1; duration: 100 }

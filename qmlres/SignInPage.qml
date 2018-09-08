@@ -9,7 +9,7 @@ import KlimeSoft.SingletonUser 1.0
 import "qrc:/qml/elements"
 
 Page{
-    id:signInPage
+    id: signInPage
 
     objectName: "signInPage"
 
@@ -22,6 +22,12 @@ Page{
 
     property alias backgroundColor: background.color
 
+    signal panelWasHidden()
+
+    function toUserPage(){
+        stackView.push(mainUserPage)
+        signInPage.panelWasHidden.disconnect(toUserPage)
+    }
 
     Connections{
         target: User
@@ -31,9 +37,10 @@ Page{
             checkForAnswerTimer.stop()
             if(progress){
                 User.user_name = name
-                stackView.push(mainUserPage)
-                nameInputRow.clear()
-                passwordInputRow.clear()
+                if(!signInPage.transitions[0].running)
+                    stackView.push(mainUserPage)
+                else
+                    signInPage.panelWasHidden.connect(toUserPage)
             }
             else{
                 indicateZone.state = mode == "signUp" ? "signUpErrorState" : "signInErrorState"
@@ -57,6 +64,11 @@ Page{
             nameInputRow.insert(0, userSettings.name)
             checkForAnswerTimer.start()
         }
+    }
+
+    function clearUserData(){
+        nameInputRow.clear()
+        passwordInputRow.clear()
     }
 
     Timer{
@@ -116,6 +128,7 @@ Page{
             AnchorChanges{ target: dataSheet; anchors.top: background.bottom }
             PropertyChanges{ target: dataSheetShadow; opacity: 0.0 }
             PropertyChanges{ target: indicateZone; visible: false}
+            StateChangeScript{ name: "hiddenSignalScript"; script: panelWasHidden() }
         }
     ]
 
@@ -123,10 +136,11 @@ Page{
         id: signTransition
         SequentialAnimation{
             ParallelAnimation{
-                AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
-                PropertyAnimation{ property: "opacity"; duration: 750; easing.type: Easing.InOutElastic }
-                PropertyAnimation{ property: "visible"; duration: signInPage.state == "hidden" ? 0 : 750 }
+                AnchorAnimation{ duration: 650; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
+                PropertyAnimation{ property: "opacity"; duration: 650; easing.type: Easing.InOutElastic }
+                PropertyAnimation{ property: "visible"; duration: signInPage.state == "hidden" ? 0 : 650 }
             }
+            ScriptAction{ scriptName: "hiddenSignalScript" }
             ScriptAction{ scriptName: "activeFocusChange" }
         }
     }
@@ -179,7 +193,7 @@ Page{
             State{
                 name: "nameExistState"
                 PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название занято" :
-                                                                                   "Название существует" }
+                                                                                   "Ок!" }
                 PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/noMeme.png" :
                                                                                    "qrc:/memePhoto/okMeme.png" }
             },
@@ -196,7 +210,7 @@ Page{
             },
             State{
                 name: "passwordHasFewerCharsState"
-                PropertyChanges{ target: indicateMessage; text: "Пароль должен быть длиннее 6-ти символов" }
+                PropertyChanges{ target: indicateMessage; text: "Пароль должен быть не менее 6-ти символов" }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
             },
             State{

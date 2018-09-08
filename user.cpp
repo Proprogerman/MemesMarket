@@ -15,8 +15,8 @@
 #include "imagerunnable.h"
 
 
-
-User::User(QObject *parent): QObject(parent), settings(new QSettings()), imgPool(new QThreadPool(this))
+User::User(QObject *parent): QObject(parent), settings(new QSettings()), imgPool(new QThreadPool(this)),
+    mngr(new QNetworkAccessManager())
 {
     if(!settings->value("user/name").toString().isEmpty())
         user_name = settings->value("user/name").toString();
@@ -117,20 +117,18 @@ void User::setMemeImage(const QJsonObject &jsonObj)
 {
     QString memeName = jsonObj["memeName"].toString();
     QString imageName = jsonObj["imageName"].toString();
-    QByteArray encoded = jsonObj["imageData"].toString().toLatin1();
-    QImage memeImage;
-    memeImage.loadFromData(QByteArray::fromBase64(encoded), "JPG");
-    QString homePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0];
-    QDir imgs(homePath + "/imgs");
-    if(!imgs.exists())
-        imgs.mkpath(imgs.path());
-
-    memeImage.save(imgs.path() + '/' + imageName, "JPG");
-    emit imageReceived("meme", memeName, imageName);
+    QUrl imageUrl = QUrl(jsonObj["imageUrl"].toString());
+    QNetworkReply *reply = mngr->get(QNetworkRequest(imageUrl));
+    connect(reply, &QNetworkReply::finished, [=](){ getImageFromVk(reply, "meme", memeName, imageName);});
 }
 
 void User::setAdImage(const QJsonObject &jsonObj)
 {
+//    QString adName = jsonObj["adName"].toString();
+//    QString imageName = jsonObj["imageName"].toString();
+//    QUrl imageUrl = QUrl(jsonObj["imageUrl"].toString());
+//    QNetworkReply *reply = mngr->get(QNetworkRequest(imageUrl));
+//    connect(reply, &QNetworkReply::finished, [=](){ getImageFromVk(reply, "ad", adName, imageName);});
     QString adName = jsonObj["adName"].toString();
     QString imageName = jsonObj["imageName"].toString();
     QByteArray encoded = jsonObj["imageData"].toString().toLatin1();
@@ -175,6 +173,8 @@ void User::setMemesWithCategory(const QVariantList &memeList, const QString &cat
             memeValues.push_back(tempPop[i].toInt());
         }
         setMeme(memeName, memeValues, imageName, category, loyalty, creativity, forced, startPopValue);
+        if(!memeObj["imageUrl"].isNull())
+            setMemeImage(QJsonObject::fromVariantMap(memeObj));
     }
 }
 
@@ -459,6 +459,19 @@ void User::storeUserSettings(QString name, bool isSigned){
     }
 }
 
+void User::getImageFromVk(QNetworkReply *reply, QString type, QString itemName, QString imageName)
+{
+    QImage image;
+    image.loadFromData(reply->readAll());
+    QString homePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0];
+    QDir imgs(homePath + "/imgs");
+    if(!imgs.exists())
+        imgs.mkpath(imgs.path());
+    image.save(imgs.path() + '/' + imageName, type == "meme" ? "JPG" : "PNG");
+    emit imageReceived(type, itemName, imageName);
+    delete reply;
+}
+
 QString User::getName(){
     return user_name;
 }
@@ -501,9 +514,6 @@ void User::processingResponse(QJsonObject &jsonObj)
     }
     else if(responseType == "userImageResponse"){
         setUserImage(jsonObj);
-    }
-    else if(responseType == "memeImageResponse"){
-        imageToThread(jsonObj);
     }
     else if(responseType == "adImageResponse"){
         imageToThread(jsonObj);
