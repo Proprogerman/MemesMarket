@@ -44,7 +44,7 @@ Page{
     property alias memeImageX: imageItem.x
     property alias memeImageY: imageItem.y
     property alias memeImageScale: imageItem.scale
-    property int imageBackY: imageBack.y
+    property alias memeImageWidth: imageItem.width
 
 
     onUserShekelsChanged: {
@@ -290,30 +290,52 @@ Page{
         width: parent.width
         height: width / 2
         anchors.top: pageHeader.bottom
-        //anchors.topMargin:
-        color: backColor//"white"
+        color: backColor
+        transformOrigin: Item.Top
     }
-    Item{
-        id: imageItem
-        height: imageBack.height
-        width: height
-        x: imageBack.x + imageItem.width / 2
-        y: imageBack.y
-        transformOrigin: Item.TopLeft
-        z: 100
-        Image {
-            id: image
+
+    PinchArea {
+        id: pinchArea
+        anchors.fill: imageItem
+        pinch.target: imageItem
+        scale: imageItem.scale
+        transformOrigin: Item.Top
+        pinch.maximumRotation: 0
+        pinch.minimumScale: 1
+        pinch.maximumScale: 5
+        pinch.dragAxis: Pinch.XAndYAxis
+        z: 500
+        MouseArea{
             anchors.fill: parent
+            onClicked: imageItem.scale === 1 ? zoomIn() : zoomOut()
+            propagateComposedEvents: true
         }
+
+        onScaleChanged: {
+            if(scale < 1 || scale > 2)
+                unforceButton.opacity = 0
+            else if(scale === 1)
+                unforceButton.opacity = 0.6
+            else
+                unforceButton.opacity = Math.abs(scale - 2)
+        }
+
         Rectangle{
             id: unforceButton
             width: image.width
             height: image.height / 2
-            anchors{ left: image.left; bottom: image.bottom }
-            opacity: 0.7
+            anchors{ left: parent.left; bottom: parent.bottom }
+            opacity: 0.6
             color: "#000000"
             layer.enabled: true
             visible: false
+
+            Behavior on opacity{
+                NumberAnimation{ duration: 100 }
+            }
+
+            onOpacityChanged: unforceMouseArea.enabled = opacity < 0.6 ? false : true
+
             Image{
                 source: "qrc:/uiIcons/deleteIcon.svg"
                 height: parent.height
@@ -321,7 +343,9 @@ Page{
                 anchors.centerIn: parent
             }
             MouseArea{
+                id: unforceMouseArea
                 anchors.fill: parent
+                propagateComposedEvents: true
                 onClicked:{
                     axisCondition = true
                     User.unforceMeme(name)
@@ -331,6 +355,69 @@ Page{
                     updateMemePopGraph()
                 }
             }
+        }
+
+        onPinchFinished: {
+            xAnimation.to = imageBack.x + imageItem.width / 2
+            yAnimation.to = imageBack.y
+            resetImagePositionAnimation.start()
+            if(imageItem.scale < 2)
+                zoomOut()
+            else
+                zoomIn()
+        }
+    }
+    NumberAnimation {
+        id: bounceBackAnimation
+        target: imageItem
+        property: "scale"
+        from: imageItem.scale
+        duration: 200
+    }
+    ParallelAnimation{
+        id: resetImagePositionAnimation
+        NumberAnimation{
+            id: xAnimation
+            target: imageItem
+            property: "x"
+            from: imageItem.x
+            duration: 200
+        }
+        NumberAnimation{
+            id: yAnimation
+            target: imageItem
+            property: "y"
+            from: imageItem.y
+            duration: 200
+        }
+    }
+
+    function zoomOut(){
+        bounceBackAnimation.to = 1
+        bounceBackAnimation.start()
+    }
+    function zoomIn(){
+        bounceBackAnimation.to = 2
+        bounceBackAnimation.start()
+    }
+
+    function setImageOrigin(side){
+        imageItem.transformOrigin = side
+    }
+
+    Item{
+        id: imageItem
+        height: imageBack.height
+        width: height
+        x: imageBack.x + imageItem.width / 2
+        y: imageBack.y
+        transformOrigin: Item.Top
+        z: 100
+
+        Image {
+            id: image
+            anchors.fill: parent
+            transformOrigin: Item.Top
         }
     }
 
@@ -501,11 +588,12 @@ Page{
     state: "hidden"
 
     onStateChanged:{
-        axisCondition = true
-        radioButtons.setButtonActive(0)
-        setManipItemColor()
-        if(state != "hidden")
+        if(state !== "hidden"){
+            axisCondition = true
+            radioButtons.setButtonActive(0)
+            setManipItemColor()
             updateMemePopGraph()
+        }
     }
 
     transitions: Transition {

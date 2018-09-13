@@ -6,7 +6,8 @@ include(deployment.pri)
 
 RESOURCES += \
     assets/qrc.qrc \
-    qmlres/qml.qrc
+    qmlres/qml.qrc \
+    data.qrc
 
 SOURCES += main.cpp \
     user.cpp \
@@ -47,7 +48,8 @@ DISTFILES += \
     android/res/values/libs.xml \
     android/build.gradle \
     android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew.bat
+    android/gradlew.bat \
+    appData.json
 
 
 GIT_VERSION_ROOT = $$PWD/..

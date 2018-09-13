@@ -22,6 +22,7 @@ User::User(QObject *parent): QObject(parent), settings(new QSettings()), imgPool
         user_name = settings->value("user/name").toString();
     connectToHost();
     timer = new QTimer();
+    requestTimer = new QTimer();
     timer->start(19000);
 
     connect(timer, &QTimer::timeout, [=](){ connectToHost(); });
@@ -36,14 +37,12 @@ User::~User(){
 }
 
 void User::checkName(const QString &name){
-    if(socketIsReady()){
-        QJsonObject jsonObj
-        {
-            {"requestType", "checkName"},
-            {"user_name",   name}
-        };
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    QJsonObject jsonObj
+    {
+        {"requestType", "checkName"},
+        {"user_name", name}
+    };
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::setName(const QString &name){
@@ -94,6 +93,8 @@ void User::setUserData(const QJsonObject &userData)
             memeValues.push_back(tempPop[i].toInt());
         }
         setMeme(memeName, memeValues, imageName, category, loyalty, creativity, true, startPopValue);
+        if(!memeObj["imageUrl"].isNull())
+            setMemeImage(QJsonObject::fromVariantMap(memeObj));
     }
 }
 
@@ -203,7 +204,6 @@ void User::setMemeData(const QJsonObject &obj)
     const QString memeName = obj["memeName"].toString();
     const double loyalty = obj["loyalty"].toDouble();
     const QString category = obj["category"].toString();
-    const QString memeImageName = obj["imageName"].toString();
     const int creativity = obj["creativity"].toInt();
     const bool forced = obj["forced"].toBool();
     const int startPopValue = obj["startPopValue"].toInt();
@@ -211,7 +211,7 @@ void User::setMemeData(const QJsonObject &obj)
     for(int i = 0; i < tempPop.size(); i++){
         memeValues.push_back(tempPop[i].toInt());
     }
-    setMeme(memeName, memeValues, memeImageName, category, loyalty, creativity, forced, startPopValue);
+    setMeme(memeName, memeValues, "null", category, loyalty, creativity, forced, startPopValue);
 }
 
 void User::setUsersRating(const QJsonArray &userList, const int &userRating)
@@ -226,7 +226,7 @@ void User::setMeme(const QString &memeName, const QVector<int> &memeValues, cons
     for(int i = 0; i < memes.size(); i++){
         if(memes[i].getName() == memeName){
             memes[i].setPopValues(memeValues);
-            memes[i].setImageName(memeImageName);
+            memes[i].setImageName(memeImageName == "null" ? memes[i].getImageName() : memeImageName);
             memes[i].setCategory(memeCategory);
             memes[i].setLoyalty(memeLoyalty);
             memes[i].setCreativity(creativity);
@@ -258,6 +258,18 @@ bool User::findAd(const QString &name)
     return false;
 }
 
+QString User::getConfData(const QString &fileName, const QString &category, const QString &dataName)
+{
+    const QString filePath = ":/conf/" + fileName;
+    QFile confData(filePath);
+    confData.open(QFile::ReadOnly | QIODevice::Text);
+    QString data = confData.readAll();
+    confData.close();
+    QJsonObject obj = QJsonDocument::fromJson(data.simplified().toUtf8()).object()
+            .value(category).toObject();
+    return obj[dataName].toString();
+}
+
 int User::getAdIndex(const QString &name)
 {
     for(int i = 0; i < ads.size(); i++){
@@ -269,19 +281,17 @@ int User::getAdIndex(const QString &name)
 
 void User::rewardUserWithShekels()
 {
-    if(socketIsReady()){
-        const int shekelsReward = 100;
+    const int shekelsReward = 100;
 
-        QJsonObject jsonObj {
-                                {"requestType", "rewardUserWithShekels"},
-                                {"user_name", getName()},
-                                {"shekels", shekelsReward}
-                            };
+    QJsonObject jsonObj {
+                            {"requestType", "rewardUserWithShekels"},
+                            {"user_name", getName()},
+                            {"shekels", shekelsReward}
+                        };
 
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-        shekels += shekelsReward;
-        emit shekelsChanged();
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
+    shekels += shekelsReward;
+    emit shekelsChanged();
 }
 
 QString User::hashPassword(const QString &password, const QString &login){
@@ -301,21 +311,21 @@ void User::connectToHost()
         connect(clientSocket, &QTcpSocket::readyRead, this, &User::onReadyRead);
         connect(clientSocket, &QTcpSocket::disconnected, this, &User::onDisconnected);
     }
-    if(clientSocket->state() != QTcpSocket::ConnectedState)
-        clientSocket->connectToHost("127.0.0.1", 1234);
-//        clientSocket->connectToHost("10.0.3.2", 1234);
-}
-
-bool User::socketIsReady()
-{
-    return clientSocket == nullptr ? false : clientSocket->waitForConnected(3000);
+    if(clientSocket->state() != QTcpSocket::ConnectedState){
+        int port = getConfData("appData.json", "Server", "port").toInt();
+        clientSocket->connectToHost(getConfData("appData.json", "Server", "host"), port);
+        clientSocket->waitForConnected();
+    }
 }
 
 bool User::writeData(const QByteArray &data)
 {
-    if(clientSocket->state() == QAbstractSocket::ConnectedState){
+    connectToHost();
+    if(clientSocket->state() == QTcpSocket::ConnectedState){
         clientSocket->write(intToArray(data.size()));
         clientSocket->write(data);
+        ++activeRequests;
+        requestTimer->singleShot(5000, this, &User::resetRequest);
         return clientSocket->waitForBytesWritten();
     }
     else
@@ -347,47 +357,41 @@ QJsonArray User::getLocalImagesList()
 
 void User::signUp(const QString &name, const QString &password)
 {
-    if(socketIsReady()){
-        passwordHash = hashPassword(password, name);
+    passwordHash = hashPassword(password, name);
 
-        QJsonObject jsonObj {
-                                {"requestType", "signUp"},
-                                {"user_name", name},
-                                {"passwordHash", passwordHash}
-                            };
+    QJsonObject jsonObj {
+                            {"requestType", "signUp"},
+                            {"user_name", name},
+                            {"passwordHash", passwordHash}
+                        };
 
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::signIn(const QString &name, const QString &password)
 {
-    if(socketIsReady()){
-        passwordHash = hashPassword(password, name);
+    passwordHash = hashPassword(password, name);
 
-        QJsonObject jsonObj {
-                                {"requestType", "signIn"},
-                                {"user_name", name},
-                                {"passwordHash", passwordHash}
-                            };
+    QJsonObject jsonObj {
+                            {"requestType", "signIn"},
+                            {"user_name", name},
+                            {"passwordHash", passwordHash}
+                        };
 
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::autoSignIn()
 {
-    if(socketIsReady()){
-        passwordHash = settings->value("user/passwordHash").toString();
+    passwordHash = settings->value("user/passwordHash").toString();
 
-        QJsonObject jsonObj {
-                                {"requestType", "signIn"},
-                                {"user_name", settings->value("user/name").toString()},
-                                {"passwordHash", settings->value("user/passwordHash").toString()}
-                            };
+    QJsonObject jsonObj {
+                            {"requestType", "signIn"},
+                            {"user_name", settings->value("user/name").toString()},
+                            {"passwordHash", settings->value("user/passwordHash").toString()}
+                        };
 
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::signOut()
@@ -403,28 +407,25 @@ void User::signOut()
     user_imageName = "";
     memes.clear();
 
-    if(socketIsReady()){
-        QJsonObject jsonObj {
-                                {"requestType", "signOut"},
-                                {"user_name", user_name}
-        };
+    QJsonObject jsonObj {
+                            {"requestType", "signOut"},
+                            {"user_name", getName()}
+    };
 
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::getUserData()
 {
-    if(socketIsReady()){
+    QJsonObject jsonObj {
+                            {"requestType", "getUserData"},
+                            {"user_name", getName()},
+                            {"localImages", getLocalImagesList()},
+                            {"screenWidth", settings->value("device/screen/width").toString()},
+                            {"screenHeight", settings->value("device/screen/height").toString()}
+                        };
 
-        QJsonObject jsonObj {
-                                {"requestType", "getUserData"},
-                                {"user_name", user_name},
-                                {"localImages", getLocalImagesList()}
-                            };
-
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::onReadyRead(){
@@ -443,12 +444,14 @@ void User::onReadyRead(){
 
         processingResponse(jsonObj);
     }
+    if(!--activeRequests){
+        requestTimer->setSingleShot(false);
+        clientSocket->disconnectFromHost();
+    }
 }
 
 void User::onDisconnected(){
     clientSocket->close();
-    clientSocket->deleteLater();
-    clientSocket = nullptr;
 }
 
 void User::storeUserSettings(QString name, bool isSigned){
@@ -472,6 +475,14 @@ void User::getImageFromVk(QNetworkReply *reply, QString type, QString itemName, 
     delete reply;
 }
 
+void User::resetRequest()
+{
+    if(activeRequests)
+        --activeRequests;
+    else
+        clientSocket->close();
+}
+
 QString User::getName(){
     return user_name;
 }
@@ -486,6 +497,11 @@ int User::getCreativity(){
 
 int User::getShekels(){
     return shekels;
+}
+
+QString User::getImageName()
+{
+    return user_imageName;
 }
 
 void User::processingResponse(QJsonObject &jsonObj)
@@ -559,110 +575,95 @@ void User::setExistingAdList()
 
 void User::getMemeListWithCategory(const QString &category)
 {
-    if(socketIsReady()){
 
-        QJsonObject jsonObj {
-                                {"requestType", "getMemeListWithCategory"},
-                                {"user_name", getName()},
-                                {"category", category},
-                                {"localImages", getLocalImagesList()}
-        };
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    QJsonObject jsonObj {
+                            {"requestType", "getMemeListWithCategory"},
+                            {"user_name", getName()},
+                            {"category", category},
+                            {"localImages", getLocalImagesList()},
+                            {"screenWidth", settings->value("device/screen/width").toString()},
+                            {"screenHeight", settings->value("device/screen/height").toString()}
+    };
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::getAdList()
 {
-    if(socketIsReady()){
-
-        QJsonObject jsonObj {
-                                {"requestType", "getAdList"},
-                                {"localImages", getLocalImagesList()},
-                                {"user_name", getName()}
-        };
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    QJsonObject jsonObj {
+                            {"requestType", "getAdList"},
+                            {"localImages", getLocalImagesList()},
+                            {"user_name", getName()}
+    };
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::getMemeData(const QString &memeName)
 {
-    if(socketIsReady()){
+    QJsonObject jsonObj {
+                            {"requestType", "getMemeData"},
+                            {"meme_name", memeName},
+                            {"user_name", getName()}
+                        };
 
-        QJsonObject jsonObj {
-                                {"requestType", "getMemeData"},
-                                {"meme_name", memeName},
-                                {"user_name", getName()}
-                            };
-
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::getMemesCategories()
 {
-    if(socketIsReady()){
-
         QJsonObject jsonObj {
-                                {"requestType", "getMemesCategories"}
+                                {"requestType", "getMemesCategories"},
+                                {"user_name", getName()}
                             };
 
         writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
 }
 
 void User::getUsersRating()
 {
-    if(socketIsReady()){
+    QJsonObject jsonObj {
+                            {"requestType", "getUsersRating"},
+                            {"user_name", getName()}
+                        };
 
-        QJsonObject jsonObj {
-                                {"requestType", "getUsersRating"},
-                                {"user_name", user_name}
-                            };
-
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-    }
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 }
 
 void User::forceMeme(const QString &memeName, const int &contributedCreativity, const int &startPopValue)
 {
-    if(socketIsReady()){
-        QJsonObject jsonObj {
-                                {"requestType", "forceMeme"},
-                                {"meme_name", memeName},
-                                {"user_name", user_name},
-                                {"startPopValue", startPopValue},
-                                {"creativity", contributedCreativity}
-                            };
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-        for(int i = 0; i < memes.size(); i++){
-            if(memes[i].getName() == memeName){
-                memes[i].setForced(true);
-                memes[i].setStartPopValue(startPopValue);
-            }
-
+    QJsonObject jsonObj {
+                            {"requestType", "forceMeme"},
+                            {"meme_name", memeName},
+                            {"user_name", getName()},
+                            {"startPopValue", startPopValue},
+                            {"creativity", contributedCreativity}
+                        };
+    writeData(QJsonDocument(jsonObj).toBinaryData());
+    for(int i = 0; i < memes.size(); i++){
+        if(memes[i].getName() == memeName){
+            memes[i].setForced(true);
+            memes[i].setStartPopValue(startPopValue);
         }
 
-        creativity -= contributedCreativity;
-        emit creativityChanged();
     }
+
+    creativity -= contributedCreativity;
+    emit creativityChanged();
 }
 
 void User::unforceMeme(const QString &memeName)
 {
-    if(socketIsReady()){
-        QJsonObject jsonObj {
-                                {"requestType", "unforceMeme"},
-                                {"meme_name", memeName},
-                                {"user_name", user_name}
-                            };
-        writeData(QJsonDocument(jsonObj).toBinaryData());
-        for(int i = 0; i< memes.size(); i++){
-            if(memes[i].getName() == memeName){
-                memes[i].setForced(false);
-                memes[i].setStartPopValue(-1);
-                emit memeUnforced(memeName);
-                break;
-            }
+    QJsonObject jsonObj {
+                            {"requestType", "unforceMeme"},
+                            {"meme_name", memeName},
+                            {"user_name", getName()}
+                        };
+    writeData(QJsonDocument(jsonObj).toBinaryData());
+    for(int i = 0; i< memes.size(); i++){
+        if(memes[i].getName() == memeName){
+            memes[i].setForced(false);
+            memes[i].setStartPopValue(-1);
+            emit memeUnforced(memeName);
+            break;
         }
     }
 }
@@ -681,34 +682,32 @@ void User::increaseLikesQuantity(const QString &memeName, const int &investedShe
     foreach(int value, memeValues){
         variantValues.append(value);
     }
-    if(socketIsReady()){
-        QJsonObject jsonObj {
-                                {"requestType", "increaseLikesQuantity"},
-                                {"meme_name", memeName},
-                                {"currentPopValues", QJsonArray::fromVariantList(variantValues)},
-                                {"shekels", investedShekels},
-                                {"user_name", user_name}
-                            };
-        writeData(QJsonDocument(jsonObj).toBinaryData());
+    QJsonObject jsonObj {
+                            {"requestType", "increaseLikesQuantity"},
+                            {"meme_name", memeName},
+                            {"currentPopValues", QJsonArray::fromVariantList(variantValues)},
+                            {"shekels", investedShekels},
+                            {"user_name", getName()}
+                        };
+    writeData(QJsonDocument(jsonObj).toBinaryData());
 
-        const int likeIncrement = memeValues.last() + investedShekels;
+    const int likeIncrement = memeValues.last() + investedShekels;
 
-        if(memeValues.size() == 12){
-            for(int i = 0; i < memeValues.size() - 1; i++){
-                memeValues[i] = memeValues[i + 1];
-            }
-            memeValues.last() = likeIncrement;
+    if(memeValues.size() == 12){
+        for(int i = 0; i < memeValues.size() - 1; i++){
+            memeValues[i] = memeValues[i + 1];
         }
-        else{
-            memeValues.append(likeIncrement);
-        }
-        memes[indexOfMeme].setPopValues(memeValues);
-        emit memeReceived(memes[indexOfMeme].getName(), memeValues, memes[indexOfMeme].getLoyalty(),
-                          memes[indexOfMeme].getCategory(), memes[indexOfMeme].getImageName(), memes[indexOfMeme].getCreativity(),
-                          memes[indexOfMeme].getStartPopValue());
-        shekels -= investedShekels;
-        emit shekelsChanged();
+        memeValues.last() = likeIncrement;
     }
+    else{
+        memeValues.append(likeIncrement);
+    }
+    memes[indexOfMeme].setPopValues(memeValues);
+    emit memeReceived(memes[indexOfMeme].getName(), memeValues, memes[indexOfMeme].getLoyalty(),
+                      memes[indexOfMeme].getCategory(), memes[indexOfMeme].getImageName(), memes[indexOfMeme].getCreativity(),
+                      memes[indexOfMeme].getStartPopValue());
+    shekels -= investedShekels;
+    emit shekelsChanged();
 }
 
 void User::acceptAd(const QString &adName)

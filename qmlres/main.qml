@@ -18,9 +18,9 @@ ApplicationWindow{
     visible: true
     height: 720
     width: 405
-//    x: 300 ; y: 50                           //for desktop
+    x: 300 ; y: 50                           //for desktop
 
-    visibility: ApplicationWindow.FullScreen               // for mobile
+//    visibility: ApplicationWindow.FullScreen               // for mobile
 
     Item{
         focus: true
@@ -144,12 +144,13 @@ ApplicationWindow{
                 SequentialAnimation{
                     ScriptAction{ script: enterItem.state = User.findMeme(enterItem.name) ? "mine" : "general" }
                     ScriptAction{ script: exitItem.setVisibilityImageOnList(enterItem.name, false) }
+                    ScriptAction{ script: enterItem.setImageOrigin(Item.TopLeft) }
                     ParallelAnimation{
                         PropertyAnimation{
                             target: enterItem
                             property: "memeImageY"
-                            from: exitItem.clickedMemeOnListY
-                            to: target.imageBackY
+                            from: exitItem.clickedMemeOnList.y
+                            to: target.memeImageY
                             duration: 200
                             easing.type: Easing.OutCirc
                         }
@@ -170,6 +171,7 @@ ApplicationWindow{
                             easing.type: Easing.OutCirc
                         }
                     }
+                    ScriptAction{ script: enterItem.setImageOrigin(Item.Top) }
                 }
             }
 
@@ -177,19 +179,20 @@ ApplicationWindow{
                 SequentialAnimation{
                     ScriptAction{ script: exitItem.state = "hidden" }
                     ScriptAction{ script: enterItem.getClosingMemePosition(exitItem.name)}
+                    ScriptAction{ script: exitItem.setImageOrigin(Item.TopLeft) }
                         ParallelAnimation{
                             PropertyAnimation{
                                 target: exitItem
                                 property: "memeImageY"
-                                from: exitItem.imageBackY
-                                to: enterItem.getClosingMemePosition(exitItem.name)
+                                from: exitItem.memeImageY
+                                to: enterItem.getClosingMemePosition(exitItem.name).y - enterItem.contentY
                                 duration: 200
                                 easing.type: Easing.OutCirc
                             }
                             PropertyAnimation{
                                 target: exitItem
                                 property: "memeImageScale"
-                                from: 1
+                                from: exitItem.memeImageScale
                                 to: enterItem.clickedMemeImageSize / (target.width / 2)
                                 duration: 200
                                 easing.type: Easing.OutCirc
@@ -197,12 +200,13 @@ ApplicationWindow{
                             PropertyAnimation{
                                 target: exitItem
                                 property: "memeImageX"
-                                from: target.width / 4
-                                to: 0
+                                from: exitItem.memeImageScale === 1 ? exitItem.memeImageX : exitItem.memeImageX - (exitItem.memeImageWidth / 2)
+                                to: enterItem.clickedMemeOnList.x
                                 duration: 200
                                 easing.type: Easing.OutCirc
                             }
                     }
+                    ScriptAction{ script: exitItem.setImageOrigin(Item.Top) }
                     ScriptAction{ script: enterItem.setVisibilityImageOnList(exitItem.name, true) }
                 }
             }
@@ -380,8 +384,7 @@ ApplicationWindow{
         }
     }
 
-
     AdMob {
-        appId: "ca-app-pub-5551381749080346~2416103256"
+        appId: User.getConfData("appData.json", "AdMob", "appId")
     }
 }

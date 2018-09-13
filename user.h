@@ -44,6 +44,8 @@ public:
     int getCreativity();
     int getShekels();
 
+    Q_INVOKABLE QString getImageName();
+
     Q_INVOKABLE void checkName(const QString &name);
     Q_INVOKABLE void signUp(const QString &name, const QString &password);
     Q_INVOKABLE void signIn(const QString &name, const QString &password);
@@ -80,6 +82,12 @@ public:
     void setMemeData(const QJsonObject &obj);
     void setUsersRating(const QJsonArray &userList, const int &userRating);
 
+    Q_INVOKABLE bool findMeme(const QString &name);
+    Q_INVOKABLE bool findCategoryMeme(const QString &name, const QString &category);
+    Q_INVOKABLE bool findAd(const QString &name);
+
+    Q_INVOKABLE QString getConfData(const QString &fileName, const QString &category, const QString &dataName);
+
     void setMeme(const QString &memeName, const QVector<int> &memeValues, const QString &memeImageName,
                  const QString &memeCategory, const int &memeLoyalty, const int &memeCreativity,
                  const bool &forced, const int &memeStartPopValue);
@@ -87,10 +95,6 @@ public:
     void processingResponse(QJsonObject &jsonObj);
 
     void toOtherThread(const QJsonObject &jsonObj);
-
-    Q_INVOKABLE bool findMeme(const QString &name);
-    Q_INVOKABLE bool findCategoryMeme(const QString &name, const QString &category);
-    Q_INVOKABLE bool findAd(const QString &name);
 
     int getAdIndex(const QString &name);
 
@@ -125,6 +129,9 @@ private:
     QTcpSocket *clientSocket = nullptr;
     QTimer *timer;
 
+    int activeRequests = 0;
+    QTimer *requestTimer;
+
     QSettings *settings;
 
     QThreadPool *imgPool;
@@ -155,6 +162,7 @@ public slots:
     void onDisconnected();
     void storeUserSettings(QString name, bool isSigned);
     void getImageFromVk(QNetworkReply *reply, QString type, QString itemName, QString imageName);
+    void resetRequest();
 };
 
 

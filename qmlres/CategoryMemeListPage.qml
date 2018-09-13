@@ -22,8 +22,9 @@ Page{
 
     property double weight: 0
 
-    property int clickedMemeOnListY
+    property var clickedMemeOnList
     property int clickedMemeImageSize
+    property int contentY: appListView.contentY
 
 
     function setMeme(meme_name, image_name, loyalty, crsDir, memeCreativity){
@@ -74,7 +75,7 @@ Page{
                     appListView.positionViewAtIndex(i, ListView.Beginning)
                 else if(appListView.y + appListView.height < currentYPos + mItem.height - appListView.contentY)
                     appListView.positionViewAtIndex(i, ListView.End)
-                return clickedMemeOnListY = mapFromItem(appListView, mItem.x, mItem.y).y - appListView.contentY
+                return clickedMemeOnList = mapFromItem(appListView, mItem.x, mItem.y)
             }
         }
     }
@@ -248,7 +249,7 @@ Page{
                         appListView.positionViewAtIndex(index, ListView.Beginning)
                     else if(appListView.y + appListView.height < currentYPos + parent.height - appListView.contentY)
                         appListView.positionViewAtIndex(index, ListView.End)
-                    clickedMemeOnListY = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y).y
+                    clickedMemeOnList = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y)
                     clickedMemeImageSize = memeImage.width
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],

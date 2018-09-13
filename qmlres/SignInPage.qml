@@ -265,7 +265,7 @@ Page{
                 font.pixelSize: height / 2
                 placeholderText: "Название группы"
                 maximumLength: 16
-                validator: RegExpValidator{regExp: /^[^\s][\w\s]+$/}
+                validator: RegExpValidator{ regExp: /^[а-яА-ЯёЁa-zA-Z0-9-_()]+(\s+[а-яА-ЯёЁa-zA-Z0-9-_()]+)*$/ }
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                 property color backgroundColor: "#ffffff"
 
@@ -281,9 +281,8 @@ Page{
                     running: false
                     repeat: false
                     onTriggered:{
-                        if(nameInputRow.getText(0, nameInputRow.length) !== '')
-                            User.checkName(nameInputRow.getText(0, nameInputRow.length))
-                        }
+                            User.checkName(nameInputRow.getText(0, nameInputRow.length).trim())
+                    }
                 }
 
                 onActiveFocusChanged: {
@@ -430,11 +429,11 @@ Page{
             onClicked:{
                 signInPage.state = "hidden"
                 if(mode == "signUp"){
-                    User.signUp(nameInputRow.getText(0, nameInputRow.length),
+                    User.signUp(nameInputRow.getText(0, nameInputRow.length).trim(),
                                 passwordInputRow.getText(0, passwordInputRow.length))
                 }
                 else{
-                    User.signIn(nameInputRow.getText(0, nameInputRow.length),
+                    User.signIn(nameInputRow.getText(0, nameInputRow.length).trim(),
                                 passwordInputRow.getText(0, passwordInputRow.length))
                 }
                 checkForAnswerTimer.start()

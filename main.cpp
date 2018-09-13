@@ -1,8 +1,10 @@
 #include <user.h>
 
 #include <QApplication>
-
 #include <QQmlApplicationEngine>
+
+#include <QSettings>
+#include <QScreen>
 
 #include "imageprovider.h"
 
@@ -21,6 +23,9 @@ int main(int argc, char *argv[])
 
     engine.addImageProvider("meme", new ImageProvider());
 
+    QSettings settings;
+    settings.setValue("device/screen/width", QApplication::screens().at(0)->size().width());
+    settings.setValue("device/screen/height", QApplication::screens().at(0)->size().height());
     engine.load(QUrl("qrc:/qml/main.qml"));
 
     return app.exec();
