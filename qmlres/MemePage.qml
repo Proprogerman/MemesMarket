@@ -555,7 +555,7 @@ Page{
     states:[
         State{
             name: "general"
-            PropertyChanges{ target: memeActionButton; label: "ЗАФОРСИТЬ" }
+            PropertyChanges{ target: memeActionButton; label: qsTr("ЗАФОРСИТЬ") + translator.emptyString }
             PropertyChanges{ target: memeActionButton; clickable: true }
             PropertyChanges{ target: unforceButton; visible: false }
             PropertyChanges{ target: startPopValueLine; visible: false }
@@ -564,7 +564,7 @@ Page{
         },
         State{
             name: "mine"
-            PropertyChanges{ target: memeActionButton; label: "НАКРУТИТЬ ЛАЙКИ" }
+            PropertyChanges{ target: memeActionButton; label: qsTr("НАКРУТИТЬ ПОПУЛЯРНОСТЬ") + translator.emptyString }
             PropertyChanges{ target: unforceButton; visible: true }
             PropertyChanges{ target: startPopValueLine; visible: true }
             PropertyChanges{ target: redZone; visible: true }

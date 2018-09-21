@@ -18,9 +18,9 @@ ApplicationWindow{
     visible: true
     height: 720
     width: 405
-    x: 300 ; y: 50                           //for desktop
+//    x: 300 ; y: 50                           //for desktop
 
-//    visibility: ApplicationWindow.FullScreen               // for mobile
+    visibility: ApplicationWindow.FullScreen               // for mobile
 
     Item{
         focus: true
@@ -46,7 +46,6 @@ ApplicationWindow{
     }
 
     property color mainColor: "#507299"
-
 
     StackView{
         id: stackView
@@ -281,7 +280,7 @@ ApplicationWindow{
                     width: parent.width
                     height: parent.height / 10
                     clickableColor: slidingMenu.color
-                    label: "биржа мемов"
+                    label: qsTr("биржа мемов") + translator.emptyString
                     labelSize: height / 4
                     z: bigAvatar.z - 1
                     onClicked:{
@@ -295,9 +294,10 @@ ApplicationWindow{
                     width: parent.width
                     height: parent.height / 10
                     clickableColor: slidingMenu.color
-                    label: "реклама"
+                    label: qsTr("реклама") + translator.emptyString
                     labelSize: height / 4
                     z: memesExchange.z - 1
+                    property string lang: "ru"
                     onClicked:{
                         User.getAdList()
                         stackView.push(adsPage)
@@ -309,7 +309,7 @@ ApplicationWindow{
                     width: parent.width
                     height: parent.height / 10
                     clickableColor: slidingMenu.color
-                    label: "рейтинг"
+                    label: qsTr("рейтинг") + translator.emptyString
                     labelSize: height / 4
                     z: ads.z - 1
                     onClicked:{
@@ -322,7 +322,7 @@ ApplicationWindow{
                     width: parent.width
                     height: parent.height / 10
                     clickableColor: slidingMenu.color
-                    label: "выход"
+                    label: qsTr("выход") + translator.emptyString
                     labelSize: height / 4
                     z: usersRating.z - 1
                     onClicked:{
@@ -335,14 +335,14 @@ ApplicationWindow{
 
     Dialog {
         id: exitDialog
-        title: "Выход"
+        title: qsTr("Выход") + translator.emptyString
         contentItem: Rectangle{
             width: mainWindow.width * 5/6
             height: width / 3
             Column{
                 anchors.fill: parent
                 Text{
-                    text: "Вы уверены, что хотите выйти?"
+                    text: qsTr("Вы уверены, что хотите выйти?") + translator.emptyString
                     height: parent.height / 2
                     width: parent.width
                     font.pixelSize: height / 4
@@ -353,7 +353,7 @@ ApplicationWindow{
                     height: parent.height / 2
                     width: parent.width
                     MaterialButton{
-                        label: "выйти"
+                        label: qsTr("выйти") + translator.emptyString
                         labelSize: height / 4
                         width: parent.width / 2
                         height: parent.height
@@ -369,7 +369,7 @@ ApplicationWindow{
                     }
                     MaterialButton{
                         id: cancelButton
-                        label: "отмена"
+                        label: qsTr("отмена") + translator.emptyString
                         labelSize: height / 4
                         width: parent.width / 2
                         height: parent.height

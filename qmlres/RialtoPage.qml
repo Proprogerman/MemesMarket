@@ -27,7 +27,7 @@ Page{
         height: pageHeader.height / 4
         width: height * 3 / 2
         y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
+        anchors{ left: pageHeader.left; leftMargin: width; }
         z: pageHeader.z + 1
         dynamic: false
         onBackAction: {
@@ -46,7 +46,7 @@ Page{
         id: pageHeader
         width: parent.width
         height: parent.height / 10
-        headerText: "Биржа Мемов"
+        headerText: qsTr("Биржа Мемов") + translator.emptyString
         z: categoriesGridView.z + 1
     }
 
@@ -83,7 +83,6 @@ Page{
                 MouseArea{
                     anchors.fill: parent
                     onClicked:{
-//                        User.getMemeListWithCategory(categoryLabel.text.toString())
                         stackView.push( {item: categoryMemeListPage, properties: { pageCategory: categoryLabel.text.toString() }} )
                     }
                 }

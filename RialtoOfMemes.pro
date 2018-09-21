@@ -1,4 +1,5 @@
 QT += network sql charts qml quick svg
+TRANSLATIONS = t1_en.ts
 
 QTFIREBASE_SDK_PATH = C:/Development/firebase_cpp_sdk
 
@@ -14,7 +15,8 @@ SOURCES += main.cpp \
     meme.cpp \
     imageprovider.cpp \
     ad.cpp \
-    imagerunnable.cpp
+    imagerunnable.cpp \
+    translator.cpp
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
@@ -39,7 +41,8 @@ HEADERS += \
     meme.h \
     imageprovider.h \
     ad.h \
-    imagerunnable.h
+    imagerunnable.h \
+    translator.h
 
 DISTFILES += \
     android/AndroidManifest.xml \

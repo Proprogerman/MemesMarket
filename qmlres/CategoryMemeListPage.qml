@@ -43,6 +43,13 @@ Page{
                              })
     }
 
+    function removeMeme(meme_name){
+        for(var i = 0; i < memeListModel.count; i++)
+            if(memeListModel.get(i).memeNameText === meme_name){
+                memeListModel.remove(i)
+            }
+    }
+
     function courseWithSign(direction){
         if(direction > 0)
             directionFormat = '+' + direction.toString()
@@ -105,6 +112,9 @@ Page{
                 startPopValues[memeName] = startPopValue
                 setMeme(memeName, imageName, loyalty, crsDir, memeCreativity)
             }
+        }
+        onMemeRemoved:{
+            removeMeme(memeName)
         }
         onImageReceived:{
             if(type == "meme")
@@ -218,7 +228,7 @@ Page{
             }
 
             Text{
-                text: "лояльность: "
+                text: qsTr("лояльность") + ": " + translator.emptyString
                 anchors{ verticalCenter: parent.verticalCenter; right: loyaltyLabel.left }
             }
             Text{
@@ -229,7 +239,7 @@ Page{
             }
 
             Text{
-                text: "креативность: "
+                text: qsTr("креативность") + ": " + translator.emptyString
                 anchors{ top: memeCreativityLabel.top; right: memeCreativityLabel.left }
                 visible: mine
             }

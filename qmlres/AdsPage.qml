@@ -15,6 +15,11 @@ Page {
     property color mainColor: "#507299"
     property color goldenColor: "#f9a602"
 
+    property string normalRep: qsTr("нормальная") + translator.emptyString
+    property string badRep: qsTr("плохая") + translator.emptyString
+    property string awfulRep: qsTr("ужасная") + translator.emptyString
+    property string goodRep: qsTr("хорошая") + translator.emptyString
+
     property string selectedAdName
     property int selectedAdIndex
 
@@ -25,7 +30,7 @@ Page {
         for(var i = 0; i < adListModel.count; i++){
             if(adListModel.get(i).adNameText === adName){
                 adListModel.set(i, { "adNameText": adName, "image": "image://meme/" + imageName, "adProfitText": adProfit,
-                                     "adReputationText": adReputation, "adDiscontented": adDiscontented, "buttonClickable": true,
+                                     "adReputationText": qsTr(adReputation), "adDiscontented": adDiscontented, "buttonClickable": true,
                                      "secondsToReady": secondsToReady })
                 if(secondsToReady || !adProfit)
                     adListModel.setProperty(i, "buttonClickable", false)
@@ -33,10 +38,17 @@ Page {
             }
         }
         adListModel.append({ "adNameText": adName, "image": "image://meme/" + imageName, "adProfitText": adProfit,
-                             "adReputationText": adReputation, "adDiscontented": adDiscontented, "buttonClickable": true,
+                             "adReputationText": qsTr(adReputation), "adDiscontented": adDiscontented, "buttonClickable": true,
                              "secondsToReady": secondsToReady })
         if(secondsToReady || !adProfit)
             adListModel.setProperty(findAd(adName), "buttonClickable", false)
+    }
+
+    function removeAd(ad_name){
+        for(var i = 0; i < adListModel.count; i++)
+            if(adListModel.get(i).adNameText === ad_name){
+                adListModel.remove(i)
+            }
     }
 
     function updateAdImage(adName, imageName){
@@ -67,6 +79,9 @@ Page {
         target: User
         onAdReceived: {
             setAd(adName, imageName, profit, reputation, discontented, secondsToReady)
+        }
+        onAdRemoved:{
+            removeAd(adName)
         }
         onImageReceived: {
             if(type === "ad")
@@ -108,7 +123,7 @@ Page {
         id: pageHeader
         width: parent.width
         height: parent.height / 10
-        headerText: "реклама"
+        headerText: qsTr("реклама") + translator.emptyString
         z: 7
     }
 
@@ -157,7 +172,7 @@ Page {
             }
             Text{
                 id: profitItem
-                text: "прибыль: "
+                text: qsTr("прибыль") + ": " + translator.emptyString
                 anchors{ left: parent.left; top: adImage.bottom }
                 font.pixelSize: adImage.height / 10
                 y: adImage.y + adImage.height / 4 - font.pixelSize / 2
@@ -171,7 +186,7 @@ Page {
 
             Text{
                 id: reputationItem
-                text: "репутация: "
+                text: qsTr("репутация") + ": " + translator.emptyString
                 anchors{ left: parent.left; top: profitItem.bottom }
                 font.pixelSize: adImage.height / 10
                 y: adImage.y + adImage.height / 2 - font.pixelSize / 2
@@ -182,14 +197,14 @@ Page {
                 font.pixelSize: adImage.height / 10
                 y: adImage.y + adImage.height / 2 - font.pixelSize / 2
                 onTextChanged: {
-                    if(text === "ужасная" || text === "плохая")
+                    if(text === awfulRep || text === badRep)
                         color = "red"
                     else
                         color = "green"
                 }
             }
             Text{
-                text: "потеря аудитории: " + adDiscontented + "%"
+                text: qsTr("потеря аудитории") + ": " + adDiscontented + "%" + translator.emptyString
                 anchors{ left: parent.left; top: reputationItem.bottom }
                 font.pixelSize: adImage.height / 10
             }
@@ -203,7 +218,7 @@ Page {
                 clickableColor: mainColor
                 unclickableColor: Qt.lighter(mainColor, 2)
                 rippleColor: Qt.lighter(mainColor)
-                label: "принять"
+                label: qsTr("принять") + translator.emptyString
                 labelSize: height / 3
                 onClicked:{
                     selectedAdName = adNameItem.text
@@ -251,14 +266,14 @@ Page {
 
     Dialog {
         id: adDialog
-        title: "Реклама"
+        title: qsTr("Реклама") + translator.emptyString
         contentItem: Rectangle{
             width: adsPage.width * 5/6
             height: width / 3
             Column{
                 anchors.fill: parent
                 Text{
-                    text: "Взять эту рекламу?"
+                    text: qsTr("Взять эту рекламу?") + translator.emptyString
                     height: parent.height / 2
                     width: parent.width
                 }
@@ -266,7 +281,7 @@ Page {
                     height: parent.height / 2
                     width: parent.width
                     MaterialButton{
-                        label: "взять"
+                        label: qsTr("взять") + translator.emptyString
                         labelSize: height / 4
                         width: parent.width / 2
                         height: parent.height
@@ -282,7 +297,7 @@ Page {
                     }
                     MaterialButton{
                         id: cancelButton
-                        label: "отмена"
+                        label: qsTr("отмена") + translator.emptyString
                         labelSize: height / 4
                         width: parent.width / 2
                         height: parent.height

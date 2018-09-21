@@ -76,6 +76,13 @@ Page {
                              })
     }
 
+    function removeMeme(meme_name){
+        for(var i = 0; i < memeListModel.count; i++)
+            if(memeListModel.get(i).memeNameText === meme_name){
+                memeListModel.remove(i)
+            }
+    }
+
     function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
             if(memeListModel.get(i).memeNameText === meme_name){
@@ -168,7 +175,6 @@ Page {
     }
 
     Component.onCompleted:{
-        User.getUserData()
         getUserDataTimer.start()
         updateAvatar(User.getImageName())
     }
@@ -177,6 +183,7 @@ Page {
         id: getUserDataTimer
         interval: 10000
         repeat: true
+        triggeredOnStart: true
         onTriggered:{
             User.getUserData()
             if(!rewardedVideoAd.loaded && rewardedVideoAd.ready)
@@ -362,7 +369,6 @@ Page {
         radius: 10
         samples: 21
         visible: false
-//        cached: true
     }
 
     Item{
@@ -567,7 +573,7 @@ Page {
             }
 
             Text{
-                text: "лояльность: "
+                text: qsTr("лояльность") + ": " + translator.emptyString
                 anchors{ verticalCenter: parent.verticalCenter; right: loyaltyLabel.left }
             }
             Text{
@@ -578,7 +584,7 @@ Page {
             }
 
             Text{
-                text: "креативность: "
+                text: qsTr("креативность") + ": " + translator.emptyString
                 anchors{ top: memeCreativityLabel.top; right: memeCreativityLabel.left }
             }
             Text{
@@ -650,14 +656,14 @@ Page {
 
     Dialog {
         id: rewardDialog
-        title: "Вознаграждение"
+        title: qsTr("Вознаграждение") + translator.emptyString
         contentItem: Rectangle{
             width: mainUserPage.width * 5 / 6
             height: width / 3
             Column{
                 anchors.fill: parent
                 Text{
-                    text: "Получить 100 shekelcoin за просмотр короткого видео?"
+                    text: qsTr("Получить 100 shekelcoin за просмотр короткого видео?") + translator.emptyString
                     height: parent.height / 2
                     width: parent.width
                     font.pixelSize: height / 4
@@ -668,7 +674,7 @@ Page {
                     height: parent.height / 2
                     width: parent.width
                     MaterialButton{
-                        label: "получить"
+                        label: qsTr("получить") + translator.emptyString
                         labelSize: height / 4
                         width: parent.width / 2
                         height: parent.height
@@ -682,7 +688,7 @@ Page {
                     }
                     MaterialButton{
                         id: cancelButton
-                        label: "отмена"
+                        label: qsTr("отмена") + translator.emptyString
                         labelSize: height / 4
                         width: parent.width / 2
                         height: parent.height

@@ -88,7 +88,7 @@ Page {
         id: pageHeader
         width: parent.width
         height: parent.height / 10
-        headerText: "Рейтинг"
+        headerText: qsTr("Рейтинг") + translator.emptyString
         z: 7
         MouseArea{
             anchors.fill: parent

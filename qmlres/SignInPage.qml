@@ -19,6 +19,7 @@ Page{
     property color errColor: "#EA7171"
 
     property string mode: "signUp"
+    property string checkedName
 
     property alias backgroundColor: background.color
 
@@ -31,8 +32,14 @@ Page{
 
     Connections{
         target: User
-        onNameExist: { nameOfGroup.state = indicateZone.state = "nameExistState" }
-        onNameDoesNotExist: { nameOfGroup.state = indicateZone.state = "nameDoesNotExistState" }
+        onNameAvailabilityChanged: {
+            checkedName = name
+            if(val)
+                nameOfGroup.state = indicateZone.state = "nameDoesNotExistState"
+            else
+               nameOfGroup.state = indicateZone.state = "nameExistState"
+        }
+
         onSignAnswered: {
             checkForAnswerTimer.stop()
             if(progress){
@@ -54,6 +61,7 @@ Page{
         category: "user"
         property string name
         property string passwordHash
+        property string language
     }
 
     Component.onCompleted: {
@@ -69,6 +77,7 @@ Page{
     function clearUserData(){
         nameInputRow.clear()
         passwordInputRow.clear()
+        dataSheet.state = "nameInputState"
     }
 
     Timer{
@@ -179,48 +188,59 @@ Page{
         states: [
             State{
                 name: "nameInputState"
-                PropertyChanges{ target: indicateMessage;  text: mode == "signUp" ? "Придумайте название группы" :
-                                                                                    "Введите название группы" }
+                PropertyChanges{ target: indicateMessage;  text: (mode == "signUp" ? qsTr("Придумайте название группы") :
+                                                                                    qsTr("Введите название группы"))
+                                                                                    + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png"}
             },
             State{
                 name: "nameDoesNotExistState"
-                PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название доступно" :
-                                                                                    "Такого имени нет" }
+                PropertyChanges{ target: indicateMessage; text: (mode == "signUp" ?  (qsTr("Название") + " " + checkedName + " "
+                                                                                     + qsTr("доступно")) :
+                                                                                    (qsTr("Сообщество") + " " + checkedName + " " +
+                                                                                     qsTr("не найдено")))
+                                                                                    + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/okMeme.png" :
                                                                                    "qrc:/memePhoto/noMeme.png" }
             },
             State{
                 name: "nameExistState"
-                PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Название занято" :
-                                                                                   "Ок!" }
+                PropertyChanges{ target: indicateMessage; text: (mode == "signUp" ? (qsTr("Название") + " " + checkedName + " "
+                                                                                    + qsTr("занято")) :
+                                                                                   qsTr("Ок!"))
+                                                                                   + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/noMeme.png" :
                                                                                    "qrc:/memePhoto/okMeme.png" }
             },
             State{
               name: "passwordInputState"
-              PropertyChanges{ target: indicateMessage; text: mode == "signUp" ? "Придумайте пароль" :
-                                                                                 "Введите пароль" }
+              PropertyChanges{ target: indicateMessage; text: (mode == "signUp" ? qsTr("Придумайте пароль") :
+                                                                                 qsTr("Введите пароль"))
+                                                                                 + translator.emptyString }
               PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
             },
             State{
                 name: "passwordIsOkState"
-                PropertyChanges{ target: indicateMessage; text: "Пароль удовлетворяет требованиям" }
+                PropertyChanges{ target: indicateMessage; text: qsTr("Пароль удовлетворяет требованиям")
+                                                                + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
             },
             State{
                 name: "passwordHasFewerCharsState"
-                PropertyChanges{ target: indicateMessage; text: "Пароль должен быть не менее 6-ти символов" }
+                PropertyChanges{ target: indicateMessage; text: qsTr("Пароль должен быть не менее 6-ти символов")
+                                                                + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
             },
             State{
                 name: "signUpErrorState"
-                PropertyChanges{ target: indicateMessage; text: "Ошибка при создании, попробуйте ещё" }
+                PropertyChanges{ target: indicateMessage; text: qsTr("Ошибка при создании, попробуйте ещё")
+                                                                + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
             },
             State{
                 name: "signInErrorState"
-                PropertyChanges{ target: indicateMessage; text: "Вход не выполнен, проверьте название и пароль" }
+                PropertyChanges{ target: indicateMessage; text: qsTr("Вход не выполнен, проверьте название и пароль")
+                                                                + translator.emptyString }
                 PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
             }
         ]
@@ -263,7 +283,7 @@ Page{
                 anchors.centerIn: parent
                 font.family: "Roboto"
                 font.pixelSize: height / 2
-                placeholderText: "Название группы"
+                placeholderText: qsTr("Название группы") + translator.emptyString
                 maximumLength: 16
                 validator: RegExpValidator{ regExp: /^[а-яА-ЯёЁa-zA-Z0-9-_()]+(\s+[а-яА-ЯёЁa-zA-Z0-9-_()]+)*$/ }
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
@@ -281,6 +301,7 @@ Page{
                     running: false
                     repeat: false
                     onTriggered:{
+                        if(nameInputRow.getText(0, nameInputRow.length) !== '')
                             User.checkName(nameInputRow.getText(0, nameInputRow.length).trim())
                     }
                 }
@@ -336,7 +357,7 @@ Page{
                 anchors.centerIn: parent
                 font.family:"Roboto"
                 font.pixelSize: height / 2
-                placeholderText:"Пароль"
+                placeholderText: qsTr("Пароль") + translator.emptyString
                 maximumLength: 16
                 validator: RegExpValidator{regExp:/[a-zA-Z1-9\!\@\#\$\%\^\&\*\(\)\-\_\+\=\;\:\,\.\/\?\\\|\`\~\[\]\{\}]{6,}/}
                 property color backgroundColor: "#ffffff"
@@ -418,7 +439,7 @@ Page{
             id: signUpButton
             width: password.width; height: password.height
             anchors{ top: password.bottom; topMargin: height/20; horizontalCenter: parent.horizontalCenter }
-            label: mode == "signUp" ? "создать" : "войти"
+            label: (mode == "signUp" ? qsTr("создать") : qsTr("войти")) + translator.emptyString
             labelSize: height / 4
             radius: height/10
             clickableColor: mainColor
@@ -441,6 +462,7 @@ Page{
         }
 
         Row{
+            id: signingToggles
             height: nameOfGroup.height / 2
             width: nameOfGroup.width / 2
             anchors.horizontalCenter: parent.horizontalCenter
@@ -448,7 +470,7 @@ Page{
             anchors.topMargin: height / 10
             CheckButton{
                 id: signUpToggle
-                label: "создать"
+                label: qsTr("создать") + translator.emptyString
                 height: parent.height
                 width: parent.width / 2
                 checkedColor: "#90A4AE"
@@ -464,7 +486,7 @@ Page{
             }
             CheckButton{
                 id: signInToggle
-                label: "войти"
+                label: qsTr("войти") + translator.emptyString
                 height: parent.height
                 width: parent.width / 2
                 checkedColor: "#90A4AE"
@@ -474,6 +496,52 @@ Page{
                     if(checked){
                         signUpToggle.checked = false
                         mode = "signIn"
+                    }
+                }
+            }
+        }
+        Row{
+            height: nameOfGroup.height / 2
+            width: nameOfGroup.width / 2
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: signingToggles.bottom
+            anchors.topMargin: signingToggles.height * 2
+            Component.onCompleted: {
+                if(userSettings.language == "ru")
+                    ruToggle.checked = true
+                else
+                    enToggle.checked = true
+            }
+            CheckButton{
+                id: ruToggle
+                label: "ru"
+                height: parent.height
+                width: parent.width / 2
+                checkedColor: "#90A4AE"
+                uncheckedColor: "#CFD8DC"
+                checked: false
+                uncheckWithTap: false
+                onCheckedChanged: {
+                    if(checked){
+                        enToggle.checked = false
+                        translator.selectLanguage("ru")
+                        userSettings.language = "ru"
+                    }
+                }
+            }
+            CheckButton{
+                id: enToggle
+                label: "en"
+                height: parent.height
+                width: parent.width / 2
+                checkedColor: "#90A4AE"
+                uncheckedColor: "#CFD8DC"
+                uncheckWithTap: false
+                onCheckedChanged: {
+                    if(checked){
+                        ruToggle.checked = false
+                        translator.selectLanguage("en")
+                        userSettings.language = "en"
                     }
                 }
             }

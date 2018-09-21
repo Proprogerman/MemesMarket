@@ -91,6 +91,9 @@ public:
     void setMeme(const QString &memeName, const QVector<int> &memeValues, const QString &memeImageName,
                  const QString &memeCategory, const int &memeLoyalty, const int &memeCreativity,
                  const bool &forced, const int &memeStartPopValue);
+    void removeMeme(const QString& memeName, const bool &mine);
+
+    void removeAd(const QString& adName);
 
     void processingResponse(QJsonObject &jsonObj);
 
@@ -127,9 +130,7 @@ private:
     QVariantList categories;
 
     QTcpSocket *clientSocket = nullptr;
-    QTimer *timer;
 
-    int activeRequests = 0;
     QTimer *requestTimer;
 
     QSettings *settings;
@@ -138,8 +139,7 @@ private:
 
     QNetworkAccessManager *mngr;
 signals:
-    void nameExist();
-    void nameDoesNotExist();
+    void nameAvailabilityChanged(bool val, QString name);
 
     void nameChanged();
     void popValueChanged();
@@ -151,8 +151,10 @@ signals:
     void imageReceived(QString type, QString name, QString imageName);
     void memeReceived(QString memeName, QVector<int> popValues, int loyalty, QString category = "", QString imageName = "",
                       int memeCreativity = 0, int startPopValue = 0);
+    void memeRemoved(QString memeName);
     void adReceived(QString adName, QString imageName, QString reputation, int profit, int discontented,
                     int secondsToReady = 0);
+    void adRemoved(QString adName);
     void memePopValuesUpdated(QString memeName, QVector<int> popValues, int loyalty);
     void memesCategoriesReceived(QVariantList memesCategories);
     void usersRatingReceived(QVariantList usersList, int userRating);
