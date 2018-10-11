@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser", 1, 0, "User", User::qmlInstance);
 
-    engine.addImageProvider("meme", new ImageProvider());
+    engine.addImageProvider("imgProv", new ImageProvider());
 
     QSettings settings;
     settings.setValue("device/screen/width", QApplication::screens().at(0)->size().width());

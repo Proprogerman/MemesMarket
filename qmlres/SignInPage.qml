@@ -183,6 +183,7 @@ Page{
             id: indicateImage
             height: parent.height * 3/4; width: height
             anchors{ bottom: parent.bottom; left: parent.left }
+            mipmap: true
         }
 
         states: [
@@ -191,7 +192,7 @@ Page{
                 PropertyChanges{ target: indicateMessage;  text: (mode == "signUp" ? qsTr("Придумайте название группы") :
                                                                                     qsTr("Введите название группы"))
                                                                                     + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png"}
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.svg"}
             },
             State{
                 name: "nameDoesNotExistState"
@@ -200,8 +201,8 @@ Page{
                                                                                     (qsTr("Сообщество") + " " + checkedName + " " +
                                                                                      qsTr("не найдено")))
                                                                                     + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/okMeme.png" :
-                                                                                   "qrc:/memePhoto/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/okMeme.svg" :
+                                                                                   "qrc:/memePhoto/noMeme.svg" }
             },
             State{
                 name: "nameExistState"
@@ -209,39 +210,39 @@ Page{
                                                                                     + qsTr("занято")) :
                                                                                    qsTr("Ок!"))
                                                                                    + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/noMeme.png" :
-                                                                                   "qrc:/memePhoto/okMeme.png" }
+                PropertyChanges{ target: indicateImage; source: mode == "signUp" ? "qrc:/memePhoto/noMeme.svg" :
+                                                                                   "qrc:/memePhoto/okMeme.svg" }
             },
             State{
               name: "passwordInputState"
               PropertyChanges{ target: indicateMessage; text: (mode == "signUp" ? qsTr("Придумайте пароль") :
                                                                                  qsTr("Введите пароль"))
                                                                                  + translator.emptyString }
-              PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.png" }
+              PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/mem_hmm.svg" }
             },
             State{
                 name: "passwordIsOkState"
-                PropertyChanges{ target: indicateMessage; text: qsTr("Пароль удовлетворяет требованиям")
+                PropertyChanges{ target: indicateMessage; text: qsTr("Ок!")
                                                                 + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/okMeme.svg" }
             },
             State{
                 name: "passwordHasFewerCharsState"
                 PropertyChanges{ target: indicateMessage; text: qsTr("Пароль должен быть не менее 6-ти символов")
                                                                 + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.svg" }
             },
             State{
                 name: "signUpErrorState"
                 PropertyChanges{ target: indicateMessage; text: qsTr("Ошибка при создании, попробуйте ещё")
                                                                 + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.svg" }
             },
             State{
                 name: "signInErrorState"
                 PropertyChanges{ target: indicateMessage; text: qsTr("Вход не выполнен, проверьте название и пароль")
                                                                 + translator.emptyString }
-                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.png" }
+                PropertyChanges{ target: indicateImage; source: "qrc:/memePhoto/noMeme.svg" }
             }
         ]
     }

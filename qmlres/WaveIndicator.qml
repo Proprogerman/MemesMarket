@@ -2,6 +2,8 @@ import QtQuick 2.0
 import QtGraphicalEffects 1.0
 
 Item {
+    id: root
+
     property int amount: 0
     property alias running: waveAnimation.running
     property alias itemColor: colorOverlay.color
@@ -17,8 +19,8 @@ Item {
         Image{
             id: wave
             source: "qrc:/uiIcons/wave.svg"
-            height: parent.height * 2
-            width: parent.width * 2
+            height: root.height * 2
+            width: root.width * 2
             y: parent.y + parent.height * ( 1 - amount / 100 ) - height / 10
             x: parent.x + parent.width - width
             visible: false
@@ -55,7 +57,7 @@ Item {
         from: waveFrame.x + waveFrame.width - wave.width
         to: waveFrame.x + waveFrame.width - wave.width / 2
         loops: Animation.Infinite
-        duration: 650
+        duration: 1250
         running: false
     }
 }

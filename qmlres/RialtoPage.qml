@@ -22,6 +22,22 @@ Page{
         }
     }
 
+    Timer{
+        id: getCategoriesTimer
+        triggeredOnStart: true
+        interval: 10000
+        repeat: true
+        onTriggered: User.getMemesCategories()
+    }
+
+    Component.onCompleted: {
+        if(User.categoriesIsEmpty())
+            User.getMemesCategories()
+        else
+            User.setExistingCategoriesList()
+        getCategoriesTimer.start()
+    }
+
     Hamburger{
         id: hamburger
         height: pageHeader.height / 4

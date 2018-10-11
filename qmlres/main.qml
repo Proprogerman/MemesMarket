@@ -17,10 +17,10 @@ ApplicationWindow{
     id: mainWindow
     visible: true
     height: 720
-    width: 405
-//    x: 300 ; y: 50                           //for desktop
+    width: 360
+    x: 300 ; y: 50                           //for desktop
 
-    visibility: ApplicationWindow.FullScreen               // for mobile
+//    visibility: ApplicationWindow.FullScreen               // for mobile
 
     Item{
         focus: true
@@ -86,7 +86,7 @@ ApplicationWindow{
                 properties.exitItem.opacity = 1
                 if(exitItemName === "memePage" && enterItemName === "mainUserPage"
                 || enterItemName === "categoryMemeListPage")
-                    properties.enterItem.setVisibilityImageOnList(true)
+                    properties.enterItem.setVisibilityImageOnList(properties.exitItem.name, true)
                 else if(exitItemName === "signInPage")
                     properties.exitItem.clearUserData()
             }
@@ -148,7 +148,7 @@ ApplicationWindow{
                         PropertyAnimation{
                             target: enterItem
                             property: "memeImageY"
-                            from: exitItem.clickedMemeOnList.y
+                            from: exitItem.clickedMemeOnListY
                             to: target.memeImageY
                             duration: 200
                             easing.type: Easing.OutCirc
@@ -176,15 +176,15 @@ ApplicationWindow{
 
             property Component fromMemePageTransition: StackViewTransition {
                 SequentialAnimation{
-                    ScriptAction{ script: exitItem.state = "hidden" }
                     ScriptAction{ script: enterItem.getClosingMemePosition(exitItem.name)}
+                    ScriptAction{ script: exitItem.state = "hidden" }
                     ScriptAction{ script: exitItem.setImageOrigin(Item.TopLeft) }
                         ParallelAnimation{
                             PropertyAnimation{
                                 target: exitItem
                                 property: "memeImageY"
                                 from: exitItem.memeImageY
-                                to: enterItem.getClosingMemePosition(exitItem.name).y - enterItem.contentY
+                                to: enterItem.clickedMemeOnListY
                                 duration: 200
                                 easing.type: Easing.OutCirc
                             }
@@ -200,7 +200,7 @@ ApplicationWindow{
                                 target: exitItem
                                 property: "memeImageX"
                                 from: exitItem.memeImageScale === 1 ? exitItem.memeImageX : exitItem.memeImageX - (exitItem.memeImageWidth / 2)
-                                to: enterItem.clickedMemeOnList.x
+                                to: 0
                                 duration: 200
                                 easing.type: Easing.OutCirc
                             }
@@ -215,17 +215,14 @@ ApplicationWindow{
             id: signInPage
             SignInPage{}
         }
-
         Component{
             id: mainUserPage
             MainUserPage{}
         }
-
         Component{
             id: memePage
             MemePage{}
         }
-
         Component{
             id: rialtoPage
             RialtoPage{}
@@ -238,7 +235,6 @@ ApplicationWindow{
             id: adsPage
             AdsPage{}
         }
-
         Component{
             id: usersRatingPage
             UsersRatingPage{}
@@ -256,12 +252,40 @@ ApplicationWindow{
         onBackAction: slidingMenu.hide()
     }
 
+    function pushPage(page){
+        var name
+        if(page === mainUserPage)
+            name = "mainUserPage"
+        else if(page === memePage)
+            name = "memePage"
+        else if(page === rialtoPage)
+            name = "rialtoPage"
+        else if(page === categoryMemeListPage)
+            name = "categoryMemeListPage"
+        else if(page === adsPage)
+            name = "adsPage"
+        else if(page === usersRatingPage)
+            name = "usersRatingPage"
+
+        if(stackView.currentItem.objectName === name)
+            return
+        else if(stackView.currentItem.objectName === "mainUserPage")
+            stackView.push(page)
+        else{
+            while(stackView.currentItem.objectName != "mainUserPage")
+                stackView.pop()
+            if(name === "mainUserPage")
+                return
+            stackView.push(page)
+        }
+    }
+
     SlidingMenu{
         id: slidingMenu
         onOpenChanged: {
             hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
         }
-        color: Qt.lighter("#7fa0ca")
+        color: "#c5e1f5"
 
         itemData:[
             Column{
@@ -274,6 +298,13 @@ ApplicationWindow{
                     sourceSize.height: height
                     sourceSize.width: width
                     cache: false
+                    MouseArea{
+                        anchors.fill: parent
+                        onClicked: {
+                            pushPage(mainUserPage)
+                            slidingMenu.hide()
+                        }
+                    }
                 }
                 MaterialButton{
                     id: memesExchange
@@ -284,8 +315,7 @@ ApplicationWindow{
                     labelSize: height / 4
                     z: bigAvatar.z - 1
                     onClicked:{
-                        User.getMemesCategories()
-                        stackView.push(rialtoPage)
+                        pushPage(rialtoPage)
                         slidingMenu.hide()
                     }
                 }
@@ -299,8 +329,7 @@ ApplicationWindow{
                     z: memesExchange.z - 1
                     property string lang: "ru"
                     onClicked:{
-                        User.getAdList()
-                        stackView.push(adsPage)
+                        pushPage(adsPage)
                         slidingMenu.hide()
                     }
                 }
@@ -313,7 +342,7 @@ ApplicationWindow{
                     labelSize: height / 4
                     z: ads.z - 1
                     onClicked:{
-                        stackView.push(usersRatingPage)
+                        pushPage(usersRatingPage)
                         slidingMenu.hide()
                     }
                 }

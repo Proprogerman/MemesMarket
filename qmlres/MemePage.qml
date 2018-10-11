@@ -330,10 +330,6 @@ Page{
             layer.enabled: true
             visible: false
 
-            Behavior on opacity{
-                NumberAnimation{ duration: 100 }
-            }
-
             onOpacityChanged: unforceMouseArea.enabled = opacity < 0.6 ? false : true
 
             Image{
@@ -424,8 +420,7 @@ Page{
     Rectangle{
         id: popGraphItem
         width: parent.width
-        height: parent.height * 3/8
-        anchors.top: imageBack.bottom
+        anchors{ top: imageBack.bottom; bottom: manipItem.top }
         color: backColor
 
         clip: true
@@ -456,7 +451,7 @@ Page{
             }
             AreaSeries{
                 id: redZone
-                color: "#ff81ae"//"#40ff0000"
+                color: "#ff81ae"
                 opacity: 0.65
                 axisX: xAxis
                 axisY: yAxis
@@ -496,17 +491,15 @@ Page{
 
     Rectangle{
         id: manipItem
-        height: pageHeader.height * 2
-        anchors{ top: popGraphItem.bottom; bottom: parent.bottom;
-            left: parent.left; right: parent.right }
+        anchors{ bottom: parent.bottom; left: parent.left; right: parent.right }
+        height: (width - spacing * 3) / 4 + pageHeader.height
         color: backColor
 
         RadioButtons{
             id: radioButtons
             width: parent.width
-            anchors.top: parent.top
-            anchors.bottom: memeActionButton.top
-            anchors.horizontalCenter: parent.horizontalCenter
+            height: (width - spacing * 3) / 4
+            anchors{ top: parent.top; bottom: memeActionButton.top }
             backgroundColor: backColor
             spacing: width / 70
 

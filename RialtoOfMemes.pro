@@ -15,7 +15,6 @@ SOURCES += main.cpp \
     meme.cpp \
     imageprovider.cpp \
     ad.cpp \
-    imagerunnable.cpp \
     translator.cpp
 
 android {
@@ -41,7 +40,6 @@ HEADERS += \
     meme.h \
     imageprovider.h \
     ad.h \
-    imagerunnable.h \
     translator.h
 
 DISTFILES += \

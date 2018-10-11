@@ -22,10 +22,8 @@ Page{
 
     property double weight: 0
 
-    property var clickedMemeOnList
+    property int clickedMemeOnListY
     property int clickedMemeImageSize
-    property int contentY: appListView.contentY
-
 
     function setMeme(meme_name, image_name, loyalty, crsDir, memeCreativity){
         if(memeListModel.count){
@@ -36,8 +34,9 @@ Page{
                     return;
                 }
         }
+
         memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
-                               "imageNameText": image_name, "image": "image://meme/" + image_name,
+                               "imageNameText": image_name, "image": "image://imgProv/meme_" + image_name,
                                "memeCreativityText": memeCreativity, "loyaltyText": parseFloat(loyalty / 100),
                                "mine": User.findMeme(meme_name) ? true : false
                              })
@@ -62,7 +61,7 @@ Page{
         for(var i = 0; i < memeListModel.count; i++)
             if(memeListModel.get(i).memeNameText === meme_name){
                 memeListModel.setProperty(i, "image", "")
-                memeListModel.setProperty(i, "image", "image://meme/" + image_name)
+                memeListModel.setProperty(i, "image", "image://imgProv/meme_" + image_name)
             }
     }
 
@@ -77,12 +76,8 @@ Page{
         for(var i = 0; i < appListView.contentItem.children.length; i++){
             if(appListView.contentItem.children[i].name === mName){
                 var mItem = appListView.contentItem.children[i]
-                var currentYPos = mapFromItem(appListView, mItem.x, mItem.y).y
-                if(appListView.y > currentYPos - appListView.contentY)
-                    appListView.positionViewAtIndex(i, ListView.Beginning)
-                else if(appListView.y + appListView.height < currentYPos + mItem.height - appListView.contentY)
-                    appListView.positionViewAtIndex(i, ListView.End)
-                return clickedMemeOnList = mapFromItem(appListView, mItem.x, mItem.y)
+                clickedMemeImageSize = mItem.height
+                clickedMemeOnListY = mapFromItem(appListView, mItem.x, mItem.y).y - appListView.contentY
             }
         }
     }
@@ -105,16 +100,17 @@ Page{
     Connections{
         target: User
         onMemeReceived:{
-            var crsDir = Math.ceil((popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100)) - startPopValue)
-                                   * parseFloat(loyalty / 100))
             if(category == pageCategory){
+                var crsDir = Math.ceil((popValues[popValues.length - 1] * (1 + parseFloat(memeCreativity / 100)) - startPopValue)
+                                       * parseFloat(loyalty / 100))
                 memesPopValues[memeName] = popValues
                 startPopValues[memeName] = startPopValue
                 setMeme(memeName, imageName, loyalty, crsDir, memeCreativity)
             }
         }
         onMemeRemoved:{
-            removeMeme(memeName)
+            if(memeCategory == pageCategory)
+                removeMeme(memeName)
         }
         onImageReceived:{
             if(type == "meme")
@@ -127,8 +123,8 @@ Page{
         onCurrentItemChanged: {
             if(stackView.currentItem !== null)
                 if(stackView.currentItem.objectName === "categoryMemeListPage"){
-                    memeListModel.clear()
                     User.setExistingMemeListWithCategory(pageCategory)
+                    getMemesWithCategoryTimer.restart()
                 }
         }
     }
@@ -154,19 +150,34 @@ Page{
         z: -1
     }
 
+    function goToIndex(index, mode){
+        listViewAnim.running = false
+        var pos = appListView.contentY
+        var destPos
+        appListView.positionViewAtIndex(index, mode)
+        destPos = appListView.contentY
+        listViewAnim.from = pos
+        listViewAnim.to = destPos
+        listViewAnim.running = true
+    }
+
     PageHeader{
         id: pageHeader
         width: parent.width
         height: parent.height / 10
         headerText: pageCategory
         z: appListView.z + 1
+        MouseArea{
+            anchors.fill: parent
+            onClicked: {
+                goToIndex(0, ListView.Center)
+            }
+        }
     }
 
     ListView {
         id: appListView
-        height: parent.height - pageHeader.height
-        width: parent.width
-        spacing: parent.height/ 50
+        spacing: pageHeader.height / 10
         z: background.z + 1
         anchors{
             top: pageHeader.bottom
@@ -218,12 +229,10 @@ Page{
                 visible: mine
 
                 onTextChanged:{
-                    if(text.charAt(0) == "-"){
+                    if(text.charAt(0) == "-")
                         color = "red"
-                    }
-                    else{
+                    else
                         color = "green"
-                    }
                 }
             }
 
@@ -255,12 +264,11 @@ Page{
                 anchors.fill: parent
                 onClicked:{
                     var currentYPos = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y).y
-                    if(appListView.y > currentYPos - appListView.contentY)
+                    if(appListView.y > currentYPos)
                         appListView.positionViewAtIndex(index, ListView.Beginning)
-                    else if(appListView.y + appListView.height < currentYPos + parent.height - appListView.contentY)
+                    else if(appListView.y + appListView.height < currentYPos + parent.height)
                         appListView.positionViewAtIndex(index, ListView.End)
-                    clickedMemeOnList = memeImage.mapToItem(categoryMemeListPage, memeImage.x, memeImage.y)
-                    clickedMemeImageSize = memeImage.width
+                    getClosingMemePosition(memeNameText)
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
                                     memeCreativity: Number(memeCreativityText), category: pageCategory}})
@@ -273,6 +281,9 @@ Page{
                 visible: false
             }
         }
+
+        NumberAnimation{ id: listViewAnim; target: appListView; property: "contentY"; duration: 400;
+            easing.type: Easing.InOutQuad }
     }
     ListModel{
         id: memeListModel

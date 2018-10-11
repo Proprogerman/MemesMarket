@@ -32,10 +32,8 @@ Page {
 
     property bool avatarPosFixation: true
 
-    property var clickedMemeOnList
+    property int clickedMemeOnListY
     property int clickedMemeImageSize
-    property int contentY: appListView.contentY
-
 
     function valueToShort(num) {
         var digits = 1
@@ -71,31 +69,24 @@ Page {
                 return;
             }
         memeListModel.append({ "memeNameText": meme_name, "courseDirectionText": courseWithSign(crsDir),
-                               "imageNameText": image_name, "image": "image://meme/" + image_name,
+                               "imageNameText": image_name, "image": "image://imgProv/meme_" + image_name,
                                "memeCreativityText": memeCreativity, "loyaltyText": parseFloat(loyalty / 100),
                              })
-    }
-
-    function removeMeme(meme_name){
-        for(var i = 0; i < memeListModel.count; i++)
-            if(memeListModel.get(i).memeNameText === meme_name){
-                memeListModel.remove(i)
-            }
     }
 
     function updateMemeImage(meme_name, image_name){
         for(var i = 0; i < memeListModel.count; i++)
             if(memeListModel.get(i).memeNameText === meme_name){
                 memeListModel.setProperty(i, "image", "")
-                memeListModel.setProperty(i, "image", "image://meme/" + image_name)
+                memeListModel.setProperty(i, "image", "image://imgProv/meme_" + image_name)
             }
     }
 
     function updateAvatar(image_name){
         avatar.source = ""
         bigAvatar.source = ""
-        avatar.source = "image://meme/" + image_name
-        bigAvatar.source = "image://meme/" + image_name
+        avatar.source = "image://imgProv/user_" + image_name
+        bigAvatar.source = "image://imgProv/user_" + image_name
     }
 
     function unforceMeme(meme_name){
@@ -124,12 +115,8 @@ Page {
         for(var i = 0; i < appListView.contentItem.children.length; i++){
             if(appListView.contentItem.children[i].name === mName){
                 var mItem = appListView.contentItem.children[i]
-                var currentYPos = mapFromItem(appListView, mItem.x, mItem.y).y
-                if(appListView.y > currentYPos - appListView.contentY)
-                    appListView.positionViewAtIndex(i, ListView.Beginning)
-                else if(appListView.y + appListView.height < currentYPos + mItem.height - appListView.contentY)
-                    appListView.positionViewAtIndex(i, ListView.End)
-                return clickedMemeOnList = mapFromItem(appListView, mItem.x, mItem.y)
+                clickedMemeOnListY = mapFromItem(appListView, mItem.x, mItem.y).y - appListView.contentY
+                clickedMemeImageSize = mItem.height
             }
         }
     }
@@ -245,6 +232,12 @@ Page {
         height: parent.height / 10
         headerText: User.user_name
         z: 7
+        MouseArea{
+            anchors.fill: parent
+            onClicked: {
+                goToIndex(0, ListView.Center)
+            }
+        }
     }
 
     DropShadow{
@@ -258,9 +251,9 @@ Page {
     }
 
     Rectangle{
-        id:userPanel
+        id: userPanel
         width: parent.width
-        height: (parent.height * 1/5)
+        height: Math.ceil(width / 3)
         z: pageHeader.z - 3
         color:"#507299"
 
@@ -268,12 +261,12 @@ Page {
             State{
                 when: appListView.contentY <= (appListView.originY - userPanel.height)
                 name: "normalState"
-                PropertyChanges { target: userPanel; y: pageHeader.y + height / 2 }
+                PropertyChanges { target: userPanel; y: pageHeader.y + pageHeader.height }
             },
             State{
                 when: appListView.contentY > (appListView.originY - userPanel.height)
                 name: "scrollUpState"
-                PropertyChanges{ target: userPanel; y: - appListView.contentY - userPanel.height / 2 }
+                PropertyChanges{ target: userPanel; y: - appListView.contentY - userPanel.height + pageHeader.height }
             }
         ]
         state: "normalState"
@@ -439,19 +432,19 @@ Page {
 
     Image{
         id: moneyInd
-        width: Math.ceil(avatar.height * 1 / 2)
+        width: Math.ceil(avatar.height / 2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.left: avatar.right
-        anchors.leftMargin: width * 1 / 2
+        anchors.leftMargin: (pageHeader.width - avatar.width) / 4 - width / 2
         source: "qrc:/uiIcons/shekel.svg"
         antialiasing: true
         mipmap: true
         z: userPanel.z + 1
         Text{
             id: moneyLabel
-            anchors{ horizontalCenter: moneyInd.horizontalCenter; top: moneyInd.bottom }
-            font.pixelSize: moneyInd.height / 4
+            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: parent.height / 10 }
+            font.pixelSize: parent.height / 4
             text: userShekels.toString()
             color: "#ffffff"
         }
@@ -489,18 +482,18 @@ Page {
 
     WaveIndicator{
         id: creativeInd
-        width: Math.ceil(avatar.height * 1 / 2)
+        width: Math.ceil(avatar.height / 2)
         height: width
         anchors.verticalCenter: userPanel.verticalCenter
         anchors.right: avatar.left
-        anchors.rightMargin: width * 1 / 2
+        anchors.rightMargin: (pageHeader.width - avatar.width) / 4 - width / 2
         z: userPanel.z + 1
         itemColor: "#00BCD4"
 
         amount: userCreativity
         Text{
             id: creativityLabel
-            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom }
+            anchors{ horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: parent.height / 10 }
             font.pixelSize: parent.height / 4
             text: userCreativity.toString()
             color: "#ffffff"
@@ -509,9 +502,7 @@ Page {
 
     ListView {
         id: appListView
-        height: parent.height - pageHeader.height
-        width: parent.width
-        spacing: parent.height / 50
+        spacing: userPanel.height / 20
         anchors{
             top: pageHeader.bottom
             right: parent.right
@@ -598,18 +589,18 @@ Page {
                 anchors.fill: parent
                 onClicked:{
                     var currentYPos = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y).y
-                    if(appListView.y > currentYPos - appListView.contentY)
+                    if(appListView.y > currentYPos)
                         appListView.positionViewAtIndex(index, ListView.Beginning)
-                    else if(appListView.y + appListView.height < currentYPos + parent.height - appListView.contentY)
+                    else if(appListView.y + appListView.height < currentYPos + parent.height)
                         appListView.positionViewAtIndex(index, ListView.End)
-                    clickedMemeOnList = memeImage.mapToItem(mainUserPage, memeImage.x, memeImage.y)
-                    clickedMemeImageSize = memeImage.width
+                    getClosingMemePosition(memeNameText)
                     stackView.push({item: memePage, properties: {img: memeImage.source, name: memeNameText,
                                     memePopValues: memesPopValues[memeNameText], memeStartPopValue: startPopValues[memeNameText],
                                     memeCreativity: Number(memeCreativityText)}})
                 }
             }
         }
+
         NumberAnimation{ id: listViewAnim; target: appListView; property: "contentY"; duration: 400;
             easing.type: Easing.InOutQuad }
     }
@@ -663,7 +654,7 @@ Page {
             Column{
                 anchors.fill: parent
                 Text{
-                    text: qsTr("Получить 100 shekelcoin за просмотр короткого видео?") + translator.emptyString
+                    text: qsTr("Получить 100 монет за просмотр короткого видео?") + translator.emptyString
                     height: parent.height / 2
                     width: parent.width
                     font.pixelSize: height / 4

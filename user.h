@@ -25,6 +25,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
+#include <memory>
+
 #include "meme.h"
 #include "ad.h"
 
@@ -36,8 +38,8 @@ class User: public QObject
     Q_PROPERTY(int creativity READ getCreativity NOTIFY creativityChanged)
     Q_PROPERTY(int shekels READ getShekels NOTIFY shekelsChanged)
 public:
-    explicit User(QObject *parent = 0);
-    ~User();
+    User(const User&) = delete;
+    User& operator=(const User&) = delete;
 
     QString getName();
     int getUserPopValue();
@@ -52,8 +54,11 @@ public:
     Q_INVOKABLE void autoSignIn();
     Q_INVOKABLE void signOut();
     Q_INVOKABLE void getUserData();
+
+    Q_INVOKABLE void setExistingCategoriesList();
     Q_INVOKABLE void setExistingMemeListWithCategory(const QString &category);
     Q_INVOKABLE void setExistingAdList();
+
     Q_INVOKABLE void getMemeListWithCategory(const QString &category);
     Q_INVOKABLE void getAdList();
     Q_INVOKABLE void getMemeData(const QString &memeName);
@@ -64,6 +69,7 @@ public:
     Q_INVOKABLE void increaseLikesQuantity(const QString &memeName, const int &investedShekels);
     Q_INVOKABLE void acceptAd(const QString &adName);
 
+    Q_INVOKABLE bool categoriesIsEmpty();
     Q_INVOKABLE bool memesWithCategoryIsEmpty(const QString &category);
     Q_INVOKABLE bool adsIsEmpty();
 
@@ -91,7 +97,7 @@ public:
     void setMeme(const QString &memeName, const QVector<int> &memeValues, const QString &memeImageName,
                  const QString &memeCategory, const int &memeLoyalty, const int &memeCreativity,
                  const bool &forced, const int &memeStartPopValue);
-    void removeMeme(const QString& memeName, const bool &mine);
+    void removeMeme(const int &index, const bool &mine);
 
     void removeAd(const QString& adName);
 
@@ -100,6 +106,8 @@ public:
     void toOtherThread(const QJsonObject &jsonObj);
 
     int getAdIndex(const QString &name);
+
+    QString getMemeCategory(const QString &imageName);
 
     Q_INVOKABLE void rewardUserWithShekels();
 
@@ -112,11 +120,17 @@ public:
     quint32 arrayToInt(QByteArray dataSize);
     QByteArray intToArray(const quint32 &dataSize);
 
-    QJsonArray getLocalImagesList();
+    QJsonArray getLocalImagesList(const QString &type, QString category = "");
+    void removeExcessImages(const QVector<QString> &images, const QString &type, QString category = "");
 
     static QObject* qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine);
+    static User* getInstance();
 
 private:
+    explicit User(QObject *parent = 0);
+
+    static User* instance;
+
     QString user_name;
     QString passwordHash;
     QString user_imageName;
@@ -129,15 +143,15 @@ private:
 
     QVariantList categories;
 
-    QTcpSocket *clientSocket = nullptr;
+    QTcpSocket clientSocket;
 
-    QTimer *requestTimer;
+    QTimer requestTimer;
 
-    QSettings *settings;
+    QSettings settings;
 
-    QThreadPool *imgPool;
+    QThreadPool imgPool;
 
-    QNetworkAccessManager *mngr;
+    QNetworkAccessManager mngr;
 signals:
     void nameAvailabilityChanged(bool val, QString name);
 
@@ -149,9 +163,9 @@ signals:
     void signAnswered(QString name, bool progress);
 
     void imageReceived(QString type, QString name, QString imageName);
-    void memeReceived(QString memeName, QVector<int> popValues, int loyalty, QString category = "", QString imageName = "",
-                      int memeCreativity = 0, int startPopValue = 0);
-    void memeRemoved(QString memeName);
+    void memeReceived(QString memeName, QVector<int> popValues, int loyalty, QString category = "",
+                      QString imageName = "", int memeCreativity = 0, int startPopValue = 0);
+    void memeRemoved(QString memeName, QString memeCategory);
     void adReceived(QString adName, QString imageName, QString reputation, int profit, int discontented,
                     int secondsToReady = 0);
     void adRemoved(QString adName);
@@ -163,7 +177,8 @@ public slots:
     void onReadyRead();
     void onDisconnected();
     void storeUserSettings(QString name, bool isSigned);
-    void getImageFromVk(QNetworkReply *reply, QString type, QString itemName, QString imageName);
+    void getImageFromVk(QNetworkReply *reply, QString type, QString itemName, QString imageName,
+                        QString category);
     void resetRequest();
 };
 

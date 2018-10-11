@@ -29,7 +29,7 @@ Page {
     function setAd(adName, imageName, adProfit, adReputation, adDiscontented, secondsToReady){
         for(var i = 0; i < adListModel.count; i++){
             if(adListModel.get(i).adNameText === adName){
-                adListModel.set(i, { "adNameText": adName, "image": "image://meme/" + imageName, "adProfitText": adProfit,
+                adListModel.set(i, { "adNameText": adName, "image": "image://imgProv/ad_" + imageName, "adProfitText": adProfit,
                                      "adReputationText": qsTr(adReputation), "adDiscontented": adDiscontented, "buttonClickable": true,
                                      "secondsToReady": secondsToReady })
                 if(secondsToReady || !adProfit)
@@ -37,7 +37,7 @@ Page {
                 return;
             }
         }
-        adListModel.append({ "adNameText": adName, "image": "image://meme/" + imageName, "adProfitText": adProfit,
+        adListModel.append({ "adNameText": adName, "image": "image://imgProv/ad_" + imageName, "adProfitText": adProfit,
                              "adReputationText": qsTr(adReputation), "adDiscontented": adDiscontented, "buttonClickable": true,
                              "secondsToReady": secondsToReady })
         if(secondsToReady || !adProfit)
@@ -55,7 +55,7 @@ Page {
         for(var i = 0; i < adListModel.count; i++)
             if(adListModel.get(i).adNameText === adName){
                 adListModel.setProperty(i, "image", " ")
-                adListModel.setProperty(i, "image", "image://meme/" + imageName)
+                adListModel.setProperty(i, "image", "image://imgProv/ad_" + imageName)
             }
     }
 
@@ -91,11 +91,10 @@ Page {
 
     Timer{
         id: getAdsTimer
+        triggeredOnStart: true
         interval: 10000
         repeat: true
-        onTriggered: {
-            User.getAdList()
-        }
+        onTriggered: User.getAdList()
     }
 
     Rectangle{

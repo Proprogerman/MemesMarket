@@ -4,9 +4,9 @@
         <file>memePlaceholder.png</file>
     </qresource>
     <qresource prefix="/memePhoto">
-        <file>mem_hmm.png</file>
-        <file>noMeme.png</file>
-        <file>okMeme.png</file>
+        <file>mem_hmm.svg</file>
+        <file>noMeme.svg</file>
+        <file>okMeme.svg</file>
     </qresource>
     <qresource prefix="/uiIcons">
         <file>up-arrow.svg</file>
