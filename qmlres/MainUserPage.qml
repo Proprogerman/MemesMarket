@@ -156,14 +156,97 @@ Page {
         target: stackView
         onCurrentItemChanged: {
             if(stackView.currentItem !== null)
-                if(stackView.currentItem.objectName === "mainUserPage")
+                if(stackView.currentItem.objectName === objectName){
                     User.localUpdateUserData()
+                    if(mainUserPage.state === "normal") setupTutorial()
+                }
         }
+    }
+
+    Connections{
+        target: slidingMenu
+        onOpenChanged: if(!slidingMenu.open) setupTutorial()
     }
 
     Component.onCompleted:{
         getUserDataTimer.start()
         updateAvatar(User.getImageName())
+    }
+
+    function setupTutorial(){
+        if(userSettings.tutorial)
+            trainMode.items = getTrainSequence()
+        trainMode.active = userSettings.tutorial
+    }
+
+    function getItemForTrain(name, desc, descPos, item, coeff, isCircle, clickable, page){
+        var obj = {
+            "name" : name,
+            "description" : desc,
+            "descriptionPosition" : descPos,
+            "item" : item,
+            "coeff" : coeff,
+            "isCircle" : isCircle,
+            "clickable" : clickable,
+            "page" : page
+        };
+        return obj
+    }
+
+    function getTrainSequence(){
+        var seq = []
+        var descPos = "bottom"
+
+        if(userSettings.mainUserPageTrain){
+            seq.push(getItemForTrain(
+                         qsTr("Креативность") + translator.emptyString,
+                         qsTr("Вкладывая креативность в мем, Вы увеличиваете его лояльность и получаете больше подписчиков")
+                         + translator.emptyString,
+                         descPos,
+                         creativeInd,
+                         2,
+                         true,
+                         "onlyZone",
+                         "mainUserPage"
+                         )
+                     )
+            seq.push(getItemForTrain(
+                         qsTr("Подписчики") + translator.emptyString,
+                         qsTr("Их количество зависит от Вашей игры")
+                         + translator.emptyString,
+                         descPos,
+                         avatarLabel,
+                         2,
+                         true,
+                         "onlyZone",
+                         "mainUserPage"
+                         )
+                     )
+            seq.push(getItemForTrain(
+                         qsTr("Монеты") + translator.emptyString,
+                         qsTr("Вкладывая монеты в мем, Вы уменьшаете его лояльность и получаете краткосрочный рост подписчиков")
+                         + translator.emptyString,
+                         descPos,
+                         moneyInd,
+                         2,
+                         true,
+                         "onlyZone",
+                         "mainUserPage"
+                         )
+                     )
+        }
+        seq.push(getItemForTrain(
+                     qsTr("Нажмите") + translator.emptyString,
+                     "",
+                     descPos,
+                     hamburger,
+                     2,
+                     true,
+                     "onlyItem",
+                     "transfer"
+                     )
+                 )
+        return seq
     }
 
     Timer{
@@ -188,7 +271,7 @@ Page {
             AnchorChanges{ target: appListView; anchors.top: pageHeader.bottom }
             StateChangeScript{ name: "avatarFixationScript"; script: avatarPosFixation = true }
             StateChangeScript{ name: "waveAnimationRunningScript"; script: creativeInd.running = true }
-        },
+            StateChangeScript{ name: "setupTutorialScript"; script: setupTutorial() } },
         State{
             name: "hidden"
             AnchorChanges{ target: pageHeader; anchors.bottom: background.top }
@@ -204,9 +287,10 @@ Page {
         Transition {
             from: "hidden"; to: "normal"
             SequentialAnimation{
-                ScriptAction{ scriptName: "waveAnimationRunningScript" }
                 AnchorAnimation{ duration: 750; easing.type: Easing.InOutElastic; easing.period: 1.0; easing.amplitude: 1.0 }
                 ScriptAction{ scriptName: "avatarFixationScript" }
+                ScriptAction{ scriptName: "setupTutorialScript" }
+                ScriptAction{ scriptName: "waveAnimationRunningScript" }
             }
         },
         Transition {
@@ -286,13 +370,13 @@ Page {
                 when: !avatarPosFixation && (userPanel.y + userPanel.height / 2) > (pageHeader.y + pageHeader.height)
                 name: "normal"
                 PropertyChanges{ target: avatar; y: userPanel.y + (userPanel.height - height) / 2 }
-                PropertyChanges{ target: avatarLable; flipped: false}
+                PropertyChanges{ target: avatarLabel; flipped: false}
             },
             State{
                 when: avatarPosFixation && ((userPanel.y + userPanel.height / 2) < (pageHeader.y + pageHeader.height))
                 name: "tapToTop"
                 AnchorChanges{ target: avatar; anchors.verticalCenter: pageHeader.bottom }
-                PropertyChanges{ target: avatarLable; flipped: true }
+                PropertyChanges{ target: avatarLabel; flipped: true }
             }
         ]
         state: "normal"
@@ -317,16 +401,6 @@ Page {
         listViewAnim.from = pos
         listViewAnim.to = destPos
         listViewAnim.running = true
-    }
-
-    MouseArea{
-        z: pageHeader.z
-        anchors.fill: avatar
-        onClicked:{
-            if(avatar.state == "tapToTop"){
-                goToIndex(0, ListView.Center)
-            }
-        }
     }
 
     OpacityMask{
@@ -386,7 +460,7 @@ Page {
     }
 
     Flipable{
-        id: avatarLable
+        id: avatarLabel
         width: avatar.width / 2
         height: avatar.height / 2
         anchors{ bottom: avatar.bottom; horizontalCenter: avatar.horizontalCenter }
@@ -415,15 +489,15 @@ Page {
 
         transform: Rotation{
             id: rotation
-            origin.x: avatarLable.width / 2
-            origin.y: avatarLable.height / 2
+            origin.x: avatarLabel.width / 2
+            origin.y: avatarLabel.height / 2
             axis{ x: 1; y: 0; z: 0 }
             angle: 0
         }
         states: State{
             name: "back"
             PropertyChanges{ target: rotation; angle: 180 }
-            when: avatarLable.flipped
+            when: avatarLabel.flipped
         }
         transitions: Transition{
             NumberAnimation{ target: rotation; property: "angle"; duration: 150 }
@@ -489,7 +563,6 @@ Page {
         anchors.rightMargin: (pageHeader.width - avatar.width) / 4 - width / 2
         z: userPanel.z + 1
         itemColor: "#00BCD4"
-
         amount: userCreativity
         Text{
             id: creativityLabel
@@ -691,6 +764,17 @@ Page {
                     }
                 }
             }
+        }
+    }
+
+    MouseArea{
+        z: pageHeader.z + 2
+        height: avatar.height
+        width: avatar.width
+        anchors{ horizontalCenter: avatar.horizontalCenter; verticalCenter: avatar.verticalCenter}
+        onClicked: {
+            if(avatar.state === "tapToTop")
+                goToIndex(0, ListView.Center)
         }
     }
 }

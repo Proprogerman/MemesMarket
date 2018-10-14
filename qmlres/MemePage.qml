@@ -192,7 +192,7 @@ Page{
         interval: 10000
         repeat: true
         onTriggered:{
-            if(stackView.currentItem.objectName == "memePage"){
+            if(stackView.currentItem.objectName === memePage.objectName){
                 User.getMemeData(name.toString())
             }
         }
@@ -240,25 +240,103 @@ Page{
         target: stackView
         onCurrentItemChanged: {
             if(stackView.currentItem !== null)
-                if(stackView.currentItem.objectName == "memePage")
+                if(stackView.currentItem.objectName === mainUserPage.objectName)
                     User.localUpdateMeme(name)
         }
     }
 
-    Hamburger{
-        id: hamburger
-        height: pageHeader.height / 4
-        width: height * 3 / 2
-        y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width }
-        z: pageHeader.z + 1
-        dynamic: false
-        onBackAction: {
-            if(stackView.__currentItem.objectName === "memePage"){
-                stackView.pop()
-                visible = false
+    Connections{
+        target: slidingMenu
+        onOpenChanged: if(!slidingMenu.open) setupTutorial(memePage.status)
+    }
+
+    Connections{
+        target: userSettings
+        onMemePageTrainChanged: {
+            if(!userSettings.memePageTrain && userSettings.adsPageTrain)
+                slidingMenu.show()
+        }
+    }
+
+
+    function setupTutorial(status){
+        if(userSettings.tutorial)
+            trainMode.items = getTrainSequence(status)
+        trainMode.active = userSettings.tutorial
+    }
+
+    function getItemForTrain(name, desc, descPos, item, coeff, isCircle, clickable, page){
+        var obj = {
+            "name" : name,
+            "description" : desc,
+            "descriptionPosition" : descPos,
+            "item" : item,
+            "coeff" : coeff,
+            "isCircle" : isCircle,
+            "clickable" : clickable,
+            "page" : page
+        };
+        return obj
+    }
+
+    function getTrainSequence(status){
+        var seq = []
+        var descPos = "top"
+
+        if(userSettings.memePageTrain){
+            if(status === "general"){
+                seq.push(getItemForTrain(
+                             qsTr("Популярность мема") + translator.emptyString,
+                             "",
+                             descPos,
+                             popGraphItem,
+                             1,
+                             false,
+                             "onlyZone",
+                             "memePageGeneral"
+                             )
+                         )
+                seq.push(getItemForTrain(
+                             qsTr("Зафорсите мем") + translator.emptyString,
+                             qsTr("Вы можете вложить креативность") + translator.emptyString,
+                             descPos,
+                             manipItem,
+                             1,
+                             false,
+                             "onlyItem",
+                             "memePageGeneral"
+                             )
+                         )
+                return seq
+            }
+            else if(status === "mine"){
+                seq.push(getItemForTrain(
+                             qsTr("Вы можете накрутить популярность мему") + translator.emptyString,
+                             qsTr("Накрутка даст вам мгновенный положительный фидбэк, но уменьшит лояльность мема") +
+                             translator.emptyString,
+                             descPos,
+                             manipItem,
+                             1,
+                             false,
+                             "both",
+                             "memePageMine"
+                             )
+                         )
             }
         }
+        seq.push(getItemForTrain(
+                     qsTr("Нажмите") + translator.emptyString,
+                     "",
+                     "bottom",
+                     hamburger,
+                     2,
+                     true,
+                     "onlyItem",
+                     "transfer"
+                     )
+                 )
+
+        return seq
     }
 
     Rectangle{
@@ -548,22 +626,26 @@ Page{
     states:[
         State{
             name: "general"
-            PropertyChanges{ target: memeActionButton; label: qsTr("ЗАФОРСИТЬ") + translator.emptyString }
+            StateChangeScript{ name: "changeButtonLabel";
+                script: memeActionButton.label = qsTr("ЗАФОРСИТЬ") + translator.emptyString }
             PropertyChanges{ target: memeActionButton; clickable: true }
             PropertyChanges{ target: unforceButton; visible: false }
             PropertyChanges{ target: startPopValueLine; visible: false }
             PropertyChanges{ target: redZone; visible: false}
             StateChangeScript{ script: setRadioButtonsItems(userCreativity)}
+            StateChangeScript{ name: "setupTutorialScript"; script: setupTutorial("general") }
         },
         State{
             name: "mine"
-            PropertyChanges{ target: memeActionButton; label: qsTr("НАКРУТИТЬ ПОПУЛЯРНОСТЬ") + translator.emptyString }
+            StateChangeScript{ name: "changeButtonLabel";
+                script: memeActionButton.label = qsTr("НАКРУТИТЬ ПОПУЛЯРНОСТЬ") + translator.emptyString }
             PropertyChanges{ target: unforceButton; visible: true }
             PropertyChanges{ target: startPopValueLine; visible: true }
             PropertyChanges{ target: redZone; visible: true }
             StateChangeScript{ script: setRadioButtonsItems(userShekels)}
             StateChangeScript{ script: checkShekelsButton()}
             StateChangeScript{ script: setStartPopValueAxis() }
+            StateChangeScript{ name: "setupTutorialScript"; script: setupTutorial("mine") }
         },
         State{
             name: "hidden"
@@ -574,7 +656,6 @@ Page{
             PropertyChanges{ target: backgroundItem; opacity: 0 }
             PropertyChanges{ target: headerShadow; opacity: 0 }
             PropertyChanges{ target: imageBack; opacity: 0 }
-            PropertyChanges{ target: hamburger; opacity: 0 }
             PropertyChanges{ target: unforceButton; opacity: 0 }
         }
     ]
@@ -590,9 +671,15 @@ Page{
     }
 
     transitions: Transition {
-        PropertyAnimation{
-            property: "opacity"
-            duration: 250
+        SequentialAnimation{
+            ScriptAction{
+                scriptName: "changeButtonLabel"
+            }
+            PropertyAnimation{
+                property: "opacity"
+                duration: 200
+            }
+            ScriptAction{ scriptName: "setupTutorialScript"}
         }
     }
 
@@ -606,8 +693,11 @@ Page{
                 User.forceMeme(name, memeCreativity, memeStartPopValue)
                 state = "mine"
             }
-            else if(state == "mine")
+            else if(state == "mine"){
                 User.increaseLikesQuantity(name, radioButtons.value)
+                if(userSettings.memePageTrain)
+                    trainMode.trainClick()
+            }
         }
     }
 }

@@ -21,12 +21,12 @@ Item {
             source: "qrc:/uiIcons/wave.svg"
             height: root.height * 2
             width: root.width * 2
-            y: parent.y + parent.height * ( 1 - amount / 100 ) - height / 10
+            y: root.running ? (parent.y + parent.height * ( 1 - amount / 100 ) - height / 10) : (parent.y + parent.height)
             x: parent.x + parent.width - width
             visible: false
 
             Behavior on y {
-                PropertyAnimation{ duration: 500; easing.type: Easing.OutCirc }
+                PropertyAnimation{ duration: 2000; easing.type: Easing.OutCirc }
             }
         }
         ColorOverlay{

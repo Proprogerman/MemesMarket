@@ -2,9 +2,8 @@ import QtQuick 2.11
 import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 
-import Qt.labs.settings 1.0
-
 import KlimeSoft.SingletonUser 1.0
+import Qt.labs.settings 1.0
 
 import "qrc:/qml/elements"
 
@@ -54,14 +53,6 @@ Page{
                 signInPage.state = "normal"
             }
         }
-    }
-
-    Settings{
-        id: userSettings
-        category: "user"
-        property string name
-        property string passwordHash
-        property string language
     }
 
     Component.onCompleted: {
@@ -508,7 +499,7 @@ Page{
             anchors.top: signingToggles.bottom
             anchors.topMargin: signingToggles.height * 2
             Component.onCompleted: {
-                if(userSettings.language == "ru")
+                if(userSettings.language === "ru")
                     ruToggle.checked = true
                 else
                     enToggle.checked = true

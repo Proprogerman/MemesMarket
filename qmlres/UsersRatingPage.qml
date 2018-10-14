@@ -70,20 +70,6 @@ Page {
         color: backColor
     }
 
-    Hamburger{
-        id: hamburger
-        height: pageHeader.height / 4
-        width: height * 3 / 2
-        y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width; /*verticalCenter: pageHeader.verticalCenter*/ }
-        z: pageHeader.z + 1
-        dynamic: false
-        onBackAction: {
-            if(stackView.__currentItem.objectName === "usersRatingPage")
-                stackView.pop()
-        }
-    }
-
     PageHeader{
         id: pageHeader
         width: parent.width

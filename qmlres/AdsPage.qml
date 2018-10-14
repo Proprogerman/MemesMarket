@@ -66,6 +66,16 @@ Page {
         }
     }
 
+    function goToIndex(index, mode){
+        listViewAnim.running = false
+        var pos = appListView.contentY
+        var destPos
+        appListView.positionViewAtIndex(index, mode)
+        destPos = appListView.contentY
+        listViewAnim.from = pos
+        listViewAnim.to = destPos
+        listViewAnim.running = true
+    }
 
     Component.onCompleted: {
         if(User.adsIsEmpty())
@@ -89,6 +99,61 @@ Page {
         }
     }
 
+    Connections{
+        target: stackView
+        onCurrentItemChanged: {
+            if(stackView.currentItem !== null){
+                if(stackView.currentItem.objectName === categoryMemeListPage.objectName && !slidingMenu.open){
+                    setupTutorial()
+                }
+            }
+        }
+    }
+
+    Connections{
+        target: slidingMenu
+        onOpenChanged: if(!slidingMenu.open) setupTutorial()
+    }
+
+
+    function setupTutorial(){
+        if(userSettings.tutorial)
+            trainMode.items = getTrainSequence()
+        trainMode.active = userSettings.tutorial
+    }
+
+    function getItemForTrain(name, desc, descPos, item, coeff, isCircle, clickable, page){
+        var obj = {
+            "name" : name,
+            "description" : desc,
+            "descriptionPosition" : descPos,
+            "item" : item,
+            "coeff" : coeff,
+            "isCircle" : isCircle,
+            "clickable" : clickable,
+            "page" : page
+        };
+        return obj
+    }
+
+    function getTrainSequence(){
+        var seq = []
+        seq.push(getItemForTrain(
+                     qsTr("Реклама") + translator.emptyString,
+                     qsTr("Здесь вы можете принять рекламное предложение и заработать на этом монеты") +
+                     translator.emptyString,
+                     "bottom",
+                     pageHeader,
+                     1,
+                     false,
+                     "onlyZone",
+                     "adsPage"
+                     )
+                 )
+        return seq
+    }
+
+
     Timer{
         id: getAdsTimer
         triggeredOnStart: true
@@ -104,26 +169,18 @@ Page {
         color: backColor
     }
 
-    Hamburger{
-        id: hamburger
-        height: pageHeader.height / 4
-        width: height * 3 / 2
-        y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width }
-        z: pageHeader.z + 1
-        dynamic: false
-        onBackAction: {
-            if(stackView.__currentItem.objectName === "adsPage")
-                stackView.pop()
-        }
-    }
-
     PageHeader{
         id: pageHeader
         width: parent.width
         height: parent.height / 10
         headerText: qsTr("реклама") + translator.emptyString
         z: 7
+        MouseArea{
+            anchors.fill: parent
+            onClicked: {
+                goToIndex(0, ListView.Center)
+            }
+        }
     }
 
     ListView {
@@ -203,7 +260,7 @@ Page {
                 }
             }
             Text{
-                text: qsTr("потеря аудитории") + ": " + adDiscontented + "%" + translator.emptyString
+                text: qsTr("отписки") + ": " + adDiscontented + "%" + translator.emptyString
                 anchors{ left: parent.left; top: reputationItem.bottom }
                 font.pixelSize: adImage.height / 10
             }
@@ -258,6 +315,9 @@ Page {
                 }
             }
         }
+
+        NumberAnimation{ id: listViewAnim; target: appListView; property: "contentY"; duration: 400;
+            easing.type: Easing.InOutQuad }
     }
     ListModel{
         id: adListModel

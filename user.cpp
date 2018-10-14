@@ -449,6 +449,11 @@ void User::autoSignIn()
 
 void User::signOut()
 {
+    QJsonObject jsonObj {
+                            {"requestType", "signOut"},
+                            {"user_name", getName()}
+    };
+
     settings.setValue("user/name", "");
     settings.setValue("user/passwordHash", "");
     settings.sync();
@@ -459,11 +464,6 @@ void User::signOut()
     shekels = 0;
     user_imageName = "";
     memes.clear();
-
-    QJsonObject jsonObj {
-                            {"requestType", "signOut"},
-                            {"user_name", getName()}
-    };
 
     writeData(QJsonDocument(jsonObj).toBinaryData());
 }

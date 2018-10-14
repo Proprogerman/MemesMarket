@@ -1,5 +1,6 @@
 QT += network sql charts qml quick svg
 TRANSLATIONS = t1_en.ts
+CONFIG += c++14
 
 QTFIREBASE_SDK_PATH = C:/Development/firebase_cpp_sdk
 
@@ -15,7 +16,8 @@ SOURCES += main.cpp \
     meme.cpp \
     imageprovider.cpp \
     ad.cpp \
-    translator.cpp
+    translator.cpp \
+    maskedmousearea.cpp
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
@@ -40,7 +42,8 @@ HEADERS += \
     meme.h \
     imageprovider.h \
     ad.h \
-    translator.h
+    translator.h \
+    maskedmousearea.h
 
 DISTFILES += \
     android/AndroidManifest.xml \

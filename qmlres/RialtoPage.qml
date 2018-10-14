@@ -6,11 +6,78 @@ import "qrc:/qml/elements"
 import KlimeSoft.SingletonUser 1.0
 
 Page{
+    id: rialtoPage
 
     objectName: "rialtoPage"
 
     property color backColor: "#edeef0"
     property color mainColor: "#507299"
+
+    Connections{
+        target: stackView
+        onCurrentItemChanged: {
+            if(stackView.currentItem !== null)
+                if(stackView.currentItem.objectName === objectName && !slidingMenu.open)
+                    setupTutorial()
+        }
+    }
+
+    Connections{
+        target: slidingMenu
+        onOpenChanged: if(!slidingMenu.open) setupTutorial()
+    }
+
+    function setupTutorial(){
+        if(userSettings.tutorial)
+            trainMode.items = getTrainSequence()
+        trainMode.active = userSettings.tutorial
+    }
+
+    function getItemForTrain(name, desc, descPos, item, coeff, isCircle, clickable, page){
+        var obj = {
+            "name" : name,
+            "description" : desc,
+            "descriptionPosition" : descPos,
+            "item" : item,
+            "coeff" : coeff,
+            "isCircle" : isCircle,
+            "clickable" : clickable,
+            "page" : page
+        };
+        return obj
+    }
+
+    function getTrainSequence(){
+        var seq = []
+        var descPos = "bottom"
+
+        if(userSettings.memePageTrain)
+            seq.push(getItemForTrain(
+                         qsTr("Выберите категорию") + translator.emptyString,
+                         "",
+                         descPos,
+                         categoriesGridView,
+                         1,
+                         false,
+                         "onlyItem",
+                         "rialtoPage"
+                         )
+                     )
+        else
+            seq.push(getItemForTrain(
+                         qsTr("Нажмите") + translator.emptyString,
+                         "",
+                         "bottom",
+                         hamburger,
+                         2,
+                         true,
+                         "onlyZone",
+                         "transfer"
+                         )
+                     )
+
+        return seq
+    }
 
     Connections{
         target: User
@@ -36,20 +103,6 @@ Page{
         else
             User.setExistingCategoriesList()
         getCategoriesTimer.start()
-    }
-
-    Hamburger{
-        id: hamburger
-        height: pageHeader.height / 4
-        width: height * 3 / 2
-        y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width; }
-        z: pageHeader.z + 1
-        dynamic: false
-        onBackAction: {
-            if(stackView.__currentItem.objectName === "rialtoPage")
-                stackView.pop()
-        }
     }
 
     Rectangle{

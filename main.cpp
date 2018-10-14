@@ -9,6 +9,7 @@
 
 #include "imageprovider.h"
 #include "translator.h"
+#include "maskedmousearea.h"
 
 
 int main(int argc, char *argv[])
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     qmlRegisterSingletonType<User>("KlimeSoft.SingletonUser", 1, 0, "User", User::qmlInstance);
+    qmlRegisterType<MaskedMouseArea>("CustomMouseArea", 1, 0, "MaskedMouseArea");
 
     engine.addImageProvider("imgProv", new ImageProvider());
 

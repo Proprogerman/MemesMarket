@@ -5,6 +5,7 @@ import QtQuick.Controls.Universal 2.2
 import QtQuick.Window 2.3
 import QtQuick.Dialogs 1.2
 
+import Qt.labs.settings 1.0
 
 import "qrc:/qml/pages"
 import "qrc:/qml/elements"
@@ -47,14 +48,30 @@ ApplicationWindow{
 
     property color mainColor: "#507299"
 
+
+    Settings{
+        id: userSettings
+        category: "user"
+
+        property string name
+        property string passwordHash
+        property string language
+
+        property bool tutorial: mainUserPageTrain || memePageTrain || adsPageTrain
+        property bool mainUserPageTrain: true
+        property bool memePageTrain: true
+        property bool adsPageTrain: true
+    }
+
     StackView{
         id: stackView
         anchors.fill: parent
         initialItem: signInPage
 
         onCurrentItemChanged: {
-            if(stackView.currentItem !== null){
-                hamburger.visible = stackView.currentItem.objectName === "mainUserPage" ? true : false
+            if(currentItem !== null){
+                hamburger.visible = stackView.currentItem.objectName !== "signInPage"
+                hamburger.state = stackView.currentItem.objectName === "mainUserPage" ? "menu" : "back"
                 slidingMenu.active = stackView.currentItem.objectName === "signInPage" ? false : true
             }
         }
@@ -73,7 +90,7 @@ ApplicationWindow{
                 else if(exitItemName === "memePage" && enterItemName === "mainUserPage"
                 && User.findMeme(properties.exitItem.name))
                     currTransition = fromMemePageTransition
-                else if(properties.exitItem.objectName === "memePage"&& properties.enterItem.objectName === "categoryMemeListPage")
+                else if(properties.exitItem.objectName === "memePage" && properties.enterItem.objectName === "categoryMemeListPage")
                     currTransition = fromMemePageTransition
 
                 return currTransition
@@ -241,6 +258,58 @@ ApplicationWindow{
         }
     }
 
+    function getItemForTrain(name, desc, descPos, item, coeff, isCircle, clickable, page){
+        var obj = {
+            "name" : name,
+            "description" : desc,
+            "descriptionPosition" : descPos,
+            "item" : item,
+            "coeff" : coeff,
+            "isCircle" : isCircle,
+            "clickable" : clickable,
+            "page" : page
+        };
+        return obj
+    }
+
+    function setupTutorial(){
+        if(userSettings.tutorial)
+            trainMode.items = getTrainSequence()
+        trainMode.active = userSettings.tutorial
+    }
+
+    function getTrainSequence(){
+        var seq = []
+        var descPos = "bottom"
+
+        if(userSettings.memePageTrain)
+            seq.push(getItemForTrain(
+                         qsTr("Нажмите") + translator.emptyString,
+                         "",
+                         descPos,
+                         memesExchange,
+                         1,
+                         false,
+                         "onlyItem",
+                         "transfer"
+                         )
+                     )
+        else if(userSettings.adsPageTrain)
+            seq.push(getItemForTrain(
+                         qsTr("Нажмите") + translator.emptyString,
+                         "",
+                         descPos,
+                         ads,
+                         1,
+                         false,
+                         "onlyItem",
+                         "transfer"
+                         )
+                     )
+
+        return seq
+    }
+
     Hamburger{
         id: hamburger
         height: slidingMenu.height / 40
@@ -249,7 +318,13 @@ ApplicationWindow{
         y: slidingMenu.y + height * 1.5
         z: slidingMenu.z
         onOpenAction: slidingMenu.show()
-        onBackAction: slidingMenu.hide()
+        onBackAction: {
+            if(stackView.currentItem.objectName !== "mainUserPage"){
+                stackView.pop()
+                return
+            }
+            slidingMenu.hide()
+        }
     }
 
     function pushPage(page){
@@ -280,86 +355,98 @@ ApplicationWindow{
         }
     }
 
+
     SlidingMenu{
         id: slidingMenu
         onOpenChanged: {
-            hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
+            if(!stackView.transitions.running && stackView.currentItem.objectName === "mainUserPage")
+                hamburger.state = open ? hamburger.state = "back" : hamburger.state = "menu"
+            if(open)
+                setupTutorial()
         }
         color: "#c5e1f5"
 
-        itemData:[
-            Column{
+        itemData: slidingMenuData
+    }
+
+    Rectangle{
+        id: slidingMenuData
+        color: slidingMenu.color
+        anchors.fill: parent
+        Column{
+            width: parent.width
+            height: parent.height
+            Image{
+                id: bigAvatar
                 width: parent.width
-                height: parent.height
-                Image{
-                    id: bigAvatar
-                    width: parent.width
-                    height: width
-                    sourceSize.height: height
-                    sourceSize.width: width
-                    cache: false
-                    MouseArea{
-                        anchors.fill: parent
-                        onClicked: {
-                            pushPage(mainUserPage)
-                            slidingMenu.hide()
-                        }
-                    }
-                }
-                MaterialButton{
-                    id: memesExchange
-                    width: parent.width
-                    height: parent.height / 10
-                    clickableColor: slidingMenu.color
-                    label: qsTr("биржа мемов") + translator.emptyString
-                    labelSize: height / 4
-                    z: bigAvatar.z - 1
-                    onClicked:{
-                        pushPage(rialtoPage)
+                height: width
+                sourceSize.height: height
+                sourceSize.width: width
+                cache: false
+                MouseArea{
+                    anchors.fill: parent
+                    onClicked: {
+                        pushPage(mainUserPage)
                         slidingMenu.hide()
-                    }
-                }
-                MaterialButton{
-                    id: ads
-                    width: parent.width
-                    height: parent.height / 10
-                    clickableColor: slidingMenu.color
-                    label: qsTr("реклама") + translator.emptyString
-                    labelSize: height / 4
-                    z: memesExchange.z - 1
-                    property string lang: "ru"
-                    onClicked:{
-                        pushPage(adsPage)
-                        slidingMenu.hide()
-                    }
-                }
-                MaterialButton{
-                    id: usersRating
-                    width: parent.width
-                    height: parent.height / 10
-                    clickableColor: slidingMenu.color
-                    label: qsTr("рейтинг") + translator.emptyString
-                    labelSize: height / 4
-                    z: ads.z - 1
-                    onClicked:{
-                        pushPage(usersRatingPage)
-                        slidingMenu.hide()
-                    }
-                }
-                MaterialButton{
-                    id: signOut
-                    width: parent.width
-                    height: parent.height / 10
-                    clickableColor: slidingMenu.color
-                    label: qsTr("выход") + translator.emptyString
-                    labelSize: height / 4
-                    z: usersRating.z - 1
-                    onClicked:{
-                        exitDialog.open()
                     }
                 }
             }
-        ]
+            MaterialButton{
+                id: memesExchange
+                width: parent.width
+                height: parent.height / 10
+                clickableColor: slidingMenu.color
+                label: qsTr("биржа мемов") + translator.emptyString
+                labelSize: height / 4
+                onClicked:{
+                    pushPage(rialtoPage)
+                    slidingMenu.hide()
+                }
+            }
+            MaterialButton{
+                id: ads
+                width: parent.width
+                height: parent.height / 10
+                clickableColor: slidingMenu.color
+                label: qsTr("реклама") + translator.emptyString
+                labelSize: height / 4
+                property string lang: "ru"
+                onClicked:{
+                    pushPage(adsPage)
+                    slidingMenu.hide()
+                }
+            }
+            MaterialButton{
+                id: usersRating
+                width: parent.width
+                height: parent.height / 10
+                clickableColor: slidingMenu.color
+                label: qsTr("рейтинг") + translator.emptyString
+                labelSize: height / 4
+                onClicked:{
+                    pushPage(usersRatingPage)
+                    slidingMenu.hide()
+                }
+            }
+            MaterialButton{
+                id: signOut
+                width: parent.width
+                height: parent.height / 10
+                clickableColor: slidingMenu.color
+                label: qsTr("выход") + translator.emptyString
+                labelSize: height / 4
+                onClicked:{
+                    exitDialog.open()
+                }
+            }
+        }
+    }
+
+    TrainMode{
+        id: trainMode
+        parent: slidingMenu._findRootItem()
+        anchors.fill: parent
+        z: slidingMenu.z + 1
     }
 
     Dialog {
@@ -393,7 +480,8 @@ ApplicationWindow{
                             exitDialog.close()
                             slidingMenu.hide()
                             User.signOut()
-                            stackView.pop(signInPage)
+                            while(stackView.currentItem.objectName !== "signInPage")
+                                stackView.pop()
                         }
                     }
                     MaterialButton{

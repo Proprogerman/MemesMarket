@@ -25,6 +25,75 @@ Page{
     property int clickedMemeOnListY
     property int clickedMemeImageSize
 
+
+    Connections{
+        target: stackView
+        onCurrentItemChanged: {
+            if(stackView.currentItem !== null){
+                if(stackView.currentItem.objectName === categoryMemeListPage.objectName && !slidingMenu.open){
+                    setupTutorial()
+                }
+            }
+        }
+    }
+
+    Connections{
+        target: slidingMenu
+        onOpenChanged: if(!slidingMenu.open && !stackView.transitions.running) setupTutorial()
+    }
+
+    function setupTutorial(){
+        if(userSettings.tutorial)
+            trainMode.items = getTrainSequence()
+        trainMode.active = userSettings.tutorial
+    }
+
+    function getItemForTrain(name, desc, descPos, item, coeff, isCircle, clickable, page){
+        var obj = {
+            "name" : name,
+            "description" : desc,
+            "descriptionPosition" : descPos,
+            "item" : item,
+            "coeff" : coeff,
+            "isCircle" : isCircle,
+            "clickable" : clickable,
+            "page" : page
+        };
+        return obj
+    }
+
+    function getTrainSequence(){
+        var seq = []
+
+        if(userSettings.memePageTrain)
+            seq.push(getItemForTrain(
+                         qsTr("Выберите мем") + translator.emptyString,
+                         "",
+                         "bottom",
+                         appListView,
+                         1,
+                         false,
+                         "onlyItem",
+                         "categoryMemeListPage"
+                         )
+                     )
+        else
+            seq.push(getItemForTrain(
+                         qsTr("Нажмите") + translator.emptyString,
+                         "",
+                         "bottom",
+                         hamburger,
+                         2,
+                         true,
+                         "onlyItem",
+                         "transfer"
+                         )
+                     )
+
+        return seq
+    }
+
+
     function setMeme(meme_name, image_name, loyalty, crsDir, memeCreativity){
         if(memeListModel.count){
             for(var i = 0; i < memeListModel.count; i++)
@@ -122,24 +191,10 @@ Page{
         target: stackView
         onCurrentItemChanged: {
             if(stackView.currentItem !== null)
-                if(stackView.currentItem.objectName === "categoryMemeListPage"){
+                if(stackView.currentItem.objectName === categoryMemeListPage.objectName){
                     User.setExistingMemeListWithCategory(pageCategory)
                     getMemesWithCategoryTimer.restart()
                 }
-        }
-    }
-
-    Hamburger{
-        id: hamburger
-        height: pageHeader.height / 4
-        width: height * 3 / 2
-        y: pageHeader.y + Math.floor(pageHeader.height / 2) - height
-        anchors{ left: pageHeader.left; leftMargin: width }
-        z: pageHeader.z + 1
-        dynamic: false
-        onBackAction: {
-            if(stackView.__currentItem.objectName === "categoryMemeListPage")
-                stackView.pop()
         }
     }
 
